@@ -62,6 +62,16 @@ app.use(`${API}/appointments`, appointmentRoutes);
 app.use(`${API}/reports`,      reportRoutes);
 app.use(`${API}/public`,       bookingRoutes);
 
+// Serve Frontend in Production
+if (!isDev) {
+  const frontendPath = path.join(__dirname, '../../clinic-web/dist');
+  app.use(express.static(frontendPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
+
 app.use(notFound);
 app.use(errorHandler);
 
