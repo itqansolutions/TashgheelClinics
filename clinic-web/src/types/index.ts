@@ -152,6 +152,7 @@ export interface Appointment {
   priceCharged?: number;
   discountPct: number;
   notes?: string;
+  prescription?: string;
   createdAt: string;
   patient?: Pick<Patient, 'id' | 'code' | 'fullName' | 'phone'>;
   doctor?: Pick<Doctor, 'id' | 'fullName'> & { user: Pick<User, 'fullName'>; specialty: Pick<Specialty, 'name'> };

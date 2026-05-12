@@ -25,8 +25,8 @@ export function ConsultationPage() {
   const [showReview, setShowReview] = useState(false);
   
   const { data: appointment, isLoading: apptLoading } = useAppointment(Number(id));
-  const { data: patient, isLoading: patientLoading } = usePatient(appointment?.patientId);
-  const { data: patientAreas } = usePatientAreas(appointment?.patientId);
+  const { data: patient, isLoading: patientLoading } = usePatient(appointment?.patientId as number);
+  const { data: patientAreas } = usePatientAreas(appointment?.patientId as number);
   
   const [notes, setNotes] = useState(appointment?.notes || '');
   const [prescription, setPrescription] = useState(appointment?.prescription || '');
