@@ -280,13 +280,35 @@ export function ConsultationPage() {
 
       <style>{`
         @media print {
-          /* Hide everything by default */
-          body * { visibility: hidden; }
-          /* Show only the report and its children */
-          .no-print-overlay, .no-print-overlay * { visibility: visible; }
-          .no-print-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: white !important; z-index: 9999; overflow: visible !important; }
-          .report-paper { border: none !important; box-shadow: none !important; width: 100% !important; margin: 0 !important; }
+          /* Force hide everything */
+          body * { visibility: hidden !important; }
           .no-print { display: none !important; }
+          
+          /* Show only the report and its children */
+          .no-print-overlay, .no-print-overlay * { visibility: visible !important; }
+          .no-print-overlay { 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important; 
+            height: auto !important; 
+            background: white !important; 
+            z-index: 9999 !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important; 
+          }
+          .report-paper { 
+            border: none !important; 
+            box-shadow: none !important; 
+            width: 100% !important; 
+            margin: 0 !important; 
+            border-radius: 0 !important;
+          }
+          /* Hide the action bar inside overlay */
+          .no-print-overlay .no-print { display: none !important; }
+          
+          body { background: white !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
         }
       `}</style>
     </div>

@@ -154,22 +154,18 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 <div className="flex flex-col items-center gap-1">
                   <BodySvg
                     zone="front"
-                    bodyAreas={frontAreas}
-                    selectedIds={selectedFrontIds}
-                    activeAreaId={null}
-                    onToggle={() => {}}
-                    canEdit={false}
+                    areaProps={(id) => ({
+                      fill: selectedFrontIds.has(id) ? '#3b82f6' : '#e5e7eb',
+                    })}
                   />
                   <span className="text-[8px] font-black text-gray-400 uppercase">Front</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <BodySvg
                     zone="back"
-                    bodyAreas={backAreas}
-                    selectedIds={selectedBackIds}
-                    activeAreaId={null}
-                    onToggle={() => {}}
-                    canEdit={false}
+                    areaProps={(id) => ({
+                      fill: selectedBackIds.has(id) ? '#3b82f6' : '#e5e7eb',
+                    })}
                   />
                   <span className="text-[8px] font-black text-gray-400 uppercase">Back</span>
                 </div>
