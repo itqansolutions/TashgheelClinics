@@ -280,9 +280,13 @@ export function ConsultationPage() {
 
       <style>{`
         @media print {
+          /* Hide everything by default */
+          body * { visibility: hidden; }
+          /* Show only the report and its children */
+          .no-print-overlay, .no-print-overlay * { visibility: visible; }
+          .no-print-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: white !important; z-index: 9999; overflow: visible !important; }
+          .report-paper { border: none !important; box-shadow: none !important; width: 100% !important; margin: 0 !important; }
           .no-print { display: none !important; }
-          body { background: white !important; margin: 0; padding: 0; }
-          .print-only { display: block !important; }
         }
       `}</style>
     </div>

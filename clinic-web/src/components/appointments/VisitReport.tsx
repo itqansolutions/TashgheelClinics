@@ -206,14 +206,6 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
         </div>
       </div>
 
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          .no-print-overlay { position: static !important; background: white !important; padding: 0 !important; }
-          .report-paper { border: none !important; box-shadow: none !important; max-width: 100% !important; margin: 0 !important; }
-          body { background: white !important; }
-        }
-      `}</style>
     </div>
   );
 }
