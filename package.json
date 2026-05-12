@@ -1,0 +1,9 @@
+{
+  "name": "tashgheel-clinics",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd clinic-api && npm start",
+    "build": "cd clinic-web && npm install && npm run build && cd ../clinic-api && npm install && npm run build"
+  }
+}
