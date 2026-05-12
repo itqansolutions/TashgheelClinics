@@ -41,6 +41,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gender / Age</span>
               <span className="text-sm font-bold text-gray-800">
                 {patient.gender === 'M' ? 'Male' : 'Female'} / {patient.dateOfBirth ? `${new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()}Y` : 'N/A'}
+                {patient.dateOfBirth && <span className="text-[9px] block text-gray-400 font-medium">DOB: {formatDate(patient.dateOfBirth)}</span>}
               </span>
             </div>
           </div>
@@ -114,7 +115,9 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
         </div>
         
         <div className="flex flex-col items-center">
-          <div className="w-32 h-16 border-b border-gray-300 mb-2"></div>
+          <div className="w-32 h-16 border-b border-gray-300 mb-2 flex items-center justify-center text-gray-200 text-2xl font-black opacity-30 select-none">
+            {getInitials(appointment.doctor?.user?.fullName || appointment.doctor?.fullName || 'Doctor')}
+          </div>
           <p className="text-[10px] font-bold text-gray-400 uppercase">Doctor Signature</p>
         </div>
       </div>

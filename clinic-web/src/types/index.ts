@@ -136,7 +136,7 @@ export interface PatientRating {
   rating: number;
   notes?: string;
   createdAt: string;
-  doctor?: Pick<Doctor, 'id'> & { user: Pick<User, 'fullName'> };
+  doctor?: Pick<Doctor, 'id' | 'fullName'> & { user: Pick<User, 'fullName'>; specialty: Pick<Specialty, 'name'> };
 }
 
 // ── Appointment ───────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ export interface Appointment {
   notes?: string;
   createdAt: string;
   patient?: Pick<Patient, 'id' | 'code' | 'fullName' | 'phone'>;
-  doctor?: Pick<Doctor, 'id'> & { user: Pick<User, 'fullName'> };
+  doctor?: Pick<Doctor, 'id' | 'fullName'> & { user: Pick<User, 'fullName'>; specialty: Pick<Specialty, 'name'> };
   service?: Pick<Service, 'id' | 'name' | 'price' | 'durationMin'>;
   payments?: Payment[];
 }

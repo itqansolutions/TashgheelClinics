@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/utils/format';
 import { 
   BarChart3, TrendingUp, Users, Calendar, 
-  DollarSign, PieChart, ArrowUpRight, ArrowDownRight 
+  DollarSign, PieChart, ArrowUpRight, ArrowDownRight,
+  Printer
 } from 'lucide-react';
 import { SimpleBarChart, SimpleDonutChart } from '@/components/ui/Charts';
 
@@ -43,9 +44,15 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-        <p className="text-gray-500 text-sm">Real-time overview of clinic performance</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+          <p className="text-gray-500 text-sm">Real-time overview of clinic performance</p>
+        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
+          <Printer className="w-4 h-4" />
+          Print Analytics
+        </Button>
       </div>
 
       {/* Stats Grid */}

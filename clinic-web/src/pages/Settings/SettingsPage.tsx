@@ -63,6 +63,12 @@ function UsersPanel() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const createUser = useCreateUser();
   const deactivateUser = useDeactivateUser();
+  const [search, setSearch] = useState('');
+
+  const filteredUsers = usersData?.data.data.filter((u: any) => 
+    u.fullName.toLowerCase().includes(search.toLowerCase()) || 
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: { fullName: '', email: '', password: '', role: 'Doctor' }
@@ -86,9 +92,20 @@ function UsersPanel() {
             <h3 className="text-sm font-semibold text-gray-900">System Users</h3>
             <p className="text-xs text-gray-500 mt-0.5">Manage staff access and roles</p>
           </div>
-          <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setIsAddOpen(true)}>
-            Add User
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                placeholder="Search staff..." 
+                className="pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 outline-none w-48"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setIsAddOpen(true)}>
+              Add User
+            </Button>
+          </div>
         </div>
 
         <div className="divide-y divide-gray-50">
@@ -98,7 +115,7 @@ function UsersPanel() {
                <Skeleton className="h-8 w-full" />
              </div>
           ) : (
-            usersData?.data.data.map((user: any) => (
+            filteredUsers?.map((user: any) => (
               <div key={user.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xs">
@@ -139,14 +156,17 @@ function UsersPanel() {
             error={errors.email?.message as string}
             {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })} 
           />
-          <Input 
-            label="Password" 
-            type="password" 
-            required 
-            hint="Min. 8 characters"
-            error={errors.password?.message as string}
-            {...register('password', { required: 'Password is required', minLength: { value: 8, message: 'Min 8 characters' } })} 
-          />
+          <div className="relative">
+            <Input 
+              label="Password" 
+              type="password" 
+              required 
+              hint="Min. 8 characters"
+              error={errors.password?.message as string}
+              {...register('password', { required: 'Password is required', minLength: { value: 8, message: 'Min 8 characters' } })} 
+            />
+            <Key className="w-4 h-4 absolute right-3 top-[34px] text-gray-300" />
+          </div>
           <Select 
             label="Role" 
             options={[

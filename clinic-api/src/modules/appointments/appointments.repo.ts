@@ -21,7 +21,7 @@ export type UpdateAppointmentInput = Partial<CreateAppointmentInput>;
 
 const FULL_INCLUDE = {
   patient: { select: { id: true, fullName: true, phone: true, code: true } },
-  doctor:  { select: { id: true, fullName: true, user: { select: { fullName: true } } } },
+  doctor:  { select: { id: true, fullName: true, specialty: { select: { name: true } }, user: { select: { fullName: true } } } },
   service: { select: { id: true, name: true, price: true } },
 };
 

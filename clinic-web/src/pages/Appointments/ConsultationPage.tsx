@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, User, Calendar, Scissors, Phone, FileText, 
@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { useAppointment, useUpdateAppointment } from '@/hooks/useAppointments';
 import { usePatient, usePatientAreas } from '@/hooks/usePatients';
-import { useBodyAreas } from '@/hooks/useLookups';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/Loader';
@@ -149,13 +148,27 @@ export function ConsultationPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 gap-2">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Phone className="w-3 h-3" /> {patient.phone || 'No phone'}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <User className="w-3 h-3" /> {patient.gender === 'M' ? 'Male' : 'Female'}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Calendar className="w-3 h-3" /> Joined {formatDate(patient.createdAt)}
+                </div>
+              </div>
+
               <div>
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                   <Activity className="w-3 h-3 text-blue-400" /> Last Visit
                 </h3>
                 <div className="text-xs text-gray-600 p-3 rounded-xl border border-gray-100">
                   <p className="font-semibold text-gray-900">Botox Session</p>
-                  <p className="text-[10px] text-gray-400">12 Apr 2024 · Dr. Sarah</p>
+                  <p className="text-[10px] text-gray-400">
+                    {formatDate('2024-04-12')} · {formatCurrency(2500)}
+                  </p>
                 </div>
               </div>
             </div>
