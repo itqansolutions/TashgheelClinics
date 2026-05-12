@@ -1,13 +1,13 @@
 // Prisma schema — Clinic Management System
-// Database: Microsoft SQL Server
-// Generated for: Sprint 0 — full schema migration
+// Database: PostgreSQL
+// Migrated from SQL Server for Railway deployment
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,10 +15,10 @@ datasource db {
 
 model User {
   id           Int      @id @default(autoincrement())
-  fullName     String   @db.NVarChar(150)
-  email        String   @unique @db.NVarChar(200)
-  passwordHash String   @db.NVarChar(500)
-  role         String   @db.NVarChar(50) @default("Reception")
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("Reception")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -29,6 +29,7 @@ model User {
   payments          Payment[]
   uploadedImages    PatientImage[]
   auditLogs         AuditLog[]
+  uploadedBy        PatientImage[] @relation("UploadedByUser")
 
   @@map("Users")
 }
@@ -38,15 +39,15 @@ model User {
 model Doctor {
   id           Int     @id @default(autoincrement())
   userId       Int?    @unique
-  fullName     String? @db.NVarChar(150) // Use if userId is null
+  fullName     String? // Use if userId is null
   specialtyId  Int
-  commission   Decimal @default(0) @db.Decimal(5, 2) // % of service price
-  discount     Decimal @default(0) @db.Decimal(5, 2) // max discount % they can grant
+  commission   Decimal @default(0) @db.Decimal(5, 2)
+  discount     Decimal @default(0) @db.Decimal(5, 2)
   isActive     Boolean @default(true)
 
   // Relations
-  user         User?          @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  specialty    Specialty      @relation(fields: [specialtyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User?          @relation(fields: [userId], references: [id])
+  specialty    Specialty      @relation(fields: [specialtyId], references: [id])
   appointments Appointment[]
   ratings      PatientRating[]
   schedules    DoctorSchedule[]
@@ -58,12 +59,12 @@ model DoctorSchedule {
   id        Int      @id @default(autoincrement())
   doctorId  Int
   dayOfWeek Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  startTime String   @db.NVarChar(10) // "09:00"
-  endTime   String   @db.NVarChar(10) // "17:00"
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
   isActive  Boolean  @default(true)
 
   // Relations
-  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
 
   @@index([doctorId])
   @@map("DoctorSchedules")
@@ -73,7 +74,7 @@ model DoctorSchedule {
 
 model Specialty {
   id       Int     @id @default(autoincrement())
-  name     String  @db.NVarChar(100)
+  name     String
   isActive Boolean @default(true)
 
   // Relations
@@ -86,13 +87,13 @@ model Specialty {
 model Service {
   id          Int     @id @default(autoincrement())
   specialtyId Int
-  name        String  @db.NVarChar(150)
+  name        String
   price       Decimal @db.Decimal(10, 2)
   durationMin Int     // appointment block in minutes
   isActive    Boolean @default(true)
 
   // Relations
-  specialty    Specialty     @relation(fields: [specialtyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
   appointments Appointment[]
 
   @@map("Services")
@@ -102,7 +103,7 @@ model Service {
 
 model LeadSource {
   id   Int    @id @default(autoincrement())
-  name String @db.NVarChar(100)
+  name String
 
   // Relations
   patients Patient[]
@@ -112,8 +113,8 @@ model LeadSource {
 
 model Country {
   id   Int    @id @default(autoincrement())
-  name String @db.NVarChar(100)
-  code String @db.Char(3)
+  name String
+  code String
 
   // Relations
   patients Patient[]
@@ -125,25 +126,25 @@ model Country {
 
 model Patient {
   id             Int         @id @default(autoincrement())
-  code           String      @unique @db.NVarChar(20) // P-00001
-  fullName       String      @db.NVarChar(200)
-  phone          String?     @db.NVarChar(30)
-  email          String?     @db.NVarChar(200)
-  dateOfBirth    DateTime?   @db.Date
-  gender         String?     @db.NVarChar(10)
-  nationality    String?     @db.NVarChar(50)
+  code           String      @unique // P-00001
+  fullName       String
+  phone          String?
+  email          String?
+  dateOfBirth    DateTime?
+  gender         String?
+  nationality    String?
   countryId      Int?
   leadSourceId   Int?
-  medicalHistory String?     @db.NVarChar(Max)
-  notes          String?     @db.NVarChar(Max)
+  medicalHistory String?
+  notes          String?
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
   createdBy      Int?
 
   // Relations
-  country      Country?      @relation(fields: [countryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  leadSource   LeadSource?   @relation(fields: [leadSourceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?        @relation("PatientCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  country      Country?      @relation(fields: [countryId], references: [id])
+  leadSource   LeadSource?   @relation(fields: [leadSourceId], references: [id])
+  createdByUser User?        @relation("PatientCreatedBy", fields: [createdBy], references: [id])
   appointments Appointment[]
   areas        PatientArea[]
   images       PatientImage[]
@@ -158,9 +159,9 @@ model Patient {
 
 model BodyArea {
   id    Int    @id @default(autoincrement())
-  name  String @db.NVarChar(100)
-  zone  String @db.NVarChar(50) // 'front' | 'back'
-  svgId String @db.NVarChar(50) // maps to SVG path id
+  name  String
+  zone  String // 'front' | 'back'
+  svgId String // maps to SVG path id
 
   // Relations
   patientAreas PatientArea[]
@@ -172,12 +173,12 @@ model PatientArea {
   id        Int      @id @default(autoincrement())
   patientId Int
   areaId    Int
-  notes     String?  @db.NVarChar(500)
+  notes     String?
   addedAt   DateTime @default(now())
 
   // Relations
-  patient Patient  @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  area    BodyArea @relation(fields: [areaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient Patient  @relation(fields: [patientId], references: [id])
+  area    BodyArea @relation(fields: [areaId], references: [id])
 
   @@unique([patientId, areaId])
   @@index([patientId])
@@ -193,19 +194,19 @@ model Appointment {
   serviceId    Int
   startTime    DateTime
   endTime      DateTime
-  status       String   @db.NVarChar(50) @default("Pending")
+  status       String   @default("Pending")
   priceCharged Decimal?          @db.Decimal(10, 2)
   discountPct  Decimal           @default(0) @db.Decimal(5, 2)
-  notes        String?           @db.NVarChar(Max)
-  prescription String?           @db.NVarChar(Max)
+  notes        String?
+  prescription String?
   createdAt    DateTime          @default(now())
   createdBy    Int?
 
   // Relations
-  patient       Patient         @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  doctor        Doctor          @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  service       Service         @relation(fields: [serviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?           @relation("AppointmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient       Patient         @relation(fields: [patientId], references: [id])
+  doctor        Doctor          @relation(fields: [doctorId], references: [id])
+  service       Service         @relation(fields: [serviceId], references: [id])
+  createdByUser User?           @relation("AppointmentCreatedBy", fields: [createdBy], references: [id])
   payments      Payment[]
   images        PatientImage[]
   ratings       PatientRating[]
@@ -222,13 +223,13 @@ model Payment {
   id            Int           @id @default(autoincrement())
   appointmentId Int
   amount        Decimal       @db.Decimal(10, 2)
-  method        String   @db.NVarChar(50) @default("Cash")
+  method        String   @default("Cash")
   paidAt        DateTime      @default(now())
   receivedBy    Int?
 
   // Relations
-  appointment  Appointment @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receivedByUser User?    @relation(fields: [receivedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointment  Appointment @relation(fields: [appointmentId], references: [id])
+  receivedByUser User?    @relation(fields: [receivedBy], references: [id])
 
   @@index([appointmentId])
   @@map("Payments")
@@ -240,15 +241,15 @@ model PatientImage {
   id            Int       @id @default(autoincrement())
   patientId     Int
   appointmentId Int?
-  imageType     String   @db.NVarChar(50)
-  storagePath   String    @db.NVarChar(500)
+  imageType     String
+  storagePath   String
   uploadedAt    DateTime  @default(now())
   uploadedBy    Int?
 
   // Relations
-  patient       Patient      @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  uploadedByUser User?       @relation(fields: [uploadedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  uploadedByUser User?       @relation("UploadedByUser", fields: [uploadedBy], references: [id])
 
   @@index([patientId])
   @@map("PatientImages")
@@ -262,13 +263,13 @@ model PatientRating {
   doctorId      Int
   appointmentId Int?
   rating        Int      // 1–5
-  notes         String?  @db.NVarChar(500)
+  notes         String?
   createdAt     DateTime @default(now())
 
   // Relations
-  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  doctor      Doctor       @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  doctor      Doctor       @relation(fields: [doctorId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
 
   @@map("PatientRatings")
 }
@@ -276,8 +277,8 @@ model PatientRating {
 // ── Settings ──────────────────────────────────────────────────────────────
 
 model ClinicSetting {
-  key   String @id @db.NVarChar(100)
-  value String @db.NVarChar(Max)
+  key   String @id
+  value String
 
   @@map("ClinicSettings")
 }
@@ -287,15 +288,15 @@ model ClinicSetting {
 model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  action    String   @db.NVarChar(100)
-  tableName String   @db.NVarChar(50)
+  action    String
+  tableName String
   recordId  Int?
-  oldValue  String?  @db.NVarChar(Max)
-  newValue  String?  @db.NVarChar(Max)
+  oldValue  String?
+  newValue  String?
   createdAt DateTime @default(now())
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user User? @relation(fields: [userId], references: [id])
 
   @@index([createdAt(sort: Desc)])
   @@map("AuditLog")
