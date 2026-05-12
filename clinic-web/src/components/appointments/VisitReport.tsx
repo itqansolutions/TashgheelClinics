@@ -1,5 +1,5 @@
 import { useClinicSettings } from '@/hooks/useSettings';
-import { formatDate, formatDateTime, getInitials } from '@/utils/format';
+import { formatDateTime, getInitials } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
 import { useBodyAreas } from '@/hooks/useLookups';
