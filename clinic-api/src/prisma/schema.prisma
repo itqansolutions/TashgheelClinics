@@ -27,9 +27,8 @@ model User {
   createdPatients   Patient[]       @relation("PatientCreatedBy")
   createdAppointments Appointment[] @relation("AppointmentCreatedBy")
   payments          Payment[]
-  uploadedImages    PatientImage[]
+  uploadedImages    PatientImage[] @relation("UploadedByUser")
   auditLogs         AuditLog[]
-  uploadedBy        PatientImage[] @relation("UploadedByUser")
 
   @@map("Users")
 }
