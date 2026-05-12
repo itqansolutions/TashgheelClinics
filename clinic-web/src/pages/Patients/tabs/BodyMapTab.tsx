@@ -194,41 +194,38 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
 
 // ── SVG Body Diagram ──────────────────────────────────────────────────────
 export function BodySvg({
-  zone, bodyAreas, selectedIds, activeAreaId, onToggle, canEdit
+  zone, 
+  bodyAreas = [], 
+  selectedIds = new Set(), 
+  activeAreaId = null, 
+  onToggle = () => {}, 
+  canEdit = false,
+  areaProps: customAreaProps
 }: {
   zone: Zone;
-  bodyAreas: { id: number; name: string; svgId: string }[];
-  selectedIds: Set<number>;
-  activeAreaId: number | null;
-  onToggle: (id: number) => void;
-  canEdit: boolean;
+  bodyAreas?: { id: number; name: string; svgId: string }[];
+  selectedIds?: Set<number>;
+  activeAreaId?: number | null;
+  onToggle?: (id: number) => void;
+  canEdit?: boolean;
+  areaProps?: (id: number) => React.SVGProps<SVGPathElement>;
 }) {
   // Build a lookup: svgId → areaId
   const svgIdMap = Object.fromEntries(bodyAreas.map((a) => [a.svgId, a.id]));
 
-  const getAreaFill = (areaId: number) => {
-    if (activeAreaId === areaId) return '#2563eb';
-    if (selectedIds.has(areaId)) return '#93c5fd';
-    return '#e5e7eb';
-  };
-
-  const getAreaStroke = (areaId: number) => {
-    if (activeAreaId === areaId) return '#1d4ed8';
-    if (selectedIds.has(areaId)) return '#3b82f6';
-    return '#d1d5db';
-  };
-
-  // Shared clickable area props
-  const areaProps = (svgId: string) => {
+  const getInternalAreaProps = (svgId: string): React.SVGProps<SVGPathElement> => {
     const areaId = svgIdMap[svgId];
-    if (!areaId) return {};
+    if (!areaId) return { fill: '#e5e7eb', stroke: '#d1d5db' };
+    
+    if (customAreaProps) return customAreaProps(areaId);
+    
     return {
-      fill:   getAreaFill(areaId),
-      stroke: getAreaStroke(areaId),
+      fill: activeAreaId === areaId ? '#2563eb' : (selectedIds.has(areaId) ? '#93c5fd' : '#e5e7eb'),
+      stroke: activeAreaId === areaId ? '#1d4ed8' : (selectedIds.has(areaId) ? '#3b82f6' : '#d1d5db'),
       strokeWidth: 1.5,
-      cursor: canEdit ? 'pointer' : 'default',
-      onClick: () => onToggle(areaId),
-      style:  { transition: 'fill 0.15s, stroke 0.15s' },
+      className: `transition-colors duration-200 ${canEdit ? 'cursor-pointer hover:opacity-80' : ''}`,
+      onClick: () => canEdit && onToggle(areaId),
+      style: { transition: 'fill 0.15s, stroke 0.15s' }
     };
   };
 
@@ -239,9 +236,9 @@ export function BodySvg({
       xmlns="http://www.w3.org/2000/svg"
     >
       {zone === 'front' ? (
-        <FrontBody areaProps={areaProps} />
+        <FrontBody areaProps={getInternalAreaProps} />
       ) : (
-        <BackBody areaProps={areaProps} />
+        <BackBody areaProps={getInternalAreaProps} />
       )}
     </svg>
   );

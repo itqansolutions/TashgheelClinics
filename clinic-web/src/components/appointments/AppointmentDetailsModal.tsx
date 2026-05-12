@@ -71,7 +71,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
         </div>
 
         {/* Content (Scrollable) */}
-        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar min-h-0" style={{ maxHeight: 'calc(90vh - 200px)' }}>
           {/* Patient Card */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-brand-600 font-bold border border-gray-200">

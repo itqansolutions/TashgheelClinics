@@ -17,8 +17,6 @@ interface Props {
 
 export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, onClose }: Props) {
   const { data: settings } = useClinicSettings();
-  const { data: frontAreas = [] } = useBodyAreas('front');
-  const { data: backAreas = [] } = useBodyAreas('back');
   
   const clinicName = settings?.clinic_name || 'Tashgheel Clinic';
   const clinicAddress = settings?.clinic_address || 'Address not set';
@@ -34,8 +32,13 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
   return (
     <div className="fixed inset-0 z-[100] bg-gray-50/95 backdrop-blur-md overflow-y-auto pt-10 pb-20 px-4 sm:px-6 no-print-overlay">
       {/* Action Bar (Non-print only) */}
-      <div className="max-w-[800px] mx-auto mb-6 flex items-center justify-between no-print">
-        <div className="flex items-center gap-3">
+      <div className="max-w-[800px] mx-auto mb-6 flex items-center justify-between no-print" style={{ display: typeof window !== 'undefined' && window.matchMedia('print').matches ? 'none' : 'flex' }}>
+        <style>{`
+          @media print {
+            .no-print-bar { display: none !important; }
+          }
+        `}</style>
+        <div className="flex items-center gap-3 no-print-bar">
           <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg">
             <Heart className="w-5 h-5 fill-white" />
           </div>
@@ -154,7 +157,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 <div className="flex flex-col items-center gap-1">
                   <BodySvg
                     zone="front"
-                    areaProps={(id) => ({
+                    areaProps={(id: number) => ({
                       fill: selectedFrontIds.has(id) ? '#3b82f6' : '#e5e7eb',
                     })}
                   />
@@ -163,7 +166,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 <div className="flex flex-col items-center gap-1">
                   <BodySvg
                     zone="back"
-                    areaProps={(id) => ({
+                    areaProps={(id: number) => ({
                       fill: selectedBackIds.has(id) ? '#3b82f6' : '#e5e7eb',
                     })}
                   />

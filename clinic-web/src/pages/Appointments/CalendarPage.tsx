@@ -67,7 +67,7 @@ export function CalendarPage() {
   };
 
   const renderListView = () => {
-    const appointments = data?.data || [];
+    const appointments = data || [];
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
@@ -153,7 +153,7 @@ export function CalendarPage() {
         const formattedDate = format(day, 'd');
         const cloneDay = day;
         
-        const dayAppointments = data?.data?.filter((apt: any) => 
+        const dayAppointments = data?.filter((apt: any) => 
           isSameDay(new Date(apt.startTime), cloneDay)
         ) || [];
 

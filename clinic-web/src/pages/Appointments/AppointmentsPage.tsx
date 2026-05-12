@@ -20,7 +20,9 @@ export function AppointmentsPage() {
   const allAppts = useAppointments(filters, { enabled: isAdminOrReception });
   const doctorAppts = useDoctorAppointments(filters, { enabled: isDoctor });
   
-  const { data, isLoading } = isDoctor ? doctorAppts : allAppts;
+  const queryResult = isDoctor ? doctorAppts : allAppts;
+  const data = (queryResult.data || []) as Appointment[];
+  const isLoading = queryResult.isLoading;
 
   return (
     <div className="space-y-6">

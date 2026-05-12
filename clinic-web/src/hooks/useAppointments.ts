@@ -5,7 +5,7 @@ import { useRole } from '@/store/authStore';
 export const APPOINTMENTS_KEY = ['appointments'];
 
 export function useAppointments(filters?: any, options: any = {}) {
-  return useQuery({
+  return useQuery<Appointment[]>({
     queryKey: [...APPOINTMENTS_KEY, filters],
     queryFn: async () => {
       const res = await appointmentsApi.getAll(filters);
@@ -16,7 +16,7 @@ export function useAppointments(filters?: any, options: any = {}) {
 }
 
 export function useAppointment(id: number) {
-  return useQuery({
+  return useQuery<Appointment>({
     queryKey: [...APPOINTMENTS_KEY, id],
     queryFn: async () => {
       const res = await appointmentsApi.getById(id);
@@ -48,7 +48,7 @@ export function useUpdateAppointment() {
 
 export function useDoctorAppointments(filters?: any, options: any = {}) {
   const role = useRole();
-  return useQuery({
+  return useQuery<Appointment[]>({
     queryKey: [...APPOINTMENTS_KEY, 'doctor-me', filters],
     queryFn: async () => {
       const res = await appointmentsApi.getDoctorMe(filters);

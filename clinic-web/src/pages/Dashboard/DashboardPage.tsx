@@ -98,7 +98,7 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : !appts?.length ? (
+          ) : !(appts as Appointment[])?.length ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <CalendarDays className="w-8 h-8 text-gray-200 mb-2" />
               <p className="text-sm text-gray-400">No appointments today</p>
