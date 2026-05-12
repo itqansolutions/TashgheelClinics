@@ -4,13 +4,14 @@ import { useRole } from '@/store/authStore';
 
 export const APPOINTMENTS_KEY = ['appointments'];
 
-export function useAppointments(filters?: any) {
+export function useAppointments(filters?: any, options: any = {}) {
   return useQuery({
     queryKey: [...APPOINTMENTS_KEY, filters],
     queryFn: async () => {
       const res = await appointmentsApi.getAll(filters);
       return res.data; // The array inside { success, data }
     },
+    ...options
   });
 }
 
@@ -45,7 +46,7 @@ export function useUpdateAppointment() {
   });
 }
 
-export function useDoctorAppointments(filters?: any) {
+export function useDoctorAppointments(filters?: any, options: any = {}) {
   const role = useRole();
   return useQuery({
     queryKey: [...APPOINTMENTS_KEY, 'doctor-me', filters],
@@ -54,5 +55,6 @@ export function useDoctorAppointments(filters?: any) {
       return res.data; // The array inside { success, data }
     },
     enabled: role === 'Doctor',
+    ...options
   });
 }

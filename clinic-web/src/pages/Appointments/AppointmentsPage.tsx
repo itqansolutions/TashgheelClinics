@@ -14,10 +14,13 @@ export function AppointmentsPage() {
   const role = useRole();
   const filters = {};
   
-  const allAppts = useAppointments(filters);
-  const doctorAppts = useDoctorAppointments(filters);
+  const isDoctor = role === 'Doctor';
+  const isAdminOrReception = role === 'Admin' || role === 'Reception';
+
+  const allAppts = useAppointments(filters, { enabled: isAdminOrReception });
+  const doctorAppts = useDoctorAppointments(filters, { enabled: isDoctor });
   
-  const { data, isLoading } = role === 'Doctor' ? doctorAppts : allAppts;
+  const { data, isLoading } = isDoctor ? doctorAppts : allAppts;
 
   return (
     <div className="space-y-6">
