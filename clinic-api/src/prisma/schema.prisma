@@ -1,0 +1,301 @@
+// Prisma schema — Clinic Management System
+// Database: Microsoft SQL Server
+// Generated for: Sprint 0 — full schema migration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String   @db.NVarChar(150)
+  email        String   @unique @db.NVarChar(200)
+  passwordHash String   @db.NVarChar(500)
+  role         String   @db.NVarChar(50) @default("Reception")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  doctor            Doctor?
+  createdPatients   Patient[]       @relation("PatientCreatedBy")
+  createdAppointments Appointment[] @relation("AppointmentCreatedBy")
+  payments          Payment[]
+  uploadedImages    PatientImage[]
+  auditLogs         AuditLog[]
+
+  @@map("Users")
+}
+
+// ── Doctors ───────────────────────────────────────────────────────────────
+
+model Doctor {
+  id           Int     @id @default(autoincrement())
+  userId       Int?    @unique
+  fullName     String? @db.NVarChar(150) // Use if userId is null
+  specialtyId  Int
+  commission   Decimal @default(0) @db.Decimal(5, 2) // % of service price
+  discount     Decimal @default(0) @db.Decimal(5, 2) // max discount % they can grant
+  isActive     Boolean @default(true)
+
+  // Relations
+  user         User?          @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  specialty    Specialty      @relation(fields: [specialtyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointments Appointment[]
+  ratings      PatientRating[]
+  schedules    DoctorSchedule[]
+
+  @@map("Doctors")
+}
+
+model DoctorSchedule {
+  id        Int      @id @default(autoincrement())
+  doctorId  Int
+  dayOfWeek Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime String   @db.NVarChar(10) // "09:00"
+  endTime   String   @db.NVarChar(10) // "17:00"
+  isActive  Boolean  @default(true)
+
+  // Relations
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([doctorId])
+  @@map("DoctorSchedules")
+}
+
+// ── Specialties & Services ────────────────────────────────────────────────
+
+model Specialty {
+  id       Int     @id @default(autoincrement())
+  name     String  @db.NVarChar(100)
+  isActive Boolean @default(true)
+
+  // Relations
+  doctors  Doctor[]
+  services Service[]
+
+  @@map("Specialties")
+}
+
+model Service {
+  id          Int     @id @default(autoincrement())
+  specialtyId Int
+  name        String  @db.NVarChar(150)
+  price       Decimal @db.Decimal(10, 2)
+  durationMin Int     // appointment block in minutes
+  isActive    Boolean @default(true)
+
+  // Relations
+  specialty    Specialty     @relation(fields: [specialtyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointments Appointment[]
+
+  @@map("Services")
+}
+
+// ── Lookup tables ─────────────────────────────────────────────────────────
+
+model LeadSource {
+  id   Int    @id @default(autoincrement())
+  name String @db.NVarChar(100)
+
+  // Relations
+  patients Patient[]
+
+  @@map("LeadSources")
+}
+
+model Country {
+  id   Int    @id @default(autoincrement())
+  name String @db.NVarChar(100)
+  code String @db.Char(3)
+
+  // Relations
+  patients Patient[]
+
+  @@map("Countries")
+}
+
+// ── Patients ──────────────────────────────────────────────────────────────
+
+model Patient {
+  id             Int         @id @default(autoincrement())
+  code           String      @unique @db.NVarChar(20) // P-00001
+  fullName       String      @db.NVarChar(200)
+  phone          String?     @db.NVarChar(30)
+  email          String?     @db.NVarChar(200)
+  dateOfBirth    DateTime?   @db.Date
+  gender         String?     @db.NVarChar(10)
+  nationality    String?     @db.NVarChar(50)
+  countryId      Int?
+  leadSourceId   Int?
+  medicalHistory String?     @db.NVarChar(Max)
+  notes          String?     @db.NVarChar(Max)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  createdBy      Int?
+
+  // Relations
+  country      Country?      @relation(fields: [countryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  leadSource   LeadSource?   @relation(fields: [leadSourceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?        @relation("PatientCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointments Appointment[]
+  areas        PatientArea[]
+  images       PatientImage[]
+  ratings      PatientRating[]
+
+  @@index([phone])
+  @@index([code])
+  @@map("Patients")
+}
+
+// ── Body Map ──────────────────────────────────────────────────────────────
+
+model BodyArea {
+  id    Int    @id @default(autoincrement())
+  name  String @db.NVarChar(100)
+  zone  String @db.NVarChar(50) // 'front' | 'back'
+  svgId String @db.NVarChar(50) // maps to SVG path id
+
+  // Relations
+  patientAreas PatientArea[]
+
+  @@map("BodyAreas")
+}
+
+model PatientArea {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  areaId    Int
+  notes     String?  @db.NVarChar(500)
+  addedAt   DateTime @default(now())
+
+  // Relations
+  patient Patient  @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  area    BodyArea @relation(fields: [areaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([patientId, areaId])
+  @@index([patientId])
+  @@map("PatientAreas")
+}
+
+// ── Appointments ──────────────────────────────────────────────────────────
+
+model Appointment {
+  id           Int               @id @default(autoincrement())
+  patientId    Int
+  doctorId     Int
+  serviceId    Int
+  startTime    DateTime
+  endTime      DateTime
+  status       String   @db.NVarChar(50) @default("Pending")
+  priceCharged Decimal?          @db.Decimal(10, 2)
+  discountPct  Decimal           @default(0) @db.Decimal(5, 2)
+  notes        String?           @db.NVarChar(Max)
+  createdAt    DateTime          @default(now())
+  createdBy    Int?
+
+  // Relations
+  patient       Patient         @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor        Doctor          @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service       Service         @relation(fields: [serviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?           @relation("AppointmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments      Payment[]
+  images        PatientImage[]
+  ratings       PatientRating[]
+
+  @@index([doctorId, startTime])
+  @@index([patientId])
+  @@index([startTime])
+  @@map("Appointments")
+}
+
+// ── Payments ──────────────────────────────────────────────────────────────
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  appointmentId Int
+  amount        Decimal       @db.Decimal(10, 2)
+  method        String   @db.NVarChar(50) @default("Cash")
+  paidAt        DateTime      @default(now())
+  receivedBy    Int?
+
+  // Relations
+  appointment  Appointment @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receivedByUser User?    @relation(fields: [receivedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([appointmentId])
+  @@map("Payments")
+}
+
+// ── Patient Images ────────────────────────────────────────────────────────
+
+model PatientImage {
+  id            Int       @id @default(autoincrement())
+  patientId     Int
+  appointmentId Int?
+  imageType     String   @db.NVarChar(50)
+  storagePath   String    @db.NVarChar(500)
+  uploadedAt    DateTime  @default(now())
+  uploadedBy    Int?
+
+  // Relations
+  patient       Patient      @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  uploadedByUser User?       @relation(fields: [uploadedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([patientId])
+  @@map("PatientImages")
+}
+
+// ── Ratings ───────────────────────────────────────────────────────────────
+
+model PatientRating {
+  id            Int      @id @default(autoincrement())
+  patientId     Int
+  doctorId      Int
+  appointmentId Int?
+  rating        Int      // 1–5
+  notes         String?  @db.NVarChar(500)
+  createdAt     DateTime @default(now())
+
+  // Relations
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor      Doctor       @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("PatientRatings")
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────
+
+model ClinicSetting {
+  key   String @id @db.NVarChar(100)
+  value String @db.NVarChar(Max)
+
+  @@map("ClinicSettings")
+}
+
+// ── Audit Log ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String   @db.NVarChar(100)
+  tableName String   @db.NVarChar(50)
+  recordId  Int?
+  oldValue  String?  @db.NVarChar(Max)
+  newValue  String?  @db.NVarChar(Max)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("AuditLog")
+}
