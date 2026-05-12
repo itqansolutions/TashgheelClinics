@@ -15,6 +15,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
+    console.warn(`[Auth] No token provided for ${req.method} ${req.path}`);
     sendError(res, 'No token provided', 401);
     return;
   }
@@ -25,7 +26,8 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     const payload = verifyAccessToken(token);
     req.user = payload;
     next();
-  } catch {
+  } catch (err) {
+    console.warn(`[Auth] Invalid token for ${req.method} ${req.path}:`, (err as Error).message);
     sendError(res, 'Invalid or expired token', 401);
   }
 }

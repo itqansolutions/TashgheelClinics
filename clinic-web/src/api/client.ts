@@ -62,20 +62,22 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post(
-          '/api/auth/refresh',
-          {},
-          { withCredentials: true }
-        );
+        // Use a clean axios instance to avoid interceptor loops
+        const { data } = await axios.post('/api/auth/refresh', {}, { withCredentials: true });
         const newToken = data.data.accessToken;
+        
         useAuthStore.getState().setAccessToken(newToken);
         processQueue(null, newToken);
+        
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        // Force redirect to login if refresh fails
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
