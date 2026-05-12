@@ -25,6 +25,9 @@ import bookingRoutes     from './modules/booking/booking.routes';
 
 const app = express();
 
+// Required for Railway/Heroku/Cloud proxies
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({
   origin: env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
