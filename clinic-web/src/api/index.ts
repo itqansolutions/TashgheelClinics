@@ -56,7 +56,7 @@ export const doctorsApi = {
     api.get<ApiResponse<Doctor[]> & { meta: PaginationMeta }>('/doctors', { params }),
   getById: (id: number) =>
     api.get<ApiResponse<Doctor>>(`/doctors/${id}`),
-  create: (data: { userId: number; specialtyId: number; commission: number; discount: number }) =>
+  create: (data: { userId?: number; fullName?: string; specialtyId: number; commission: number; discount: number }) =>
     api.post<ApiResponse<Doctor>>('/doctors', data),
   update: (id: number, data: Partial<{ specialtyId: number; commission: number; discount: number; isActive: boolean }>) =>
     api.put<ApiResponse<Doctor>>(`/doctors/${id}`, data),
