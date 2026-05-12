@@ -71,7 +71,7 @@ export function AppointmentsPage() {
         <PageLoader />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.data?.map((apt: any) => (
+          {data?.map((apt: any) => (
             <div key={apt.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export function AppointmentsPage() {
               </div>
             </div>
           ))}
-          {data?.data?.length === 0 && (
+          {data?.length === 0 && (
             <div className="col-span-full py-12 text-center text-gray-500">
               No appointments found.
             </div>
