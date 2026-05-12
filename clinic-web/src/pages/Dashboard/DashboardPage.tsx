@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, TrendingUp, Stethoscope, Clock, ArrowRight } from 'lucide-react';
@@ -16,9 +17,16 @@ function useDashboardKpis() {
     refetchInterval: 60_000,
   });
 }
+
 function useAppointmentsToday() {
   const role = useRole();
-  const doctorQuery = useDoctorAppointments({ status: 'Confirmed', start: new Date().toISOString() }); // Simple approximation
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d.toISOString();
+  }, []);
+
+  const doctorQuery = useDoctorAppointments({ status: 'Confirmed', start: todayStart });
   const adminQuery = useQuery({
     queryKey: ['dashboard', 'appointments-today'],
     queryFn: async () => { const r = await dashboardApi.getAppointmentsToday(); return r.data.data; },
