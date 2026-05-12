@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '@/api/appointments';
 import { useRole } from '@/store/authStore';
+import type { Appointment } from '@/types';
 
 export const APPOINTMENTS_KEY = ['appointments'];
 

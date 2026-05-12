@@ -245,7 +245,7 @@ export function BodySvg({
 }
 
 /* ── Front body schematic ── */
-function FrontBody({ areaProps }: { areaProps: (id: string) => Record<string, unknown> }) {
+function FrontBody({ areaProps }: { areaProps: (id: string) => any }) {
   return (
     <g>
       {/* Head */}
@@ -285,7 +285,7 @@ function FrontBody({ areaProps }: { areaProps: (id: string) => Record<string, un
 }
 
 /* ── Back body schematic ── */
-function BackBody({ areaProps }: { areaProps: (id: string) => Record<string, unknown> }) {
+function BackBody({ areaProps }: { areaProps: (id: string) => any }) {
   return (
     <g>
       {/* Scalp / Head back */}

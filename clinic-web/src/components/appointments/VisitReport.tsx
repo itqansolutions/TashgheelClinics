@@ -2,7 +2,6 @@ import { useClinicSettings } from '@/hooks/useSettings';
 import { formatDateTime, getInitials } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
-import { useBodyAreas } from '@/hooks/useLookups';
 import { Button } from '@/components/ui/Button';
 import { Printer, X, Heart, ShieldCheck } from 'lucide-react';
 

@@ -7,6 +7,7 @@ import { Calendar, Filter, Plus, Search, Clock, User, Scissors } from 'lucide-re
 import { Button } from '@/components/ui/Button';
 import { CreateAppointmentModal } from '@/components/appointments/CreateAppointmentModal';
 import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDetailsModal';
+import type { Appointment } from '@/types';
 
 export function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
