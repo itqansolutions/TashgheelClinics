@@ -34,11 +34,6 @@ export const useAuthStore = create<AuthState>()(
       // Only persist user info — NOT the access token (it's short-lived)
       // Token refresh uses httpOnly cookie
       storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        // Don't persist accessToken — re-fetched on refresh
-      }),
     }
   )
 );
