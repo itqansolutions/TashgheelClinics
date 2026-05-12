@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "start": "cd clinic-api && npm start",
-    "build": "cd clinic-web && npm install && npm run build && cd ../clinic-api && npm install && npx prisma generate && npm run build"
+    "build": "cd clinic-web && npm install && npm run build && cd ../clinic-api && npm install && npx prisma generate --schema=src/prisma/schema.prisma && npm run build"
   }
 }
