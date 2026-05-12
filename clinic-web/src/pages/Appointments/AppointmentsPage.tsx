@@ -10,8 +10,7 @@ import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDe
 export function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
-  const [filters, setFilters] = useState({});
-  const { data, isLoading } = useAppointments(filters);
+  const { data, isLoading } = useAppointments({});
 
   return (
     <div className="space-y-6">

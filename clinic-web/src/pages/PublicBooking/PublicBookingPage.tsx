@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/Button';
 import { 
-  Clock, User, Scissors, Heart, 
-  CheckCircle, ChevronRight, Phone, Mail, 
-  History, Calendar, Search, AlertCircle, ArrowRight, XCircle
+  Clock, User, Scissors, 
+  CheckCircle, Phone, 
+  History, Search, ArrowRight, XCircle
 } from 'lucide-react';
-import { format, getDay, parseISO, isWithinInterval } from 'date-fns';
+import { format, getDay } from 'date-fns';
 
 export function PublicBookingPage() {
   const [step, setStep] = useState(1);

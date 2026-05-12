@@ -40,7 +40,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
     }
   });
 
-  const selectedDoctorId = watch('doctorId');
+  // const selectedDoctorId = watch('doctorId');
   
   // Flatten all services from all specialties
   const allServices = specialties?.flatMap((s: any) => 

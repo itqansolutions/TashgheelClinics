@@ -71,7 +71,7 @@ export function DoctorsPage() {
       });
     } else {
       await createDoctor.mutateAsync({
-        userId:      data.userId ? Number(data.userId) : undefined,
+        userId:      data.userId ? Number(data.userId) : 0,
         fullName:    data.fullName || undefined,
         specialtyId: Number(data.specialtyId),
         commission:  Number(data.commission),

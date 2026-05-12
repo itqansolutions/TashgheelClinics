@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useAppointments } from '@/hooks/useAppointments';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors, LayoutGrid, List, Calendar as CalendarIcon, Phone } from 'lucide-react';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
-import { formatCurrency, formatDateTime } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDetailsModal';
 
 export function CalendarPage() {
