@@ -33,7 +33,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, max: 300,
+  windowMs: 5 * 60 * 1000, 
+  max: 1000, // Increased for dev/testing
   standardHeaders: true, legacyHeaders: false,
   message: { success: false, message: 'Too many requests' },
 }));

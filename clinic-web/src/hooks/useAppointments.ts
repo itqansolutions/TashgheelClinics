@@ -37,3 +37,10 @@ export function useUpdateAppointment() {
     },
   });
 }
+
+export function useDoctorAppointments(filters?: any) {
+  return useQuery({
+    queryKey: [...APPOINTMENTS_KEY, 'doctor-me', filters],
+    queryFn: () => appointmentsApi.getDoctorMe(filters),
+  });
+}

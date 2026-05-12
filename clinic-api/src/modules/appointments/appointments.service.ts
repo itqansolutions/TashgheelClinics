@@ -43,5 +43,12 @@ export const appointmentsService = {
     }
     await this.getById(id);
     return appointmentsRepo.update(id, { status });
+  },
+
+  async getDoctorAppointments(userId: number, filters: any, page: number, limit: number) {
+    const doctor = await import('../doctors/doctors.repo').then(m => m.doctorsRepo.findByUserId(userId));
+    if (!doctor) throw new AppError('Doctor profile not found', 404);
+
+    return this.list({ ...filters, doctorId: doctor.id }, page, limit);
   }
 };

@@ -79,6 +79,12 @@ const svc = {
     await svc.getById(id);
     return doctorsRepo.update(id, { isActive: false });
   },
+
+  async getMe(userId: number) {
+    const doc = await doctorsRepo.findByUserId(userId);
+    if (!doc) throw new AppError('Doctor profile not found for this user', 404);
+    return doc;
+  },
 };
 
 // ── Controller ────────────────────────────────────────────────────────────
@@ -106,6 +112,10 @@ const ctrl = {
     try { sendSuccess(res, await svc.deactivate(Number(req.params.id)), 'Doctor deactivated'); }
     catch (e) { next(e); }
   },
+  async getMe(req: Request, res: Response, next: NextFunction) {
+    try { sendSuccess(res, await svc.getMe(req.user!.sub)); }
+    catch (e) { next(e); }
+  },
 };
 
 import doctorScheduleRoutes from './doctors.schedule.routes';
@@ -117,7 +127,8 @@ router.use(authenticate);
 // Mount schedule sub-routes
 router.use('/', doctorScheduleRoutes);
 
-router.get('/',    allRoles,         validate(querySchema, 'query'), ctrl.list);
+router.get('/me',  allRoles, ctrl.getMe);
+router.get('/',    allRoles, validate(querySchema, 'query'), ctrl.list);
 router.get('/:id', allRoles,         ctrl.getById);
 router.post('/',   adminOnly,        validate(createSchema), ctrl.create);
 router.put('/:id', adminOrReception, validate(updateSchema), ctrl.update);

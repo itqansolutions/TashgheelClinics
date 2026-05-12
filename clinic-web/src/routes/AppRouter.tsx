@@ -16,6 +16,7 @@ import { DoctorSchedulePage } from '@/pages/Doctors/DoctorSchedulePage';
 import { AppointmentsPage } from '@/pages/Appointments/AppointmentsPage';
 import { CalendarPage }     from '@/pages/Appointments/CalendarPage';
 import { PublicBookingPage } from '@/pages/PublicBooking/PublicBookingPage';
+import { ConsultationPage }  from '@/pages/Appointments/ConsultationPage';
 // Sprint 6:
 import { ReportsPage }      from '@/pages/Reports/ReportsPage';
 
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
         { path: '/specialties',      element: <SpecialtiesPage /> },
         { path: '/appointments',  element: <AppointmentsPage /> },
         { path: '/calendar',      element: <CalendarPage /> },
+        { path: '/appointments/:id/consultation', element: <ConsultationPage /> },
         { path: '/reports',       element: <ReportsPage /> },
       ],
     }],

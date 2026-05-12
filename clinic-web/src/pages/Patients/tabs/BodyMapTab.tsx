@@ -13,13 +13,18 @@ import type { PatientArea } from '@/types';
 type Zone = 'front' | 'back';
 
 export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit: boolean }) {
-  const [zone, setZone]                 = useState<Zone>('front');
+  const { data: patientAreas = [], isLoading: areasLoading } = usePatientAreas(patientId);
   const [selectedIds, setSelectedIds]   = useState<Set<number>>(new Set());
+  const [initialized, setInitialized]   = useState(false);
+  const [zone, setZone]                 = useState<Zone>('front');
   const [activeAreaId, setActiveAreaId] = useState<number | null>(null);
   const [areaNote, setAreaNote]         = useState('');
   const [dirty, setDirty]               = useState(false);
 
-  const { data: patientAreas = [], isLoading: areasLoading } = usePatientAreas(patientId);
+  if (!initialized && patientAreas.length > 0) {
+    setSelectedIds(new Set(patientAreas.map((a: PatientArea) => a.areaId)));
+    setInitialized(true);
+  }
   const { data: bodyAreas = [], isLoading: bodyLoading }     = useBodyAreas(zone);
   const qc = useQueryClient();
 

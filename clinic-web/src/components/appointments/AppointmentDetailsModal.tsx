@@ -1,8 +1,11 @@
-import { X, Clock, User, Scissors, Phone, FileText, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Clock, User, Scissors, Phone, FileText, Calendar, CheckCircle, XCircle, Stethoscope, Printer } from 'lucide-react';
+import { VisitReport } from './VisitReport';
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatDateTime, formatCurrency } from '@/utils/format';
-
 import { useUpdateAppointment } from '@/hooks/useAppointments';
+import { useRole } from '@/store/authStore';
 
 interface Props {
   appointment: any;
@@ -12,7 +15,19 @@ interface Props {
 
 export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props) {
   const updateMutation = useUpdateAppointment();
+  const navigate = useNavigate();
+  const role = useRole();
+  const [isPrinting, setIsPrinting] = useState(false);
+
   if (!isOpen || !appointment) return null;
+
+  const handlePrint = () => {
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 500);
+  };
 
   const handleStatusUpdate = async (newStatus: string) => {
     try {
@@ -106,8 +121,17 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
                 <div className="flex items-start gap-3">
                   <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Notes</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Clinical Notes</p>
                     <p className="text-xs text-gray-600 leading-relaxed italic">"{appointment.notes}"</p>
+                  </div>
+                </div>
+              )}
+              {appointment.prescription && (
+                <div className="flex items-start gap-3">
+                  <Scissors className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Prescription</p>
+                    <p className="text-xs text-gray-600 leading-relaxed italic">"{appointment.prescription}"</p>
                   </div>
                 </div>
               )}
@@ -115,49 +139,82 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
           </div>
         </div>
 
+        {/* Print Content (Hidden) */}
+        {isPrinting && (
+          <VisitReport 
+            appointment={appointment}
+            patient={appointment.patient}
+            notes={appointment.notes}
+            prescription={appointment.prescription}
+            bodyAreas={[]} // Areas could be fetched if needed, but for now empty
+          />
+        ) /* Note: Areas should ideally be part of the appointment fetch or passed down */}
+
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex gap-3">
-          {appointment.status === 'Pending' ? (
-            <>
-              <Button 
-                variant="outline" 
-                className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50"
-                loading={updateMutation.isPending}
-                onClick={() => handleStatusUpdate('Cancelled')}
-              >
-                <XCircle className="w-4 h-4" />
-                Reject
-              </Button>
-              <Button 
-                className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                loading={updateMutation.isPending}
-                onClick={() => handleStatusUpdate('Confirmed')}
-              >
-                <CheckCircle className="w-4 h-4" />
-                Accept
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                variant="outline" 
-                className="flex-1 gap-2"
-                disabled={appointment.status === 'Cancelled'}
-                onClick={() => handleStatusUpdate('Cancelled')}
-              >
-                <XCircle className="w-4 h-4" />
-                Cancel Appointment
-              </Button>
-              <Button 
-                className="flex-1 gap-2"
-                disabled={appointment.status === 'Done' || appointment.status === 'Cancelled'}
-                onClick={() => handleStatusUpdate('Done')}
-              >
-                <CheckCircle className="w-4 h-4" />
-                Mark as Done
-              </Button>
-            </>
+        <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col gap-3">
+          {role === 'Doctor' && appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
+            <Button 
+              className="w-full gap-2 bg-brand-600 hover:bg-brand-700 py-6 text-base shadow-lg shadow-brand-100"
+              onClick={() => navigate(`/appointments/${appointment.id}/consultation`)}
+            >
+              <Stethoscope className="w-5 h-5" />
+              Start Consultation
+            </Button>
           )}
+
+          {appointment.status === 'Done' && (
+            <Button 
+              className="w-full gap-2 bg-blue-600 hover:bg-blue-700 py-6 text-base shadow-lg shadow-blue-100"
+              onClick={handlePrint}
+            >
+              <Printer className="w-5 h-5" />
+              Print Visit Report
+            </Button>
+          )}
+
+          <div className="flex gap-3">
+            {appointment.status === 'Pending' ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                  loading={updateMutation.isPending}
+                  onClick={() => handleStatusUpdate('Cancelled')}
+                >
+                  <XCircle className="w-4 h-4" />
+                  Reject
+                </Button>
+                <Button 
+                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+                  loading={updateMutation.isPending}
+                  onClick={() => handleStatusUpdate('Confirmed')}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Accept
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 gap-2"
+                  disabled={appointment.status === 'Cancelled'}
+                  onClick={() => handleStatusUpdate('Cancelled')}
+                >
+                  <XCircle className="w-4 h-4" />
+                  Cancel Appointment
+                </Button>
+                <Button 
+                  className="flex-1 gap-2"
+                  disabled={appointment.status === 'Done' || appointment.status === 'Cancelled'}
+                  onClick={() => handleStatusUpdate('Done')}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Mark as Done
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

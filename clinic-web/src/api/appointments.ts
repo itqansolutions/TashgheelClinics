@@ -31,4 +31,7 @@ export const appointmentsApi = {
     
   cancel: (id: number) => 
     api.delete(`/appointments/${id}`).then(res => res.data),
+    
+  getDoctorMe: (params?: any) =>
+    api.get('/appointments/doctor-me', { params }).then(res => res.data),
 };

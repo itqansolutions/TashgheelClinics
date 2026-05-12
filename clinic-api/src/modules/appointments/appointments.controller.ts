@@ -72,5 +72,23 @@ export const appointmentsController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  async getDoctorMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { status, start, end, page, limit } = req.query;
+      const filters = {
+        ...(status && { status: String(status) }),
+        ...(start  && { start: new Date(String(start)) }),
+        ...(end    && { end: new Date(String(end)) }),
+      };
+      const result = await appointmentsService.getDoctorAppointments(
+        req.user!.sub,
+        filters,
+        Number(page || 1),
+        Number(limit || 50)
+      );
+      sendSuccess(res, result.data, 'OK', 200, result.meta);
+    } catch (e) { next(e); }
   }
 };

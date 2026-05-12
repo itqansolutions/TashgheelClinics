@@ -7,7 +7,8 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/',     appointmentsController.getAll);
+router.get('/doctor-me', appointmentsController.getDoctorMe);
+router.get('/',          appointmentsController.getAll);
 router.get('/:id',  appointmentsController.getOne);
 router.post('/',    appointmentsController.create);
 router.patch('/:id', appointmentsController.update);

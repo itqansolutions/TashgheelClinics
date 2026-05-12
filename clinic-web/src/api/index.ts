@@ -62,6 +62,8 @@ export const doctorsApi = {
     api.put<ApiResponse<Doctor>>(`/doctors/${id}`, data),
   deactivate: (id: number) =>
     api.delete<ApiResponse<Doctor>>(`/doctors/${id}`),
+  getMe: () =>
+    api.get<ApiResponse<Doctor>>('/doctors/me'),
 };
 
 // ── Patients ──────────────────────────────────────────────────────────────

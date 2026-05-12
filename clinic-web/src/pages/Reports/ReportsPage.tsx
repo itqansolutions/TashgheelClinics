@@ -7,14 +7,26 @@ import {
   BarChart3, TrendingUp, Users, Calendar, 
   DollarSign, PieChart, ArrowUpRight, ArrowDownRight 
 } from 'lucide-react';
+import { SimpleBarChart, SimpleDonutChart } from '@/components/ui/Charts';
 
 export function ReportsPage() {
   const [summary, setSummary] = useState<any>(null);
+  const [aptStats, setAptStats] = useState<any[]>([]);
+  const [revenueDoctor, setRevenueDoctor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    reportsApi.getSummary().then(res => {
-      setSummary(res.data);
+    Promise.all([
+      reportsApi.getSummary(),
+      reportsApi.getAppointmentsStatus(),
+      reportsApi.getRevenueByDoctor()
+    ]).then(([sumRes, aptRes, revRes]) => {
+      setSummary(sumRes.data);
+      setAptStats(aptRes.data);
+      setRevenueDoctor(revRes.data);
+      setLoading(false);
+    }).catch(err => {
+      console.error('Failed to fetch reports', err);
       setLoading(false);
     });
   }, []);
@@ -55,24 +67,24 @@ export function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Placeholder for Charts */}
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm min-h-[400px] flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
                 <BarChart3 className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Revenue Growth</h3>
+              <h3 className="text-lg font-bold text-gray-900">Revenue by Doctor</h3>
             </div>
-            <select className="bg-gray-50 border-none text-xs font-bold rounded-lg px-3 py-2 outline-none">
-              <option>Last 30 Days</option>
-              <option>Last 6 Months</option>
-            </select>
           </div>
-          <div className="flex-1 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-12 text-center">
-            <TrendingUp className="w-12 h-12 text-gray-300 mb-4" />
-            <h4 className="text-sm font-bold text-gray-400 mb-2">Revenue Chart Loading...</h4>
-            <p className="text-xs text-gray-300 max-w-xs">Connecting to analytics engine to generate visual reports</p>
+          <div className="flex-1 flex flex-col justify-end pb-4">
+            {revenueDoctor.length > 0 ? (
+              <SimpleBarChart 
+                data={revenueDoctor.map(d => ({ label: d.doctorName, value: d.revenue }))} 
+                height={250} 
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-300 text-sm italic">No revenue data available</div>
+            )}
           </div>
         </div>
 
@@ -82,14 +94,21 @@ export function ReportsPage() {
               <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
                 <PieChart className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Appointment Distribution</h3>
+              <h3 className="text-lg font-bold text-gray-900">Appointment Status</h3>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs">Download CSV</Button>
           </div>
-          <div className="flex-1 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-12 text-center">
-            <PieChart className="w-12 h-12 text-gray-300 mb-4" />
-            <h4 className="text-sm font-bold text-gray-400 mb-2">Distribution Chart Loading...</h4>
-            <p className="text-xs text-gray-300 max-w-xs">Analyzing appointment status data for visual breakdown</p>
+          <div className="flex-1 flex items-center justify-center">
+            {aptStats.length > 0 ? (
+              <SimpleDonutChart 
+                data={aptStats.map((s, i) => ({ 
+                  label: s.status, 
+                  value: s._count.id, 
+                  color: ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444'][i % 4] 
+                }))} 
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-300 text-sm italic">No appointment data available</div>
+            )}
           </div>
         </div>
       </div>

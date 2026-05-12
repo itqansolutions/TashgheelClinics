@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointments, useDoctorAppointments } from '@/hooks/useAppointments';
+import { useRole } from '@/store/authStore';
 import { PageLoader } from '@/components/ui/Loader';
 import { formatCurrency, formatDateTime } from '@/utils/format';
 import { Calendar, Filter, Plus, Search, Clock, User, Scissors } from 'lucide-react';
@@ -10,7 +11,13 @@ import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDe
 export function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
-  const { data, isLoading } = useAppointments({});
+  const role = useRole();
+  const filters = {};
+  
+  const allAppts = useAppointments(filters);
+  const doctorAppts = useDoctorAppointments(filters);
+  
+  const { data, isLoading } = role === 'Doctor' ? doctorAppts : allAppts;
 
   return (
     <div className="space-y-6">
@@ -105,8 +112,16 @@ export function AppointmentsPage() {
                   {formatCurrency(apt.priceCharged || apt.service?.price || 0)}
                 </span>
                 <div className="flex gap-2">
+                  {role === 'Doctor' && apt.status !== 'Done' && (
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      onClick={() => window.location.href = `/appointments/${apt.id}/consultation`}
+                    >
+                      Start Consultation
+                    </Button>
+                  )}
                   <Button variant="ghost" size="sm" onClick={() => setSelectedApt(apt)}>Details</Button>
-                  <Button variant="outline" size="sm">Edit</Button>
                 </div>
               </div>
             </div>

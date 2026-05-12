@@ -13,6 +13,7 @@ export interface CreateAppointmentInput {
   priceCharged?: number;
   discountPct?:  number;
   notes?:       string;
+  prescription?: string;
   createdBy?:    number;
 }
 
@@ -33,8 +34,11 @@ export const appointmentsRepo = {
       ...(filters.doctorId && { doctorId: filters.doctorId }),
       ...(filters.patientId && { patientId: filters.patientId }),
       ...(filters.status && { status: filters.status }),
-      ...(filters.start && filters.end && {
-        startTime: { gte: filters.start, lte: filters.end },
+      ...(filters.start && {
+        startTime: { 
+          gte: filters.start, 
+          ...(filters.end && { lte: filters.end }) 
+        } 
       }),
     };
 

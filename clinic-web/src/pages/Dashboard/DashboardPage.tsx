@@ -6,6 +6,8 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { KpiSkeleton, Skeleton } from '@/components/ui/Loader';
 import { formatCurrency, formatTime, getInitials } from '@/utils/format';
 import type { Appointment } from '@/types';
+import { useRole } from '@/store/authStore';
+import { useDoctorAppointments } from '@/hooks/useAppointments';
 
 function useDashboardKpis() {
   return useQuery({
@@ -15,11 +17,15 @@ function useDashboardKpis() {
   });
 }
 function useAppointmentsToday() {
-  return useQuery({
+  const role = useRole();
+  const doctorQuery = useDoctorAppointments({ status: 'Confirmed', start: new Date().toISOString() }); // Simple approximation
+  const adminQuery = useQuery({
     queryKey: ['dashboard', 'appointments-today'],
     queryFn: async () => { const r = await dashboardApi.getAppointmentsToday(); return r.data.data; },
     refetchInterval: 60_000,
   });
+
+  return role === 'Doctor' ? doctorQuery : adminQuery;
 }
 
 export function DashboardPage() {

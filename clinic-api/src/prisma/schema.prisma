@@ -197,6 +197,7 @@ model Appointment {
   priceCharged Decimal?          @db.Decimal(10, 2)
   discountPct  Decimal           @default(0) @db.Decimal(5, 2)
   notes        String?           @db.NVarChar(Max)
+  prescription String?           @db.NVarChar(Max)
   createdAt    DateTime          @default(now())
   createdBy    Int?
 

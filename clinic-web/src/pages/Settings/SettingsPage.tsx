@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check } from 'lucide-react';
+import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key } from 'lucide-react';
 import { useClinicSettings, useUpdateClinicSettings, useLeadSourcesAdmin, useLeadSourceMutations } from '@/hooks/useSettings';
 import { useCountries } from '@/hooks/useLookups';
+import { useUsers, useCreateUser, useDeactivateUser } from '@/hooks/useUsers';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Loader';
+import { Modal } from '@/components/ui/Modal';
 import { clsx } from 'clsx';
+import { Badge } from '@/components/ui/Badge';
 
-type Tab = 'clinic' | 'lead-sources' | 'countries';
+type Tab = 'clinic' | 'lead-sources' | 'countries' | 'users';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'clinic',        label: 'Clinic Info',    icon: Building2 },
+  { id: 'users',         label: 'System Users',   icon: User      },
   { id: 'lead-sources',  label: 'Lead Sources',   icon: Tag       },
   { id: 'countries',     label: 'Countries',      icon: Globe     },
 ];
@@ -45,9 +50,119 @@ export function SettingsPage() {
       </div>
 
       {tab === 'clinic'       && <ClinicInfoPanel />}
+      {tab === 'users'        && <UsersPanel />}
       {tab === 'lead-sources' && <LeadSourcesPanel />}
       {tab === 'countries'    && <CountriesPanel />}
     </div>
+  );
+}
+
+// ── System Users ───────────────────────────────────────────────────────────
+function UsersPanel() {
+  const { data: usersData, isLoading } = useUsers();
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const createUser = useCreateUser();
+  const deactivateUser = useDeactivateUser();
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { fullName: '', email: '', password: '', role: 'Doctor' }
+  });
+
+  const onAddUser = async (data: any) => {
+    try {
+      await createUser.mutateAsync(data);
+      reset();
+      setIsAddOpen(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to create user');
+    }
+  };
+
+  return (
+    <>
+      <Card padding="none">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">System Users</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Manage staff access and roles</p>
+          </div>
+          <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setIsAddOpen(true)}>
+            Add User
+          </Button>
+        </div>
+
+        <div className="divide-y divide-gray-50">
+          {isLoading ? (
+             <div className="p-4 space-y-3">
+               <Skeleton className="h-8 w-full" />
+               <Skeleton className="h-8 w-full" />
+             </div>
+          ) : (
+            usersData?.data.data.map((user: any) => (
+              <div key={user.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xs">
+                    {user.fullName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{user.fullName}</p>
+                    <p className="text-[11px] text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge variant={user.role === 'Admin' ? 'purple' : user.role === 'Doctor' ? 'blue' : 'gray'}>
+                    {user.role}
+                  </Badge>
+                  <Button variant="ghost" size="xs" className="text-red-400 hover:text-red-600" 
+                    onClick={() => { if(confirm('Deactivate user?')) deactivateUser.mutate(user.id); }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <Modal open={isAddOpen} onClose={() => setIsAddOpen(false)} title="Create New User" size="sm">
+        <form onSubmit={handleSubmit(onAddUser)} className="space-y-4">
+          <Input 
+            label="Full Name" 
+            required 
+            error={errors.fullName?.message as string}
+            {...register('fullName', { required: 'Name is required' })} 
+          />
+          <Input 
+            label="Email Address" 
+            type="email" 
+            required 
+            error={errors.email?.message as string}
+            {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })} 
+          />
+          <Input 
+            label="Password" 
+            type="password" 
+            required 
+            hint="Min. 8 characters"
+            error={errors.password?.message as string}
+            {...register('password', { required: 'Password is required', minLength: { value: 8, message: 'Min 8 characters' } })} 
+          />
+          <Select 
+            label="Role" 
+            options={[
+              { value: 'Admin', label: 'Admin' },
+              { value: 'Doctor', label: 'Doctor' },
+              { value: 'Receptionist', label: 'Receptionist' },
+            ]} 
+            {...register('role')} 
+          />
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+            <Button type="submit" className="flex-1" loading={createUser.isPending}>Create Account</Button>
+          </div>
+        </form>
+      </Modal>
+    </>
   );
 }
 
