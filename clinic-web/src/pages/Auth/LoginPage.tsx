@@ -36,7 +36,9 @@ export function LoginPage() {
       const res = await authApi.login(data);
       const { user, accessToken } = res.data.data;
       setAuth(user, accessToken);
-      navigate(from, { replace: true });
+      
+      const target = user.role === 'Doctor' ? '/appointments' : from;
+      navigate(target, { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data

@@ -38,13 +38,23 @@ const router = createBrowserRouter([
         { path: '/patients',         element: <PatientsListPage /> },
         { path: '/patients/new',     element: <PatientFormPage /> },
         { path: '/patients/:id',     element: <PatientProfilePage /> },
+        { path: '/appointments',     element: <AppointmentsPage /> },
+        { path: '/calendar',         element: <CalendarPage /> },
+        { path: '/appointments/:id/consultation', element: <ConsultationPage /> },
+      ],
+    }],
+  },
+
+  // ── Admin & Reception only ─────────────────────────────────────────────
+  {
+    element: <ProtectedRoute allowedRoles={['Admin', 'Reception']} />,
+    children: [{
+      element: <AppLayout />,
+      children: [
         { path: '/doctors',          element: <DoctorsPage /> },
         { path: '/doctors/schedule', element: <DoctorSchedulePage /> },
         { path: '/specialties',      element: <SpecialtiesPage /> },
-        { path: '/appointments',  element: <AppointmentsPage /> },
-        { path: '/calendar',      element: <CalendarPage /> },
-        { path: '/appointments/:id/consultation', element: <ConsultationPage /> },
-        { path: '/reports',       element: <ReportsPage /> },
+        { path: '/reports',          element: <ReportsPage /> },
       ],
     }],
   },
@@ -56,7 +66,6 @@ const router = createBrowserRouter([
       element: <AppLayout />,
       children: [
         { path: '/settings', element: <SettingsPage /> },
-        // { path: '/users', element: <UsersPage /> },
       ],
     }],
   },
