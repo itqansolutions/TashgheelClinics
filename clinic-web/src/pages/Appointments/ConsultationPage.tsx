@@ -22,6 +22,7 @@ export function ConsultationPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('notes');
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   
   const { data: appointment, isLoading: apptLoading } = useAppointment(Number(id));
   const { data: patient, isLoading: patientLoading } = usePatient(appointment?.patientId);
@@ -53,7 +54,9 @@ export function ConsultationPage() {
           status: finish ? 'Done' : appointment.status
         }
       });
-      if (finish) navigate('/calendar');
+      if (finish) {
+        setShowReview(true);
+      }
     } catch (err) {
       alert('Failed to save consultation data');
     }
@@ -69,14 +72,15 @@ export function ConsultationPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
-      {/* Print Overlay (Hidden unless printing) */}
-      {isPrinting && (
+      {/* Report Review & Print Overlay */}
+      {(isPrinting || showReview) && (
         <VisitReport 
           appointment={appointment} 
           patient={patient} 
           notes={notes} 
           prescription={prescription}
           bodyAreas={patientAreas}
+          onClose={() => showReview ? navigate('/appointments') : setIsPrinting(false)}
         />
       )}
 

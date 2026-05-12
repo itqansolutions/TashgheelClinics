@@ -10,7 +10,7 @@ import { PageLoader } from '@/components/ui/Loader';
 import { clsx } from 'clsx';
 import type { PatientArea } from '@/types';
 
-type Zone = 'front' | 'back';
+export type Zone = 'front' | 'back';
 
 export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit: boolean }) {
   const { data: patientAreas = [], isLoading: areasLoading } = usePatientAreas(patientId);
@@ -193,7 +193,7 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
 }
 
 // ── SVG Body Diagram ──────────────────────────────────────────────────────
-function BodySvg({
+export function BodySvg({
   zone, bodyAreas, selectedIds, activeAreaId, onToggle, canEdit
 }: {
   zone: Zone;
