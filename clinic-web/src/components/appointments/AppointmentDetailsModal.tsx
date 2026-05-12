@@ -43,9 +43,9 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
               appointment.status === 'Confirmed' ? 'bg-green-100 text-green-600' :
@@ -70,8 +70,8 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content (Scrollable) */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
           {/* Patient Card */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-brand-600 font-bold border border-gray-200">
@@ -151,7 +151,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
         ) /* Note: Areas should ideally be part of the appointment fetch or passed down */}
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col gap-3">
+        <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col gap-3 shrink-0">
           {role === 'Doctor' && appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
             <Button 
               className="w-full gap-2 bg-brand-600 hover:bg-brand-700 py-6 text-base shadow-lg shadow-brand-100"
