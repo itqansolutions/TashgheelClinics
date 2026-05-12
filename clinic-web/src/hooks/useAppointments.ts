@@ -9,7 +9,7 @@ export function useAppointments(filters?: any) {
     queryKey: [...APPOINTMENTS_KEY, filters],
     queryFn: async () => {
       const res = await appointmentsApi.getAll(filters);
-      return res.data.data; // The array
+      return res.data; // The array inside { success, data }
     },
   });
 }
@@ -19,7 +19,7 @@ export function useAppointment(id: number) {
     queryKey: [...APPOINTMENTS_KEY, id],
     queryFn: async () => {
       const res = await appointmentsApi.getById(id);
-      return res.data.data; // The object
+      return res.data; // The object inside { success, data }
     },
     enabled: !!id,
   });
@@ -51,7 +51,7 @@ export function useDoctorAppointments(filters?: any) {
     queryKey: [...APPOINTMENTS_KEY, 'doctor-me', filters],
     queryFn: async () => {
       const res = await appointmentsApi.getDoctorMe(filters);
-      return res.data.data; // The array
+      return res.data; // The array inside { success, data }
     },
     enabled: role === 'Doctor',
   });
