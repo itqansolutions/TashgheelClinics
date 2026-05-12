@@ -9,7 +9,7 @@ const COOKIE_OPTS = {
   secure: env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  path: '/api/auth',
+  path: '/api',
 };
 
 export const authController = {
@@ -36,7 +36,7 @@ export const authController = {
   },
 
   async logout(_req: Request, res: Response) {
-    res.clearCookie(COOKIE_NAME, { path: '/api/auth' });
+    res.clearCookie(COOKIE_NAME, { path: '/api' });
     sendSuccess(res, null, 'Logged out');
   },
 
