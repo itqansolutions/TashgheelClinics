@@ -27,7 +27,13 @@ export const appointmentsService = {
   },
 
   async update(id: number, data: UpdateAppointmentInput) {
-    await this.getById(id);
+    const appointment = await this.getById(id);
+    
+    // Auto-set price if finishing and not set
+    if (data.status === 'Done' && !appointment.priceCharged && !data.priceCharged) {
+      data.priceCharged = Number(appointment.service.price);
+    }
+    
     return appointmentsRepo.update(id, data);
   },
 
@@ -41,8 +47,14 @@ export const appointmentsService = {
     if (!validStatuses.includes(status)) {
       throw new AppError(`Invalid status: ${status}`, 400);
     }
-    await this.getById(id);
-    return appointmentsRepo.update(id, { status });
+    const appointment = await this.getById(id);
+    
+    const updateData: any = { status };
+    if (status === 'Done' && !appointment.priceCharged) {
+      updateData.priceCharged = Number(appointment.service.price);
+    }
+
+    return appointmentsRepo.update(id, updateData);
   },
 
   async getDoctorAppointments(userId: number, filters: any, page: number, limit: number) {

@@ -29,7 +29,7 @@ router.get('/summary', async (req, res, next) => {
       patientsCount,
       appointmentsCount,
       doctorsCount,
-      totalRevenue: revenue._sum.priceCharged || 0
+      totalRevenue: Number(revenue._sum.priceCharged || 0)
     });
   } catch (error) {
     next(error);
@@ -71,7 +71,7 @@ router.get('/revenue-doctor', async (req, res, next) => {
       });
       return {
         doctorName: doc?.user?.fullName || 'Unknown',
-        revenue: s._sum.priceCharged || 0,
+        revenue: Number(s._sum.priceCharged || 0),
         count: s._count.id
       };
     }));

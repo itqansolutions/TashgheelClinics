@@ -32,6 +32,7 @@ export function ReportsPage() {
   }, []);
 
   if (loading) return <PageLoader />;
+  if (!summary) return <div className="text-center py-20 text-gray-500">Failed to load analytics data.</div>;
 
   const stats = [
     { label: 'Total Revenue', value: formatCurrency(summary.totalRevenue), icon: DollarSign, color: 'bg-green-500', trend: '+12.5%', isUp: true },
