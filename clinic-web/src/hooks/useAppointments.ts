@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '@/api/appointments';
+import { useRole } from '@/store/authStore';
 
 export const APPOINTMENTS_KEY = ['appointments'];
 
@@ -39,8 +40,10 @@ export function useUpdateAppointment() {
 }
 
 export function useDoctorAppointments(filters?: any) {
+  const role = useRole();
   return useQuery({
     queryKey: [...APPOINTMENTS_KEY, 'doctor-me', filters],
     queryFn: () => appointmentsApi.getDoctorMe(filters),
+    enabled: role === 'Doctor',
   });
 }

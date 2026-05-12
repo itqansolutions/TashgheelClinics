@@ -23,6 +23,7 @@ function useAppointmentsToday() {
     queryKey: ['dashboard', 'appointments-today'],
     queryFn: async () => { const r = await dashboardApi.getAppointmentsToday(); return r.data.data; },
     refetchInterval: 60_000,
+    enabled: role === 'Admin' || role === 'Reception',
   });
 
   return role === 'Doctor' ? doctorQuery : adminQuery;
