@@ -2,7 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, Users, Stethoscope, CalendarDays,
-  BarChart3, Settings, Heart, Scissors, LogOut, Clock, X
+  BarChart3, Settings, Heart, Scissors, LogOut, Clock, X,
+  Package, Boxes, Users2
 } from 'lucide-react';
 import { useUser, useRole, useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth';
@@ -21,6 +22,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Calendar',     path: '/calendar',    icon: CalendarDays    },
   { label: 'Doctors',      path: '/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
   { label: 'Schedule',     path: '/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
+  { label: 'Stock Balance',path: '/stock/balance', icon: Boxes,        roles: ['Admin']              },
+  { label: 'Products',     path: '/stock/products', icon: Package,      roles: ['Admin']              },
+  { label: 'Vendors',      path: '/stock/vendors', icon: Users2,       roles: ['Admin']              },
   { label: 'Specialties',  path: '/specialties', icon: Scissors,       roles: ['Admin']              },
   { label: 'Reports',      path: '/reports',     icon: BarChart3,      roles: ['Admin']              },
   { label: 'Settings',     path: '/settings',    icon: Settings,       roles: ['Admin']              },

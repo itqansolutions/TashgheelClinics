@@ -19,6 +19,10 @@ import { PublicBookingPage } from '@/pages/PublicBooking/PublicBookingPage';
 import { ConsultationPage }  from '@/pages/Appointments/ConsultationPage';
 // Sprint 6:
 import { ReportsPage }      from '@/pages/Reports/ReportsPage';
+// Stock Module:
+import { StockBalancePage } from '@/pages/Stock/StockBalancePage';
+import { ProductsPage }     from '@/pages/Stock/ProductsPage';
+import { VendorsPage }      from '@/pages/Stock/VendorsPage';
 
 const router = createBrowserRouter([
   // ── Public ─────────────────────────────────────────────────────────────
@@ -55,6 +59,9 @@ const router = createBrowserRouter([
         { path: '/doctors/schedule', element: <DoctorSchedulePage /> },
         { path: '/specialties',      element: <SpecialtiesPage /> },
         { path: '/reports',          element: <ReportsPage /> },
+        { path: '/stock/balance',    element: <StockBalancePage /> },
+        { path: '/stock/products',   element: <ProductsPage /> },
+        { path: '/stock/vendors',    element: <VendorsPage /> },
       ],
     }],
   },

@@ -22,6 +22,7 @@ import dashboardRoutes  from './modules/dashboard/dashboard.routes';
 import appointmentRoutes from './modules/appointments/appointments.routes';
 import reportRoutes      from './modules/reports/reports.routes';
 import bookingRoutes     from './modules/booking/booking.routes';
+import stockRoutes       from './modules/stock/stock.routes';
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use(`${API}/dashboard`,   dashboardRoutes);
 app.use(`${API}/appointments`, appointmentRoutes);
 app.use(`${API}/reports`,      reportRoutes);
 app.use(`${API}/public`,       bookingRoutes);
+app.use(`${API}/stock`,        stockRoutes);
 
 // Serve Frontend in Production
 if (!isDev) {

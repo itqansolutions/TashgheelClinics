@@ -14,8 +14,10 @@ import { formatDateTime, formatDate, formatCurrency, getInitials } from '@/utils
 import { BodyMapTab } from '@/pages/Patients/tabs/BodyMapTab';
 import { clsx } from 'clsx';
 import { VisitReport } from '@/components/appointments/VisitReport';
+import { InventoryUsageTab } from './tabs/InventoryUsageTab';
+import { Boxes } from 'lucide-react';
 
-type TabId = 'notes' | 'bodymap' | 'prescription';
+type TabId = 'notes' | 'bodymap' | 'prescription' | 'usage';
 
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +32,7 @@ export function ConsultationPage() {
   
   const [notes, setNotes] = useState(appointment?.notes || '');
   const [prescription, setPrescription] = useState(appointment?.prescription || '');
+  const [usedItems, setUsedItems] = useState<any[]>([]);
   
   // Sync state when data is loaded
   useEffect(() => {
@@ -51,7 +54,13 @@ export function ConsultationPage() {
         data: {
           notes: notes,
           prescription: prescription,
-          status: finish ? 'Done' : appointment.status
+          status: finish ? 'Done' : appointment.status,
+          usedItems: usedItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            costAtTime: item.costAtTime,
+            priceAtTime: item.priceAtTime
+          }))
         }
       });
       if (finish) {
@@ -196,13 +205,14 @@ export function ConsultationPage() {
             {[
               { id: 'notes', label: 'Clinical Notes', icon: FileText },
               { id: 'bodymap', label: 'Body Mapping', icon: Activity },
-              { id: 'prescription', label: 'Prescription & Instructions', icon: Scissors },
+              { id: 'prescription', label: 'Prescription', icon: Scissors },
+              { id: 'usage', label: 'Stock Usage', icon: Boxes },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabId)}
                 className={clsx(
-                  'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all',
+                  'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all',
                   activeTab === tab.id 
                     ? 'bg-brand-600 text-white shadow-md shadow-brand-200' 
                     : 'text-gray-500 hover:bg-gray-50'
@@ -269,10 +279,13 @@ export function ConsultationPage() {
                         <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-brand-500" />
                         {hint}
                       </button>
-                    ))}
                   </div>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'usage' && (
+              <InventoryUsageTab usedItems={usedItems} onChange={setUsedItems} />
             )}
           </div>
         </main>

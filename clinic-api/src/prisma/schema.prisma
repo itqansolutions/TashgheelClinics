@@ -209,6 +209,7 @@ model Appointment {
   payments      Payment[]
   images        PatientImage[]
   ratings       PatientRating[]
+  sessionItems  SessionItem[]
 
   @@index([doctorId, startTime])
   @@index([patientId])
@@ -299,4 +300,149 @@ model AuditLog {
 
   @@index([createdAt(sort: Desc)])
   @@map("AuditLog")
+}
+
+// ── Stock Module (Inventory) ──────────────────────────────────────────────
+
+model Vendor {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  taxId     String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relations
+  products  Product[]
+  purchases Purchase[]
+  payments  VendorPayment[]
+
+  @@map("Vendors")
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  code         String   @unique
+  barcode      String?
+  category     String?
+  unit         String   @default("Piece") // Box, ML, Gram, Piece
+  minStock     Int      @default(0)
+  currentStock Int      @default(0)
+  averageCost  Decimal  @default(0) @db.Decimal(10, 2)
+  sellingPrice Decimal  @default(0) @db.Decimal(10, 2)
+  vendorId     Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  vendor       Vendor?            @relation(fields: [vendorId], references: [id])
+  transactions StockTransaction[]
+  purchaseItems PurchaseItem[]
+  sessionItems SessionItem[]
+
+  @@map("Products")
+}
+
+model StockTransaction {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  type        String   // 'Purchase', 'Usage', 'Adjustment', 'Return'
+  quantity    Int      // Positive for IN, Negative for OUT
+  balanceBefore Int
+  balanceAfter  Int
+  cost        Decimal  @db.Decimal(10, 2)
+  referenceId Int?     // ID of Purchase, Session, or Adjustment
+  notes       String?
+  userId      Int?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@map("StockTransactions")
+}
+
+model Purchase {
+  id           Int      @id @default(autoincrement())
+  vendorId     Int
+  invoiceNo    String?
+  totalAmount  Decimal  @db.Decimal(10, 2)
+  purchaseDate DateTime @default(now())
+  notes        String?
+  attachment   String?
+  status       String   @default("Completed")
+  createdAt    DateTime @default(now())
+  userId       Int?
+
+  // Relations
+  vendor       Vendor         @relation(fields: [vendorId], references: [id])
+  items        PurchaseItem[]
+
+  @@map("Purchases")
+}
+
+model PurchaseItem {
+  id           Int      @id @default(autoincrement())
+  purchaseId   Int
+  productId    Int
+  quantity     Int
+  costPerUnit  Decimal  @db.Decimal(10, 2)
+  batchNo      String?
+  expiryDate   DateTime?
+  totalCost    Decimal  @db.Decimal(10, 2)
+
+  // Relations
+  purchase     Purchase @relation(fields: [purchaseId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id])
+
+  @@map("PurchaseItems")
+}
+
+model StockAdjustment {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  type        String   // 'Addition', 'Shortage', 'Wastage', 'Damaged'
+  quantity    Int      // The net change
+  reason      String?
+  notes       String?
+  userId      Int?
+  createdAt   DateTime @default(now())
+
+  @@map("StockAdjustments")
+}
+
+model VendorPayment {
+  id            Int      @id @default(autoincrement())
+  vendorId      Int
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentMethod String   @default("Cash")
+  paymentDate   DateTime @default(now())
+  notes         String?
+  attachment    String?
+  userId        Int?
+
+  // Relations
+  vendor        Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@map("VendorPayments")
+}
+
+model SessionItem {
+  id            Int      @id @default(autoincrement())
+  appointmentId Int
+  productId     Int
+  quantity      Int
+  costAtTime    Decimal  @db.Decimal(10, 2)
+  priceAtTime   Decimal  @db.Decimal(10, 2)
+
+  // Relations
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id])
+
+  @@map("SessionItems")
 }
