@@ -11,7 +11,10 @@ export const STOCK_KEYS = {
 export function useProducts(filters: any = {}) {
   return useQuery({
     queryKey: [...STOCK_KEYS.products, filters],
-    queryFn: () => stockApi.getProducts(filters)
+    queryFn: async () => {
+      const res = await stockApi.getProducts(filters);
+      return res.data;
+    }
   });
 }
 
@@ -28,7 +31,10 @@ export function useCreateProduct() {
 export function useVendors() {
   return useQuery({
     queryKey: STOCK_KEYS.vendors,
-    queryFn: () => stockApi.getVendors()
+    queryFn: async () => {
+      const res = await stockApi.getVendors();
+      return res.data;
+    }
   });
 }
 
@@ -45,7 +51,10 @@ export function useCreateVendor() {
 export function useStockBalances() {
   return useQuery({
     queryKey: STOCK_KEYS.balances,
-    queryFn: () => stockApi.getBalances()
+    queryFn: async () => {
+      const res = await stockApi.getBalances();
+      return res.data;
+    }
   });
 }
 
