@@ -185,15 +185,15 @@ router.post('/book', async (req, res, next) => {
       });
     }
 
-    const service = await prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service) throw new AppError('Service not found', 404);
-
+    const service = serviceId ? await prisma.service.findUnique({ where: { id: Number(serviceId) } }) : null;
+    
     const start = new Date(startTime);
-    const end = new Date(start.getTime() + (service.durationMin || 30) * 60000);
+    const duration = service?.durationMin || 30;
+    const end = new Date(start.getTime() + duration * 60000);
 
     const dayOfWeek = start.getDay();
     const schedule = await prisma.doctorSchedule.findFirst({
-      where: { doctorId, dayOfWeek, isActive: true }
+      where: { doctorId: Number(doctorId), dayOfWeek, isActive: true }
     });
 
     if (!schedule) throw new AppError('Doctor does not work on this day', 400);
@@ -205,7 +205,7 @@ router.post('/book', async (req, res, next) => {
 
     const conflict = await prisma.appointment.findFirst({
       where: {
-        doctorId,
+        doctorId: Number(doctorId),
         status: { in: ['Pending', 'Confirmed'] },
         OR: [
           { startTime: { lt: end, gte: start } },
@@ -219,13 +219,13 @@ router.post('/book', async (req, res, next) => {
     const appointment = await prisma.appointment.create({
       data: {
         patientId: patient.id,
-        doctorId,
-        serviceId,
+        doctorId: Number(doctorId),
+        serviceId: serviceId ? Number(serviceId) : null,
         startTime: start,
         endTime: end,
         status: 'Pending',
         notes: notes || 'Booked via Online Portal',
-        priceCharged: service.price,
+        priceCharged: service?.price || 0,
       }
     });
 

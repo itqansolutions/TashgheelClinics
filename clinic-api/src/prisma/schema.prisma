@@ -191,7 +191,7 @@ model Appointment {
   id           Int               @id @default(autoincrement())
   patientId    Int
   doctorId     Int
-  serviceId    Int
+  serviceId    Int?
   startTime    DateTime
   endTime      DateTime
   status       String   @default("Pending")
