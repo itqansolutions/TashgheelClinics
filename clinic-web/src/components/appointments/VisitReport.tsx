@@ -187,35 +187,56 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-600" /> Injection Map
               </h3>
               
-              <div className="flex gap-4 justify-center items-center bg-gray-50/50 rounded-3xl p-4 border border-gray-100">
-                <div className="flex flex-col items-center gap-1">
-                  <BodySvg
-                    zone="front"
-                    areaProps={(id: number) => ({
-                      fill: selectedFrontIds.has(id) ? '#3b82f6' : '#e5e7eb',
-                    })}
-                  />
-                  <span className="text-[8px] font-black text-gray-400 uppercase">Front</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <BodySvg
-                    zone="back"
-                    areaProps={(id: number) => ({
-                      fill: selectedBackIds.has(id) ? '#3b82f6' : '#e5e7eb',
-                    })}
-                  />
-                  <span className="text-[8px] font-black text-gray-400 uppercase">Back</span>
-                </div>
-              </div>
-
-              {/* List of areas */}
-              <div className="space-y-1.5">
-                {bodyAreas?.map((ba) => (
-                  <div key={ba.id} className="flex flex-col px-3 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <span className="text-[10px] font-bold text-gray-900">{ba.area.name}</span>
-                    {ba.notes && <span className="text-[9px] text-gray-500 italic leading-tight mt-0.5">{ba.notes}</span>}
+              <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
+                <div className="flex gap-8 justify-center items-center mb-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-32">
+                      <BodySvg
+                        zone="front"
+                        areaProps={(id: number) => ({
+                          fill: selectedFrontIds.has(id) ? '#2563eb' : '#e5e7eb',
+                          stroke: selectedFrontIds.has(id) ? '#1e40af' : '#d1d5db',
+                          strokeWidth: selectedFrontIds.has(id) ? 2 : 1,
+                        })}
+                      />
+                    </div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Front</span>
                   </div>
-                ))}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-32">
+                      <BodySvg
+                        zone="back"
+                        areaProps={(id: number) => ({
+                          fill: selectedBackIds.has(id) ? '#2563eb' : '#e5e7eb',
+                          stroke: selectedBackIds.has(id) ? '#1e40af' : '#d1d5db',
+                          strokeWidth: selectedBackIds.has(id) ? 2 : 1,
+                        })}
+                      />
+                    </div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Back</span>
+                  </div>
+                </div>
+
+                {/* List of areas */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Treated Zones Details</p>
+                  {bodyAreas?.map((ba) => (
+                    <div key={ba.id} className="flex flex-col px-4 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                        <span className="text-xs font-bold text-gray-900">{ba.area.name}</span>
+                      </div>
+                      {ba.notes && (
+                        <span className="text-[11px] text-gray-600 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100/50 mt-1">
+                          {ba.notes}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {(!bodyAreas || bodyAreas.length === 0) && (
+                    <p className="text-[10px] text-gray-400 italic text-center py-4">No specific injection zones recorded.</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
