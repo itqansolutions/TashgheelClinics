@@ -47,6 +47,8 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
   };
 
   const statement = statementData?.data || { purchases: [], payments: [], balance: 0, transactions: [] };
+  const purchases = statement.purchases || [];
+  const payments = statement.payments || [];
   
   // Use pre-sorted transactions from backend if available, otherwise combine locally
   const transactions = statement.transactions?.length > 0 
@@ -59,7 +61,7 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
         impact: t.type === 'Purchase' ? 'positive' : 'negative'
       }))
     : [
-        ...statement.purchases.map((p: any) => ({
+        ...purchases.map((p: any) => ({
           id: `purch-${p.id}`,
           date: p.purchaseDate,
           type: 'Purchase',
@@ -67,7 +69,7 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
           amount: Number(p.totalAmount),
           impact: 'positive'
         })),
-        ...statement.payments.map((p: any) => ({
+        ...payments.map((p: any) => ({
           id: `pay-${p.id}`,
           date: p.paymentDate,
           type: 'Payment',
@@ -129,7 +131,7 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
               <PageLoader />
             ) : (
               <div className="space-y-3">
-                {transactions.map((t) => (
+                {transactions.map((t: any) => (
                   <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 group hover:border-brand-200 transition-all hover:bg-white hover:shadow-md">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${t.impact === 'positive' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>

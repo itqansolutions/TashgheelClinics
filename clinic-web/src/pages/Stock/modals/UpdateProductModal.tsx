@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useUpdateProduct, useVendors } from '@/hooks/useStock';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { Package, Tag, Hash, Bookmark, Scale, DollarSign } from 'lucide-react';
+import { Tag, Hash, Bookmark, DollarSign } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
