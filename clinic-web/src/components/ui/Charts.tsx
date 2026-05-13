@@ -50,7 +50,7 @@ export function SimpleDonutChart({ data }: { data: { label: string, value: numbe
         <svg viewBox="-1 -1 2 2" className="transform -rotate-90 w-full h-full">
           {data.map((d, i) => {
             const [startX, startY] = getCoordinatesForPercent(cumulativePercent);
-            const percent = d.value / total;
+            const percent = total > 0 ? d.value / total : 0;
             cumulativePercent += percent;
             const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
             const largeArcFlag = percent > 0.5 ? 1 : 0;
@@ -60,6 +60,7 @@ export function SimpleDonutChart({ data }: { data: { label: string, value: numbe
               `L 0 0`,
             ].join(' ');
 
+            if (percent === 0 && total > 0) return null;
             return <path key={i} d={pathData} fill={d.color} className="hover:opacity-80 transition-opacity cursor-pointer" />;
           })}
           {/* Inner circle to make it a donut */}

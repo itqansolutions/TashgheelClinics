@@ -37,10 +37,12 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
   };
 
   const statement = statementData?.data || { purchases: [], payments: [], balance: 0 };
+  const purchases = statement.purchases || [];
+  const payments = statement.payments || [];
   
   // Combine and sort transactions
   const transactions = [
-    ...statement.purchases.map((p: any) => ({
+    ...purchases.map((p: any) => ({
       id: `purch-${p.id}`,
       date: p.purchaseDate,
       type: 'Purchase',
@@ -48,7 +50,7 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
       amount: Number(p.totalAmount),
       impact: 'positive'
     })),
-    ...statement.payments.map((p: any) => ({
+    ...payments.map((p: any) => ({
       id: `pay-${p.id}`,
       date: p.paymentDate,
       type: 'Payment',
@@ -192,11 +194,11 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
               <div className="space-y-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-brand-700 font-medium opacity-60">Total Purchases:</span>
-                  <span className="font-mono font-bold text-brand-900">{formatCurrency(statement.purchases?.reduce((s: any, p: any) => s + Number(p.totalAmount), 0) || 0)}</span>
+                  <span className="font-mono font-bold text-brand-900">{formatCurrency(purchases.reduce((s: any, p: any) => s + Number(p.totalAmount), 0) || 0)}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-brand-700 font-medium opacity-60">Total Paid:</span>
-                  <span className="font-mono font-bold text-brand-900">{formatCurrency(statement.payments?.reduce((s: any, p: any) => s + Number(p.amount), 0) || 0)}</span>
+                  <span className="font-mono font-bold text-brand-900">{formatCurrency(payments.reduce((s: any, p: any) => s + Number(p.amount), 0) || 0)}</span>
                 </div>
                 <div className="h-px bg-brand-200 my-2" />
                 <div className="flex justify-between text-sm">

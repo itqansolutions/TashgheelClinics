@@ -9,11 +9,14 @@ import {
 import { formatCurrency } from '@/utils/format';
 import { clsx } from 'clsx';
 import { RecordPurchaseModal } from './modals/RecordPurchaseModal';
+import { StockCardModal } from './modals/StockCardModal';
 
 export function StockBalancePage() {
   const { data, isLoading } = useStockBalances();
   const [search, setSearch] = useState('');
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   
   const balances = data?.data || [];
   const filtered = balances.filter((b: any) => 
@@ -175,7 +178,13 @@ export function StockBalancePage() {
                       </p>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 hover:bg-brand-50 text-gray-400 hover:text-brand-600 rounded-xl transition-all">
+                      <button 
+                        className="p-2 hover:bg-brand-50 text-gray-400 hover:text-brand-600 rounded-xl transition-all"
+                        onClick={() => {
+                          setSelectedProduct(item);
+                          setIsCardModalOpen(true);
+                        }}
+                      >
                         <ArrowUpRight className="w-4 h-4" />
                       </button>
                     </td>
@@ -200,6 +209,11 @@ export function StockBalancePage() {
       <RecordPurchaseModal 
         isOpen={isPurchaseModalOpen}
         onClose={() => setIsPurchaseModalOpen(false)}
+      />
+      <StockCardModal 
+        isOpen={isCardModalOpen}
+        onClose={() => setIsCardModalOpen(false)}
+        product={selectedProduct}
       />
     </div>
   );
