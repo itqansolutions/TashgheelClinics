@@ -102,6 +102,36 @@ export const appointmentsRepo = {
 
       // 2. Handle used items
       for (const item of usedItems) {
+        // Find suitable batches (FEFO: First Expired, First Out)
+        const batches = await tx.purchaseItem.findMany({
+          where: { 
+            productId: item.productId, 
+            remainingQuantity: { gt: 0 } 
+          },
+          orderBy: [
+            { expiryDate: 'asc' },
+            { id: 'asc' }
+          ]
+        });
+
+        let remainingToDeduct = item.quantity;
+        
+        for (const batch of batches) {
+          if (remainingToDeduct <= 0) break;
+          const deduct = Math.min(batch.remainingQuantity, remainingToDeduct);
+          
+          await tx.purchaseItem.update({
+            where: { id: batch.id },
+            data: { remainingQuantity: { decrement: deduct } }
+          });
+          
+          remainingToDeduct -= deduct;
+        }
+
+        if (remainingToDeduct > 0) {
+          throw new Error(`Insufficient batch stock for item ID ${item.productId}. Still need ${remainingToDeduct}`);
+        }
+
         // Record usage in SessionItem
         await tx.sessionItem.create({
           data: {
@@ -113,7 +143,7 @@ export const appointmentsRepo = {
           }
         });
 
-        // Deduct from stock
+        // Deduct from total stock
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product) throw new Error(`Product ${item.productId} not found`);
 

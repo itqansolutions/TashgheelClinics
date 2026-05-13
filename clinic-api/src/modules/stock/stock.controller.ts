@@ -34,6 +34,7 @@ export class StockController {
               create: items.map((item: any) => ({
                 productId: Number(item.productId),
                 quantity: Number(item.quantity),
+                remainingQuantity: Number(item.quantity),
                 costPerUnit: Number(item.costPerUnit),
                 batchNo: item.batchNo,
                 expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,

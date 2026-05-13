@@ -6,6 +6,7 @@ export const STOCK_KEYS = {
   vendors:  ['stock', 'vendors'],
   balances: ['stock', 'balances'],
   ledger:   (id: number) => ['stock', 'ledger', id],
+  statement: (id: number) => ['stock', 'statement', id],
 };
 
 export function useProducts(filters: any = {}) {
@@ -65,6 +66,27 @@ export function useRecordPurchase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.balances });
       queryClient.invalidateQueries({ queryKey: STOCK_KEYS.products });
+    }
+  });
+}
+
+export function useVendorStatement(vendorId: number) {
+  return useQuery({
+    queryKey: STOCK_KEYS.statement(vendorId),
+    queryFn: async () => {
+      const res = await stockApi.getVendorStatement(vendorId);
+      return res.data;
+    },
+    enabled: !!vendorId
+  });
+}
+
+export function useRecordVendorPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: stockApi.recordVendorPayment,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: STOCK_KEYS.statement(Number(variables.vendorId)) });
     }
   });
 }

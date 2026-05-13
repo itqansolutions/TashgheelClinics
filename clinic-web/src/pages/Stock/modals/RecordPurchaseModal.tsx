@@ -25,13 +25,17 @@ export function RecordPurchaseModal({ isOpen, onClose }: Props) {
   });
 
   const [items, setItems] = useState<any[]>([
-    { productId: '', quantity: 1, costPerUnit: 0, batchNo: '', expiryDate: '' }
+    { productId: '', quantity: 1, costPerUnit: 0, batchNo: new Date().toLocaleDateString('en-GB').replace(/\//g, ''), expiryDate: '' }
   ]);
 
   if (!isOpen) return null;
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, costPerUnit: 0, batchNo: '', expiryDate: '' }]);
+    const defaultBatch = formData.purchaseDate 
+      ? formData.purchaseDate.split('-').reverse().join('')
+      : new Date().toLocaleDateString('en-GB').replace(/\//g, '');
+      
+    setItems([...items, { productId: '', quantity: 1, costPerUnit: 0, batchNo: defaultBatch, expiryDate: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -145,7 +149,7 @@ export function RecordPurchaseModal({ isOpen, onClose }: Props) {
             <div className="space-y-3">
               {items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-3 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 items-end animate-in fade-in slide-in-from-right-4 duration-200">
-                  <div className="col-span-4 space-y-1">
+                  <div className="col-span-3 space-y-1">
                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Product</label>
                     <select
                       required
@@ -161,6 +165,16 @@ export function RecordPurchaseModal({ isOpen, onClose }: Props) {
                   </div>
 
                   <div className="col-span-2 space-y-1">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Batch No</label>
+                    <input
+                      placeholder="e.g. 13052026"
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500/20"
+                      value={item.batchNo}
+                      onChange={(e) => updateItem(index, 'batchNo', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Qty</label>
                     <input
                       type="number"

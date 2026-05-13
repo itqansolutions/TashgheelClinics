@@ -391,6 +391,7 @@ model PurchaseItem {
   purchaseId   Int
   productId    Int
   quantity     Int
+  remainingQuantity Int      @default(0)
   costPerUnit  Decimal  @db.Decimal(10, 2)
   batchNo      String?
   expiryDate   DateTime?

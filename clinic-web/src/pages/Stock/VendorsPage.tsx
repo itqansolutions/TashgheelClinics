@@ -4,9 +4,12 @@ import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { Users2, Plus, Search, Phone, Mail, MapPin, ExternalLink, ArrowRight } from 'lucide-react';
 import { CreateVendorModal } from './modals/CreateVendorModal';
+import { VendorStatementModal } from './modals/VendorStatementModal';
 
 export function VendorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<any>(null);
+  const [isStatementOpen, setIsStatementOpen] = useState(false);
   const [search, setSearch] = useState('');
   const { data, isLoading } = useVendors();
 
@@ -90,7 +93,15 @@ export function VendorsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" className="rounded-xl h-8 text-[10px] font-black uppercase tracking-widest gap-1.5">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="rounded-xl h-8 text-[10px] font-black uppercase tracking-widest gap-1.5"
+                        onClick={() => {
+                          setSelectedVendor(vendor);
+                          setIsStatementOpen(true);
+                        }}
+                      >
                         Statement <ExternalLink className="w-3 h-3" />
                       </Button>
                       <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">
@@ -117,6 +128,12 @@ export function VendorsPage() {
       <CreateVendorModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <VendorStatementModal 
+        isOpen={isStatementOpen}
+        onClose={() => setIsStatementOpen(false)}
+        vendor={selectedVendor}
       />
     </div>
   );

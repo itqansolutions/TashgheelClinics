@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Calendar, Clock, User, Scissors, Info, Stethoscope, Plus, Search, Globe, Users2 } from 'lucide-react';
+import { X, Calendar, Clock, User, Stethoscope, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useCreateAppointment } from '@/hooks/useAppointments';
 import { usePatientList, useCreatePatient } from '@/hooks/usePatients';
 import { useDoctorList } from '@/hooks/useDoctors';
 import { useSpecialtyList } from '@/hooks/useSpecialties';
-import { useLeadSources, useCountries } from '@/hooks/useLookups';
+import { useLeadSources } from '@/hooks/useLookups';
 
 const schema = z.object({
   // Appointment Details
@@ -53,7 +53,6 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
   const { data: doctors } = useDoctorList({ limit: 100 });
   const { data: specialties } = useSpecialtyList();
   const { data: leadSources } = useLeadSources();
-  const { data: countries } = useCountries();
   
   const createMutation = useCreateAppointment();
   const createPatientMutation = useCreatePatient();
