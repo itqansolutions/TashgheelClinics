@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/response';
 
-export type Role = 'Admin' | 'Reception' | 'Doctor';
+export type Role = 'Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant';
 
 /**
  * Usage: router.delete('/:id', authenticate, rbac('Admin'), handler)

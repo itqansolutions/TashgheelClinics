@@ -1,5 +1,5 @@
 import prisma from '../../config/db';
-export type Role = 'Admin' | 'Reception' | 'Doctor' | string;
+export type Role = 'Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant' | string;
 import { PaginationResult } from '../../utils/pagination';
 
 export interface CreateUserInput {
