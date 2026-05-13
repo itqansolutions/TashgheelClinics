@@ -205,7 +205,7 @@ model Appointment {
   // Relations
   patient       Patient         @relation(fields: [patientId], references: [id])
   doctor        Doctor          @relation(fields: [doctorId], references: [id])
-  service       Service         @relation(fields: [serviceId], references: [id])
+  service       Service?         @relation(fields: [serviceId], references: [id])
   createdByUser User?           @relation("AppointmentCreatedBy", fields: [createdBy], references: [id])
   payments      Payment[]
   images        PatientImage[]

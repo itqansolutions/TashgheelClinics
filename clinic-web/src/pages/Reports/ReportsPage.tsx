@@ -4,7 +4,7 @@ import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { 
-  TrendingUp, Users, Calendar, 
+  TrendingUp, TrendingDown, Users, Calendar, 
   DollarSign, PieChart, ArrowUpRight, ArrowDownRight,
   Printer, Wallet, Percent,
   Activity
@@ -33,11 +33,11 @@ export function ReportsPage() {
     ]).then(([sumRes, finRes, aptRes, revRes, flowRes, incRes, comRes]) => {
       setSummary(sumRes.data);
       setFinanceSum(finRes.data);
-      setAptStats(aptRes.data);
-      setRevenueDoctor(revRes.data);
-      setCashFlow(flowRes.data);
+      setAptStats(aptRes.data || []);
+      setRevenueDoctor(revRes.data || []);
+      setCashFlow(flowRes.data || []);
       setIncomeBreakdown(incRes.data);
-      setDoctorCommissions(comRes.data);
+      setDoctorCommissions(comRes.data || []);
       setLoading(false);
     }).catch(err => {
       console.error('Failed to fetch reports', err);
@@ -49,10 +49,12 @@ export function ReportsPage() {
   if (!summary) return <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest opacity-30">Failed to load analytics data.</div>;
 
   const stats = [
-    { label: 'Total Revenue', value: formatCurrency(financeSum?.totalIncome || 0), icon: Wallet, color: 'bg-brand-600', trend: '+12.5%', isUp: true },
+    { label: 'Gross Revenue', value: formatCurrency(financeSum?.totalIncome || 0), icon: Wallet, color: 'bg-brand-600', trend: '+12.5%', isUp: true },
+    { label: 'Operational Expenses', value: formatCurrency(financeSum?.breakdown?.general || 0), icon: ArrowDownRight, color: 'bg-red-600', trend: '-2.4%', isUp: false },
+    { label: 'Inventory Purchases', value: formatCurrency(financeSum?.breakdown?.purchases || 0), icon: TrendingDown, color: 'bg-orange-600', trend: '+15.2%', isUp: false },
     { label: 'Net Profit', value: formatCurrency(financeSum?.netProfit || 0), icon: DollarSign, color: 'bg-green-600', trend: '+8.2%', isUp: true },
     { label: 'Total Patients', value: summary.patientsCount, icon: Users, color: 'bg-blue-600', trend: '+5.2%', isUp: true },
-    { label: 'Appointments', value: summary.appointmentsCount, icon: Calendar, color: 'bg-purple-600', trend: '+18.1%', isUp: true },
+    { label: 'Total Appointments', value: summary.appointmentsCount, icon: Calendar, color: 'bg-purple-600', trend: '+18.1%', isUp: true },
   ];
 
   return (
@@ -76,7 +78,7 @@ export function ReportsPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((s) => (
           <div key={s.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-brand-100 transition-all group">
             <div className="flex justify-between items-start mb-6">
