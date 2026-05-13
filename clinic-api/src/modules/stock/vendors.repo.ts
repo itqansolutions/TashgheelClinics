@@ -44,13 +44,17 @@ export class VendorRepository {
       prisma.vendorPayment.findMany({ where: { vendorId }, orderBy: { paymentDate: 'asc' } })
     ]);
 
-    // Combine and sort by date for a unified statement
-    const statement = [
-      ...purchases.map(p => ({ date: p.purchaseDate, type: 'Purchase', amount: p.totalAmount, ref: p.invoiceNo })),
-      ...payments.map(p => ({ date: p.paymentDate, type: 'Payment', amount: -p.amount, ref: p.notes }))
-    ].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const totalPurchases = purchases.reduce((sum, p) => sum + p.totalAmount.toNumber(), 0);
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount.toNumber(), 0);
+    const balance = totalPurchases - totalPaid;
 
-    return statement;
+    return {
+      purchases,
+      payments,
+      balance,
+      totalPurchases,
+      totalPaid
+    };
   }
 }
 
