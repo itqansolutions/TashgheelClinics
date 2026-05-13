@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Patients',     path: '/patients',    icon: Users           },
   { label: 'Appointments', path: '/appointments',icon: CalendarDays    },
   { label: 'Calendar',     path: '/calendar',    icon: CalendarDays    },
+  { label: 'Reports',      path: '/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
   { label: 'Doctors',      path: '/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
   { label: 'Schedule',     path: '/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
   { label: 'Stock Balance',path: '/stock/balance', icon: Boxes,        roles: ['Admin']              },
