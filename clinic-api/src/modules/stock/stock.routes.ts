@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { stockController } from './stock.controller';
-import { authenticate, authorize } from '../../middleware/auth';
+import { authenticate } from '../../middleware/auth';
+import { rbac } from '../../middleware/rbac';
 
 const router = Router();
 
@@ -8,17 +9,17 @@ const router = Router();
 router.use(authenticate);
 
 // Balance & Purchases
-router.get('/balance', authorize(['Admin']), stockController.getBalances);
-router.post('/purchase', authorize(['Admin']), stockController.recordPurchase);
+router.get('/balance', rbac('Admin', 'Manager', 'Accountant'), stockController.getBalances);
+router.post('/purchase', rbac('Admin', 'Manager'), stockController.recordPurchase);
 
 // Products
 router.get('/products', stockController.getProducts);
-router.post('/products', authorize(['Admin']), stockController.createProduct);
+router.post('/products', rbac('Admin', 'Manager'), stockController.createProduct);
 
 // Vendors
-router.get('/vendors', authorize(['Admin']), stockController.getVendors);
-router.post('/vendors', authorize(['Admin']), stockController.createVendor);
-router.get('/vendors/:id/statement', authorize(['Admin']), stockController.getVendorStatement);
-router.post('/vendors/payment', authorize(['Admin']), stockController.recordVendorPayment);
+router.get('/vendors', rbac('Admin', 'Manager', 'Accountant'), stockController.getVendors);
+router.post('/vendors', rbac('Admin', 'Manager'), stockController.createVendor);
+router.get('/vendors/:id/statement', rbac('Admin', 'Manager', 'Accountant'), stockController.getVendorStatement);
+router.post('/vendors/payment', rbac('Admin', 'Manager', 'Accountant'), stockController.recordVendorPayment);
 
 export default router;

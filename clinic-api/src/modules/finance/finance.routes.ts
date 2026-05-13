@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { financeController } from './finance.controller';
-import { authenticate, authorize } from '../../middleware/auth';
+import { authenticate } from '../../middleware/auth';
+import { rbac } from '../../middleware/rbac';
 
 const router = Router();
 
 // All finance routes require authentication and specific roles
 router.use(authenticate);
-router.use(authorize(['Admin', 'Finance Manager', 'Accountant']));
+router.use(rbac('Admin', 'Manager', 'Accountant'));
 
 router.get('/queue', financeController.getQueue);
 router.get('/transactions', financeController.getTransactions);
