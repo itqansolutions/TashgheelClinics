@@ -31,7 +31,7 @@ export const appointmentsService = {
     
     // Auto-set price if finishing and not set
     if (data.status === 'Done' && !appointment.priceCharged && !data.priceCharged) {
-      data.priceCharged = Number(appointment.service.price);
+      data.priceCharged = Number(appointment.service?.price || 0);
     }
     
     return appointmentsRepo.update(id, data);
@@ -51,7 +51,7 @@ export const appointmentsService = {
     
     const updateData: any = { status };
     if (status === 'Done' && !appointment.priceCharged) {
-      updateData.priceCharged = Number(appointment.service.price);
+      updateData.priceCharged = Number(appointment.service?.price || 0);
     }
 
     return appointmentsRepo.update(id, updateData);
