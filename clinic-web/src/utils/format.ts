@@ -3,8 +3,13 @@ import { format, formatDistanceToNow, parseISO } from 'date-fns';
 // ── Date ──────────────────────────────────────────────────────────────────
 
 export function formatDate(date: string | Date, pattern = 'dd MMM yyyy'): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, pattern);
+  if (!date) return '—';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    return format(d, pattern);
+  } catch (e) {
+    return '—';
+  }
 }
 
 export function formatDateTime(date: string | Date): string {
@@ -29,7 +34,8 @@ export function formatCurrency(
   _currency = 'EGP',
   symbol = 'ج.م'
 ): string {
-  return `${symbol} ${amount.toLocaleString('en-EG', { minimumFractionDigits: 0 })}`;
+  const val = typeof amount === 'number' ? amount : Number(amount || 0);
+  return `${symbol} ${val.toLocaleString('en-EG', { minimumFractionDigits: 0 })}`;
 }
 
 // ── Patient code ──────────────────────────────────────────────────────────
