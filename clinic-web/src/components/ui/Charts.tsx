@@ -85,3 +85,83 @@ export function SimpleDonutChart({ data }: { data: { label: string, value: numbe
     </div>
   );
 }
+
+export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: number }) {
+  if (!data.length) return null;
+
+  const max = Math.max(...data.flatMap(d => [d.income, d.expense]), 1);
+  const width = 500;
+  const padding = 20;
+  
+  const getX = (i: number) => (i / (data.length - 1)) * (width - padding * 2) + padding;
+  const getY = (v: number) => height - ((v / max) * (height - padding * 2) + padding);
+
+  const incomePoints = data.map((d, i) => `${getX(i)},${getY(d.income)}`).join(' ');
+  const expensePoints = data.map((d, i) => `${getX(i)},${getY(d.expense)}`).join(' ');
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-0 relative">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map(p => (
+            <line 
+              key={p} 
+              x1={padding} 
+              y1={getY(max * p)} 
+              x2={width - padding} 
+              y2={getY(max * p)} 
+              stroke="#f1f5f9" 
+              strokeWidth="1" 
+            />
+          ))}
+
+          {/* Income Line */}
+          <polyline
+            fill="none"
+            stroke="#0ea5e9"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={incomePoints}
+            className="drop-shadow-lg"
+          />
+          {/* Expense Line */}
+          <polyline
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={expensePoints}
+            className="drop-shadow-lg opacity-60"
+          />
+
+          {/* Data Points */}
+          {data.map((d, i) => (
+            <g key={i} className="group cursor-pointer">
+              <circle cx={getX(i)} cy={getY(d.income)} r="4" fill="#0ea5e9" className="hover:r-6 transition-all" />
+              <circle cx={getX(i)} cy={getY(d.expense)} r="4" fill="#ef4444" className="hover:r-6 transition-all" />
+            </g>
+          ))}
+        </svg>
+      </div>
+      <div className="flex justify-between px-2 mt-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-1 bg-[#0ea5e9] rounded-full"></div>
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Income</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-1 bg-[#ef4444] rounded-full opacity-60"></div>
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Expense</span>
+          </div>
+        </div>
+        <div className="text-[10px] text-gray-400 font-bold">
+          {data[0]?.label} — {data[data.length - 1]?.label}
+        </div>
+      </div>
+    </div>
+  );
+}
+

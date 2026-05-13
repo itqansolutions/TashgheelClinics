@@ -1,11 +1,11 @@
 // ── Enums ─────────────────────────────────────────────────────────────────
 
-export type Role = 'Admin' | 'Reception' | 'Doctor';
+export type Role = 'Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant';
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Done' | 'Cancelled';
 export type Nationality = 'Egyptian' | 'Foreigner';
 export type Gender = 'M' | 'F';
 export type ImageType = 'Before' | 'After' | 'Other';
-export type PaymentMethod = 'Cash' | 'Card' | 'Bank' | 'Online';
+export type PaymentMethod = 'Cash' | 'Card' | 'Bank' | 'Online' | 'Insurance' | 'Vodafone Cash' | 'Visa';
 
 // ── API wrapper ────────────────────────────────────────────────────────────
 
@@ -195,4 +195,22 @@ export interface BodyArea {
 export interface ClinicSetting {
   key: string;
   value: string;
+}
+
+// ── Finance ───────────────────────────────────────────────────────────────
+
+export type TransactionType = 'Income' | 'Expense';
+
+export interface FinancialTransaction {
+  id: number;
+  type: TransactionType;
+  category: string;
+  amount: number;
+  method: string;
+  description?: string;
+  referenceType?: string;
+  referenceId?: number;
+  userId: number;
+  createdAt: string;
+  user?: { fullName: string };
 }

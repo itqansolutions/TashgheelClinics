@@ -2,8 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, Users, Stethoscope, CalendarDays,
-  BarChart3, Settings, Heart, Scissors, LogOut, Clock, X,
-  Package, Boxes, Users2
+  Settings, Heart, Scissors, LogOut, Clock, X,
+  Package, Boxes, Users2, Wallet
 } from 'lucide-react';
 import { useUser, useRole, useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth';
@@ -12,7 +12,7 @@ interface NavItem {
   label: string;
   path:  string;
   icon:  React.ElementType;
-  roles?: Array<'Admin' | 'Reception' | 'Doctor'>;
+  roles?: Array<'Admin' | 'Reception' | 'Doctor' | 'Nurse' | 'Manager' | 'Accountant'>;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -23,11 +23,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Doctors',      path: '/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
   { label: 'Schedule',     path: '/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
   { label: 'Stock Balance',path: '/stock/balance', icon: Boxes,        roles: ['Admin']              },
+  { label: 'Finance',      path: '/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
   { label: 'Products',     path: '/stock/products', icon: Package,      roles: ['Admin']              },
   { label: 'Vendors',      path: '/stock/vendors', icon: Users2,       roles: ['Admin']              },
   { label: 'Specialties',  path: '/specialties', icon: Scissors,       roles: ['Admin']              },
-  { label: 'Reports',      path: '/reports',     icon: BarChart3,      roles: ['Admin']              },
-  { label: 'Settings',     path: '/settings',    icon: Settings,       roles: ['Admin']              },
+  { label: 'Settings',     path: '/settings',    icon: Settings,       roles: ['Admin', 'Manager']   },
 ];
 
 interface SidebarProps {

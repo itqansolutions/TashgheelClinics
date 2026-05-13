@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key } from 'lucide-react';
+import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt } from 'lucide-react';
 import { useClinicSettings, useUpdateClinicSettings, useLeadSourcesAdmin, useLeadSourceMutations } from '@/hooks/useSettings';
+import { useInvoiceSettings, useUpdateInvoiceSettings } from '@/hooks/useFinance';
 import { useCountries } from '@/hooks/useLookups';
 import { useUsers, useCreateUser, useDeactivateUser } from '@/hooks/useUsers';
 import { Button } from '@/components/ui/Button';
@@ -13,11 +14,12 @@ import { Modal } from '@/components/ui/Modal';
 import { clsx } from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 
-type Tab = 'clinic' | 'lead-sources' | 'countries' | 'users';
+type Tab = 'clinic' | 'lead-sources' | 'countries' | 'users' | 'invoice';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'clinic',        label: 'Clinic Info',    icon: Building2 },
   { id: 'users',         label: 'System Users',   icon: User      },
+  { id: 'invoice',       label: 'Invoice Design', icon: Receipt   },
   { id: 'lead-sources',  label: 'Lead Sources',   icon: Tag       },
   { id: 'countries',     label: 'Countries',      icon: Globe     },
 ];
@@ -33,13 +35,13 @@ export function SettingsPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1.5">
+      <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1.5 overflow-x-auto custom-scrollbar">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors',
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors shrink-0',
               tab === t.id ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
             )}
           >
@@ -51,6 +53,7 @@ export function SettingsPage() {
 
       {tab === 'clinic'       && <ClinicInfoPanel />}
       {tab === 'users'        && <UsersPanel />}
+      {tab === 'invoice'      && <InvoiceDesignPanel />}
       {tab === 'lead-sources' && <LeadSourcesPanel />}
       {tab === 'countries'    && <CountriesPanel />}
     </div>
@@ -173,6 +176,8 @@ function UsersPanel() {
               { value: 'Admin', label: 'Admin' },
               { value: 'Doctor', label: 'Doctor' },
               { value: 'Receptionist', label: 'Receptionist' },
+              { value: 'Manager', label: 'Manager' },
+              { value: 'Accountant', label: 'Accountant' },
             ]} 
             {...register('role')} 
           />
@@ -365,6 +370,93 @@ function CountriesPanel() {
               </div>
             ))}
       </div>
+    </Card>
+  );
+}
+
+// ── Invoice Design ────────────────────────────────────────────────────────
+function InvoiceDesignPanel() {
+  const { data: settings, isLoading } = useInvoiceSettings();
+  const updateSettings = useUpdateInvoiceSettings();
+  const [saved, setSaved] = useState(false);
+
+  const { register, handleSubmit, formState: { isDirty, isSubmitting } } = useForm<Record<string, string>>({
+    values: settings ?? {},
+  });
+
+  const onSubmit = async (data: Record<string, string>) => {
+    await updateSettings.mutateAsync(data);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  if (isLoading) return (
+    <Card>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="mb-4"><Skeleton className="h-3 w-24 mb-1.5" /><Skeleton className="h-9 w-full" /></div>
+      ))}
+    </Card>
+  );
+
+  return (
+    <Card>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div className="sm:col-span-2">
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Identity & Branding</h4>
+          </div>
+          <Input label="Clinic Name (on Invoice)" {...register('clinic_name')} />
+          <Input label="Tax Number / VAT ID" {...register('tax_number')} />
+          <Input label="Header Accent Color" type="color" className="h-10" {...register('header_color')} />
+          <Input label="Brand Font Family" {...register('font_family')} hint="e.g. Inter, system-ui" />
+          
+          <div className="sm:col-span-2 mt-4">
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Contact Information</h4>
+          </div>
+          <Input label="Phone" {...register('contact_phone')} />
+          <Input label="Email" {...register('contact_email')} />
+          <div className="sm:col-span-2">
+            <Input label="Address" {...register('contact_address')} />
+          </div>
+
+          <div className="sm:col-span-2 mt-4">
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Legal & Footer</h4>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-bold text-gray-700 mb-1.5 block">Terms & Conditions</label>
+            <textarea 
+              {...register('terms')}
+              rows={3}
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+              placeholder="e.g. Invoices are valid for 14 days..."
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-bold text-gray-700 mb-1.5 block">Footer Note</label>
+            <textarea 
+              {...register('footer_note')}
+              rows={2}
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+              placeholder="e.g. Thank you for choosing Tashgheel Clinics"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          {saved && (
+            <span className="flex items-center gap-1.5 text-xs text-green-600">
+              <Check className="w-3.5 h-3.5" /> Branding updated
+            </span>
+          )}
+          <div className="ml-auto">
+            <Button type="submit" loading={isSubmitting} disabled={!isDirty}
+              leftIcon={<Save className="w-3.5 h-3.5" />}
+            >
+              Save Invoice Branding
+            </Button>
+          </div>
+        </div>
+      </form>
     </Card>
   );
 }

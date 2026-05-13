@@ -23,6 +23,7 @@ import { ReportsPage }      from '@/pages/Reports/ReportsPage';
 import { StockBalancePage } from '@/pages/Stock/StockBalancePage';
 import { ProductsPage }     from '@/pages/Stock/ProductsPage';
 import { VendorsPage }      from '@/pages/Stock/VendorsPage';
+import { FinancePage }      from '@/pages/Finance/FinancePage';
 
 const router = createBrowserRouter([
   // ── Public ─────────────────────────────────────────────────────────────
@@ -49,9 +50,9 @@ const router = createBrowserRouter([
     }],
   },
 
-  // ── Admin & Reception only ─────────────────────────────────────────────
+  // ── Admin, Reception, Manager & Accountant ─────────────────────────────
   {
-    element: <ProtectedRoute allowedRoles={['Admin', 'Reception']} />,
+    element: <ProtectedRoute allowedRoles={['Admin', 'Reception', 'Manager', 'Accountant']} />,
     children: [{
       element: <AppLayout />,
       children: [
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
         { path: '/doctors/schedule', element: <DoctorSchedulePage /> },
         { path: '/specialties',      element: <SpecialtiesPage /> },
         { path: '/reports',          element: <ReportsPage /> },
+        { path: '/finance',          element: <FinancePage /> },
         { path: '/stock/balance',    element: <StockBalancePage /> },
         { path: '/stock/products',   element: <ProductsPage /> },
         { path: '/stock/vendors',    element: <VendorsPage /> },
@@ -66,9 +68,9 @@ const router = createBrowserRouter([
     }],
   },
 
-  // ── Admin-only ──────────────────────────────────────────────────────────
+  // ── Admin & Manager-only ──────────────────────────────────────────────
   {
-    element: <ProtectedRoute allowedRoles={['Admin']} />,
+    element: <ProtectedRoute allowedRoles={['Admin', 'Manager']} />,
     children: [{
       element: <AppLayout />,
       children: [

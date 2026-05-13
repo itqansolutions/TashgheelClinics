@@ -3,11 +3,12 @@ import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { rbac } from '../../middleware/rbac';
+import { reportsRepo } from './reports.repo';
 
 const router = Router();
 
 router.use(authenticate);
-router.use(rbac('Admin'));
+router.use(rbac('Admin', 'Manager', 'Accountant'));
 
 /**
  * @route GET /api/reports/summary
@@ -36,6 +37,34 @@ router.get('/summary', async (req, res, next) => {
   }
 });
 
+router.get('/financial-summary', async (req, res, next) => {
+  try {
+    const stats = await reportsRepo.getFinancialSummary();
+    sendSuccess(res, stats);
+  } catch (error) { next(error); }
+});
+
+router.get('/income-breakdown', async (req, res, next) => {
+  try {
+    const stats = await reportsRepo.getIncomeBreakdown();
+    sendSuccess(res, stats);
+  } catch (error) { next(error); }
+});
+
+router.get('/doctor-commissions', async (req, res, next) => {
+  try {
+    const stats = await reportsRepo.getDoctorCommissions();
+    sendSuccess(res, stats);
+  } catch (error) { next(error); }
+});
+
+router.get('/cash-flow', async (req, res, next) => {
+  try {
+    const stats = await reportsRepo.getCashFlow();
+    sendSuccess(res, stats);
+  } catch (error) { next(error); }
+});
+
 /**
  * @route GET /api/reports/appointments-by-status
  */
@@ -56,30 +85,13 @@ router.get('/appointments-status', async (req, res, next) => {
  */
 router.get('/revenue-doctor', async (req, res, next) => {
   try {
-    const stats = await prisma.appointment.groupBy({
-      by: ['doctorId'],
-      where: { status: 'Done' },
-      _sum: { priceCharged: true },
-      _count: { id: true }
-    });
-    
-    // Enrich with doctor names
-    const enriched = await Promise.all(stats.map(async (s) => {
-      const doc = await prisma.doctor.findUnique({
-        where: { id: s.doctorId },
-        include: { user: { select: { fullName: true } } }
-      });
-      return {
-        doctorName: doc?.user?.fullName || 'Unknown',
-        revenue: Number(s._sum.priceCharged || 0),
-        count: s._count.id
-      };
-    }));
-
-    sendSuccess(res, enriched);
-  } catch (error) {
-    next(error);
-  }
+    const stats = await reportsRepo.getDoctorCommissions();
+    sendSuccess(res, stats.map(s => ({
+      doctorName: s.doctorName,
+      revenue: s.totalRevenue,
+      count: s.appointmentCount
+    })));
+  } catch (error) { next(error); }
 });
 
 export default router;

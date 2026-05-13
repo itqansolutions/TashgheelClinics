@@ -447,3 +447,31 @@ model SessionItem {
 
   @@map("SessionItems")
 }
+
+model FinancialTransaction {
+  id            Int      @id @default(autoincrement())
+  type          String   // 'Income', 'Expense'
+  category      String?  // 'Rent', 'Salary', 'Medical Supplies', etc.
+  amount        Decimal  @db.Decimal(10, 2)
+  method        String   @default("Cash") // Cash, Card, Vodafone Cash, Bank Transfer, Insurance
+  description   String?
+  referenceType String?  // 'Appointment', 'Purchase', 'Other'
+  referenceId   Int?
+  date          DateTime @default(now())
+  attachment    String?
+  userId        Int?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user          User?    @relation(fields: [userId], references: [id])
+
+  @@map("FinancialTransactions")
+}
+
+model InvoiceSetting {
+  key   String @id
+  value String
+
+  @@map("InvoiceSettings")
+}
+
