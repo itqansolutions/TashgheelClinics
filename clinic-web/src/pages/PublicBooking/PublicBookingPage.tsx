@@ -391,43 +391,44 @@ export function PublicBookingPage() {
                   <p className="text-gray-500">Select service, doctor and time</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Specialty (Required)</label>
-                    <select 
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
-                      value={formData.specialtyId}
-                      onChange={e => setFormData({...formData, specialtyId: e.target.value, serviceId: '', doctorId: ''})}
-                    >
-                      <option value="">Choose Specialty</option>
-                      {specialties.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Specialty (Required)</label>
+                      <select 
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
+                        value={formData.specialtyId}
+                        onChange={e => setFormData({...formData, specialtyId: e.target.value, serviceId: '', doctorId: ''})}
+                      >
+                        <option value="">Choose Specialty</option>
+                        {specialties.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Service (Optional)</label>
-                    <select 
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
-                      value={formData.serviceId}
-                      onChange={e => setFormData({...formData, serviceId: e.target.value, doctorId: ''})}
-                      disabled={!formData.specialtyId}
-                    >
-                      <option value="">Choose Service (Optional)</option>
-                      {filteredServices.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} EGP)</option>)}
-                    </select>
-                  </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Service (Optional)</label>
+                      <select 
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
+                        value={formData.serviceId}
+                        onChange={e => setFormData({...formData, serviceId: e.target.value, doctorId: ''})}
+                        disabled={!formData.specialtyId}
+                      >
+                        <option value="">Choose Service (Optional)</option>
+                        {filteredServices.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} EGP)</option>)}
+                      </select>
+                    </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
-                    <input 
-                      type="date"
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm"
-                      value={formData.date}
-                      onChange={e => setFormData({...formData, date: e.target.value, doctorId: ''})}
-                    />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
+                      <input 
+                        type="date"
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm"
+                        value={formData.date}
+                        onChange={e => setFormData({...formData, date: e.target.value, doctorId: ''})}
+                      />
+                    </div>
                   </div>
-                </div>
 
                   <div className="grid grid-cols-1 gap-2">
                     <label className="text-xs font-bold text-gray-400 ml-1">Available Doctors</label>
