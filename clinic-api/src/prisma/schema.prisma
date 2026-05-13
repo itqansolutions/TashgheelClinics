@@ -29,6 +29,7 @@ model User {
   payments          Payment[]
   uploadedImages    PatientImage[] @relation("UploadedByUser")
   auditLogs         AuditLog[]
+  financialTransactions FinancialTransaction[]
 
   @@map("Users")
 }
