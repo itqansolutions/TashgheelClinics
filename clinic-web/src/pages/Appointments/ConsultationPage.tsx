@@ -89,6 +89,7 @@ export function ConsultationPage() {
           notes={notes} 
           prescription={prescription}
           bodyAreas={patientAreas}
+          usedItems={usedItems}
           onClose={() => showReview ? navigate('/appointments') : setIsPrinting(false)}
         />
       )}

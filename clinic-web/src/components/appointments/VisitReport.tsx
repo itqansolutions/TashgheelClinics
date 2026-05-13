@@ -11,10 +11,11 @@ interface Props {
   notes:       string;
   prescription: string;
   bodyAreas?:  PatientArea[];
+  usedItems?:  any[];
   onClose?:    () => void;
 }
 
-export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, onClose }: Props) {
+export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, usedItems = [], onClose }: Props) {
   const { data: settings } = useClinicSettings();
   
   const clinicName = settings?.clinic_name || 'Tashgheel Clinic';
@@ -153,17 +154,51 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                         <span className="font-mono font-bold">-{formatCurrency(((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (appointment.discountPct / 100))}</span>
                       </div>
                     )}
+                    {usedItems.length > 0 && (
+                      <div className="space-y-2 py-2 border-t border-dashed border-gray-200 my-1">
+                        <p className="text-[9px] font-black text-gray-400 uppercase">Materials & Supplies</p>
+                        {usedItems.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-[11px]">
+                            <span className="text-gray-600">{item.name} (x{item.quantity})</span>
+                            <span className="font-mono font-bold text-gray-900">{formatCurrency(item.quantity * item.priceAtTime)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="pt-3 border-t border-gray-200 mt-2 flex justify-between items-center">
                       <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Amount</span>
                       <span className="text-lg font-mono font-black text-brand-600">
                         {formatCurrency(
-                          ((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (1 - (appointment.discountPct / 100))
+                          (((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (1 - (appointment.discountPct / 100))) + 
+                          usedItems.reduce((sum, i) => sum + (i.quantity * i.priceAtTime), 0)
                         )}
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Materials & Supplies Section (Detailed) */}
+              {usedItems.length > 0 && (
+                <div className="relative">
+                  <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600" /> Materials & Clinical Supplies
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {usedItems.map((item, idx) => (
+                      <div key={idx} className="bg-white px-4 py-3 rounded-2xl border border-gray-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">{item.name}</p>
+                          <p className="text-[10px] text-gray-500 font-medium uppercase">{item.quantity} {item.unit || 'Units'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-mono font-bold text-brand-600">{formatCurrency(item.quantity * item.priceAtTime)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Prescription */}
               <div className="relative">
