@@ -1,5 +1,5 @@
 import { useClinicSettings } from '@/hooks/useSettings';
-import { formatDateTime, getInitials } from '@/utils/format';
+import { formatDateTime, getInitials, formatCurrency } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
 import { Button } from '@/components/ui/Button';
@@ -117,9 +117,9 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
 
           <hr className="border-gray-100" />
 
-          {/* Treatment Details */}
+          {/* Treatment & Financial Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="md:col-span-2 space-y-8">
+            <div className="md:col-span-2 space-y-10">
               {/* Clinical Notes */}
               <div className="relative">
                 <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -130,12 +130,47 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 </div>
               </div>
 
+              {/* Financial Summary */}
+              <div className="relative">
+                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-600" /> Financial Summary
+                </h3>
+                <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-500 font-bold uppercase">{appointment.service?.name || 'Primary Service'}</span>
+                      <span className="font-mono font-bold text-gray-900">{formatCurrency(appointment.service?.price || 0)}</span>
+                    </div>
+                    {appointment.priceCharged && appointment.priceCharged > 0 && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-500 font-bold uppercase">Consultation / Additional Fee</span>
+                        <span className="font-mono font-bold text-gray-900">{formatCurrency(appointment.priceCharged)}</span>
+                      </div>
+                    )}
+                    {appointment.discountPct > 0 && (
+                      <div className="flex justify-between items-center text-xs text-red-600">
+                        <span className="font-bold uppercase">Applied Discount ({appointment.discountPct}%)</span>
+                        <span className="font-mono font-bold">-{formatCurrency(((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (appointment.discountPct / 100))}</span>
+                      </div>
+                    )}
+                    <div className="pt-3 border-t border-gray-200 mt-2 flex justify-between items-center">
+                      <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Amount</span>
+                      <span className="text-lg font-mono font-black text-brand-600">
+                        {formatCurrency(
+                          ((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (1 - (appointment.discountPct / 100))
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Prescription */}
-              <div className="relative pt-4">
+              <div className="relative">
                 <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-600" /> Medications & Home Care
                 </h3>
-                <div className="bg-gray-50/50 border-2 border-dashed border-gray-200 p-6 rounded-3xl relative">
+                <div className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-3xl relative">
                   <p className="text-sm text-gray-800 font-bold leading-relaxed whitespace-pre-wrap min-h-[80px]">
                     {prescription || 'No medications or specific instructions provided.'}
                   </p>

@@ -280,12 +280,17 @@ export function ConsultationPage() {
 
       <style>{`
         @media print {
-          /* Force hide everything */
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+
+          /* Force hide everything except report */
           body * { visibility: hidden !important; }
           .no-print { display: none !important; }
           
-          /* Show only the report and its children */
           .no-print-overlay, .no-print-overlay * { visibility: visible !important; }
+          
           .no-print-overlay { 
             position: absolute !important; 
             left: 0 !important; 
@@ -298,17 +303,27 @@ export function ConsultationPage() {
             padding: 0 !important;
             overflow: visible !important; 
           }
+          
           .report-paper { 
             border: none !important; 
             box-shadow: none !important; 
             width: 100% !important; 
+            max-width: none !important;
             margin: 0 !important; 
             border-radius: 0 !important;
           }
+          
           /* Hide the action bar inside overlay */
           .no-print-overlay .no-print { display: none !important; }
           
-          body { background: white !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+          body { 
+            background: white !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            overflow: visible !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
         }
       `}</style>
     </div>
