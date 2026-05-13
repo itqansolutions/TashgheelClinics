@@ -22,6 +22,7 @@ import { formatCurrency, formatDate } from '@/utils/format';
 import { CollectPaymentModal } from './modals/CollectPaymentModal';
 import { MakeTransactionModal } from './modals/MakeTransactionModal';
 import { InvoiceTemplate } from '@/components/finance/InvoiceTemplate';
+import { appointmentsApi } from '@/api/appointments';
 
 export function FinancePage() {
   const [activeTab, setActiveTab] = useState<'queue' | 'ledger'>('queue');
@@ -39,6 +40,20 @@ export function FinancePage() {
   const onPrintClick = (apt: any) => {
     setSelectedAppointment(apt);
     setTimeout(() => handlePrint(), 100);
+  };
+
+  const handlePrintLedger = async (tx: any) => {
+    if (tx.referenceType === 'Appointment' && tx.referenceId) {
+      try {
+        const res = await appointmentsApi.getById(tx.referenceId);
+        if (res.data) {
+          setSelectedAppointment(res.data);
+          setTimeout(() => handlePrint(), 200);
+        }
+      } catch (err) {
+        console.error('Failed to fetch appointment for print', err);
+      }
+    }
   };
 
   const { data: queueData, isLoading: isQueueLoading } = useFinanceQueue();
@@ -251,11 +266,23 @@ export function FinancePage() {
                         <p className="text-[10px] text-gray-500 font-medium">{tx.description} · {formatDate(tx.date)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`text-base font-mono font-black ${tx.type === 'Income' ? 'text-brand-600' : 'text-red-600'}`}>
-                        {tx.type === 'Income' ? '+' : '-'}{formatCurrency(tx.amount)}
-                      </p>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Added by {tx.user?.fullName}</p>
+                    <div className="text-right flex items-center gap-4">
+                      <div className="text-right">
+                        <p className={`text-base font-mono font-black ${tx.type === 'Income' ? 'text-brand-600' : 'text-red-600'}`}>
+                          {tx.type === 'Income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                        </p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Added by {tx.user?.fullName}</p>
+                      </div>
+                      
+                      {tx.referenceType === 'Appointment' && (
+                        <button 
+                          onClick={() => handlePrintLedger(tx)}
+                          className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-brand-600"
+                          title="Print Invoice"
+                        >
+                          <Printer className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -15,6 +15,7 @@ router.post('/purchase', rbac('Admin', 'Manager'), stockController.recordPurchas
 // Products
 router.get('/products', stockController.getProducts);
 router.post('/products', rbac('Admin', 'Manager'), stockController.createProduct);
+router.put('/products/:id', rbac('Admin', 'Manager'), stockController.updateProduct);
 
 // Vendors
 router.get('/vendors', rbac('Admin', 'Manager', 'Accountant'), stockController.getVendors);

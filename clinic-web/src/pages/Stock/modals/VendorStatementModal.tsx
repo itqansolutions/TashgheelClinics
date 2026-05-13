@@ -46,33 +46,40 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
     setPaymentNotes('');
   };
 
-  const statement = statementData?.data || { purchases: [], payments: [], balance: 0 };
-  const purchases = statement.purchases || [];
-  const payments = statement.payments || [];
+  const statement = statementData?.data || { purchases: [], payments: [], balance: 0, transactions: [] };
   
-  // Combine and sort transactions
-  const transactions = [
-    ...purchases.map((p: any) => ({
-      id: `purch-${p.id}`,
-      date: p.purchaseDate,
-      type: 'Purchase',
-      reference: p.invoiceNo || `#${p.id}`,
-      amount: Number(p.totalAmount),
-      impact: 'positive'
-    })),
-    ...payments.map((p: any) => ({
-      id: `pay-${p.id}`,
-      date: p.paymentDate,
-      type: 'Payment',
-      reference: p.paymentMethod,
-      amount: Number(p.amount),
-      impact: 'negative'
-    }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Use pre-sorted transactions from backend if available, otherwise combine locally
+  const transactions = statement.transactions?.length > 0 
+    ? statement.transactions.map((t: any) => ({
+        id: `${t.type}-${t.id}`,
+        date: t.date,
+        type: t.type,
+        reference: t.ref,
+        amount: Number(t.amount < 0 ? -t.amount : t.amount),
+        impact: t.type === 'Purchase' ? 'positive' : 'negative'
+      }))
+    : [
+        ...statement.purchases.map((p: any) => ({
+          id: `purch-${p.id}`,
+          date: p.purchaseDate,
+          type: 'Purchase',
+          reference: p.invoiceNo || `#${p.id}`,
+          amount: Number(p.totalAmount),
+          impact: 'positive'
+        })),
+        ...statement.payments.map((p: any) => ({
+          id: `pay-${p.id}`,
+          date: p.paymentDate,
+          type: 'Payment',
+          reference: p.paymentMethod,
+          amount: Number(p.amount),
+          impact: 'negative'
+        }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-5xl h-[92vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 animate-in fade-in slide-in-from-bottom-8 duration-300">
         {/* Header */}
         <div className="bg-brand-600 p-8 text-white flex justify-between items-start shrink-0 relative overflow-hidden">
           <div className="relative z-10 flex items-center gap-5">

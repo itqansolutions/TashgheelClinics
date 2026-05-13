@@ -29,6 +29,17 @@ export function useCreateProduct() {
   });
 }
 
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number, data: any }) => stockApi.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: STOCK_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: STOCK_KEYS.balances });
+    }
+  });
+}
+
 export function useVendors() {
   return useQuery({
     queryKey: STOCK_KEYS.vendors,

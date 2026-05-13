@@ -4,6 +4,7 @@ export const stockApi = {
   // Products
   getProducts: (filters: any = {}) => api.get('/stock/products', { params: filters }),
   createProduct: (data: any) => api.post('/stock/products', data),
+  updateProduct: (id: number, data: any) => api.put(`/stock/products/${id}`, data),
 
   // Vendors
   getVendors: () => api.get('/stock/vendors'),

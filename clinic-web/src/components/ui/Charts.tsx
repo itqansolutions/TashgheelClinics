@@ -96,15 +96,28 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
   const width = 600;
   const padding = 40;
   
-  const getX = (i: number) => (i / (data.length - 1)) * (width - padding * 2) + padding;
+  const getX = (i: number) => {
+    if (data.length < 2) return width / 2;
+    return (i / (data.length - 1)) * (width - padding * 2) + padding;
+  };
   const getY = (v: number) => height - ((v / max) * (height - padding * 2) + padding);
 
-  const incomePoints = data.map((d, i) => `${getX(i)},${getY(d.income)}`).join(' ');
-  const expensePoints = data.map((d, i) => `${getX(i)},${getY(d.expense)}`).join(' ');
+  const incomePoints = data.length > 1 
+    ? data.map((d, i) => `${getX(i)},${getY(d.income)}`).join(' ')
+    : `${getX(0)-1},${getY(data[0].income)} ${getX(0)+1},${getY(data[0].income)}`;
+    
+  const expensePoints = data.length > 1
+    ? data.map((d, i) => `${getX(i)},${getY(d.expense)}`).join(' ')
+    : `${getX(0)-1},${getY(data[0].expense)} ${getX(0)+1},${getY(data[0].expense)}`;
 
   // Area paths
-  const incomeAreaPoints = `${incomePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`;
-  const expenseAreaPoints = `${expensePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`;
+  const incomeAreaPoints = data.length > 1
+    ? `${incomePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`
+    : `${getX(0)-1},${height} ${getX(0)-1},${getY(data[0].income)} ${getX(0)+1},${getY(data[0].income)} ${getX(0)+1},${height}`;
+    
+  const expenseAreaPoints = data.length > 1
+    ? `${expensePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`
+    : `${getX(0)-1},${height} ${getX(0)-1},${getY(data[0].expense)} ${getX(0)+1},${getY(data[0].expense)} ${getX(0)+1},${height}`;
 
   return (
     <div className="flex flex-col h-full">

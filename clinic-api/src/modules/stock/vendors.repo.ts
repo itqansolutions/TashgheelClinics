@@ -48,12 +48,23 @@ export class VendorRepository {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount.toNumber(), 0);
     const balance = totalPurchases - totalPaid;
 
+    const allTransactions = [
+      ...purchases.map(p => ({ date: p.purchaseDate, type: 'Purchase', amount: p.totalAmount, ref: p.invoiceNo, id: p.id })),
+      ...payments.map(p => ({ date: p.paymentDate, type: 'Payment', amount: -p.amount, ref: p.notes, id: p.id }))
+    ].sort((a, b) => {
+      const diff = a.date.getTime() - b.date.getTime();
+      if (diff !== 0) return diff;
+      // If same time, purchases first
+      return a.type === 'Purchase' ? -1 : 1;
+    });
+
     return {
       purchases,
       payments,
       balance,
       totalPurchases,
-      totalPaid
+      totalPaid,
+      transactions: allTransactions
     };
   }
 }

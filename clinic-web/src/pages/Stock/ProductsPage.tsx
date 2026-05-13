@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { Package, Plus, Search, Tag, Layers, User, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import { CreateProductModal } from './modals/CreateProductModal';
+import { UpdateProductModal } from './modals/UpdateProductModal';
 
 export function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [search, setSearch] = useState('');
   const { data, isLoading } = useProducts();
 
@@ -105,11 +108,22 @@ export function ProductsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" className="rounded-xl h-8 text-[10px] font-black uppercase tracking-widest">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="rounded-xl h-8 text-[10px] font-black uppercase tracking-widest"
+                      >
                         View Card
                       </Button>
-                      <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">
-                        <ArrowRight className="w-4 h-4 text-gray-400" />
+                      <button 
+                        className="p-2 hover:bg-brand-50 text-brand-600 rounded-xl transition-all"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsUpdateModalOpen(true);
+                        }}
+                        title="Edit Product"
+                      >
+                        <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -132,6 +146,12 @@ export function ProductsPage() {
       <CreateProductModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <UpdateProductModal 
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        product={selectedProduct}
       />
     </div>
   );

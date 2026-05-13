@@ -113,6 +113,12 @@ export class StockController {
     res.json({ success: true, data: product });
   }
 
+  async updateProduct(req: Request, res: Response) {
+    const { id } = req.params;
+    const product = await productRepo.update(Number(id), req.body);
+    res.json({ success: true, data: product });
+  }
+
   async getVendorStatement(req: Request, res: Response) {
     const { id } = req.params;
     const statement = await vendorRepo.getStatement(Number(id));
