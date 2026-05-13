@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
-import { useFinanceQueue, useFinanceTransactions, useCollectPayment } from '@/hooks/useFinance';
+import { useState, useRef } from 'react';
+import { useFinanceQueue, useFinanceTransactions } from '@/hooks/useFinance';
 import { useFinancialSummary } from '@/hooks/useReports';
-import { reportsApi } from '@/api/reports';
 import { useReactToPrint } from 'react-to-print';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
