@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useVendorStatement, useRecordVendorPayment } from '@/hooks/useStock';
 import { Button } from '@/components/ui/Button';
-import { X, FileText, DollarSign, Calendar, TrendingUp, TrendingDown, Receipt, Wallet } from 'lucide-react';
+import { X, FileText, DollarSign, Calendar, TrendingUp, TrendingDown, Receipt, Wallet, Printer } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { PageLoader } from '@/components/ui/Loader';
+import { useReactToPrint } from 'react-to-print';
+import { useRef } from 'react';
+import { VendorStatementTemplate } from '@/components/stock/VendorStatementTemplate';
+import { format } from 'date-fns';
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +22,12 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [paymentNotes, setPaymentNotes] = useState('');
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Statement_${vendor?.name || 'Vendor'}_${format(new Date(), 'yyyyMMdd')}`,
+  });
 
   if (!isOpen || !vendor) return null;
 
@@ -75,9 +85,20 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
             </div>
           </div>
           
-          <div className="relative z-10 text-right">
-            <p className="text-[10px] font-black text-brand-200 uppercase tracking-widest mb-1">Outstanding Balance</p>
-            <p className="text-4xl font-mono font-black text-white">{formatCurrency(statement.balance)}</p>
+          <div className="relative z-10 flex gap-4">
+            <div className="text-right">
+              <p className="text-[10px] font-black text-brand-200 uppercase tracking-widest mb-1">Outstanding Balance</p>
+              <p className="text-4xl font-mono font-black text-white">{formatCurrency(statement.balance)}</p>
+            </div>
+            
+            <button 
+              onClick={() => handlePrint()}
+              className="mt-2 p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all flex flex-col items-center gap-1 border border-white/10 shadow-lg"
+              title="Print Statement"
+            >
+              <Printer className="w-5 h-5" />
+              <span className="text-[8px] font-black uppercase tracking-tighter">Print</span>
+            </button>
           </div>
 
           <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors z-20">
@@ -209,6 +230,16 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Hidden Print Template */}
+      <div className="hidden">
+        <VendorStatementTemplate 
+          ref={printRef}
+          vendor={vendor}
+          statement={statement}
+          transactions={transactions}
+        />
       </div>
     </div>
   );
