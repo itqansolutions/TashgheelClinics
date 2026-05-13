@@ -22,6 +22,37 @@ router.get('/settings', async (req, res, next) => {
 });
 
 /**
+ * @route GET /api/public/specialties
+ * @desc  Get available specialties
+ */
+router.get('/specialties', async (req, res, next) => {
+  try {
+    const specialties = await prisma.specialty.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true }
+    });
+    sendSuccess(res, specialties);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route GET /api/public/lead-sources
+ * @desc  Get lead sources for registration
+ */
+router.get('/lead-sources', async (req, res, next) => {
+  try {
+    const sources = await prisma.leadSource.findMany({
+      select: { id: true, name: true }
+    });
+    sendSuccess(res, sources);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * @route GET /api/public/check-patient
  * @desc  Check if patient exists by phone and return basic history
  */
@@ -130,7 +161,8 @@ router.post('/book', async (req, res, next) => {
   try {
     const { 
       fullName, phone, email, 
-      doctorId, serviceId, startTime, notes 
+      doctorId, serviceId, startTime, notes,
+      dateOfBirth, gender, nationality, leadSourceId
     } = req.body;
 
     let patient = await prisma.patient.findFirst({ where: { phone } });
@@ -139,7 +171,17 @@ router.post('/book', async (req, res, next) => {
       const count = await prisma.patient.count();
       const code = `G-${(count + 1).toString().padStart(4, '0')}`;
       patient = await prisma.patient.create({
-        data: { fullName, phone, email, code, notes: 'Public Booking Guest' }
+        data: { 
+          fullName, 
+          phone, 
+          email, 
+          code, 
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          gender,
+          nationality,
+          leadSourceId: leadSourceId ? Number(leadSourceId) : null,
+          notes: 'Public Booking Guest' 
+        }
       });
     }
 

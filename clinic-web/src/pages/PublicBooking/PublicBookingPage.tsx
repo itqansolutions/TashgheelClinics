@@ -12,6 +12,8 @@ export function PublicBookingPage() {
   const [step, setStep] = useState(1);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [specialties, setSpecialties] = useState<any[]>([]);
+  const [leadSources, setLeadSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -23,6 +25,11 @@ export function PublicBookingPage() {
     fullName: '',
     phone: '',
     email: '',
+    dateOfBirth: '',
+    gender: 'Male',
+    nationality: 'Egyptian',
+    leadSourceId: '',
+    specialtyId: '',
     doctorId: '',
     serviceId: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -33,6 +40,8 @@ export function PublicBookingPage() {
   useEffect(() => {
     axios.get('/api/public/doctors').then(res => setDoctors(res.data.data));
     axios.get('/api/public/services').then(res => setServices(res.data.data));
+    axios.get('/api/public/specialties').then(res => setSpecialties(res.data.data));
+    axios.get('/api/public/lead-sources').then(res => setLeadSources(res.data.data));
     axios.get('/api/public/settings').then(res => setSettings(res.data.data));
   }, []);
 
@@ -74,10 +83,16 @@ export function PublicBookingPage() {
 
   // Filter logic for doctors
   const filteredDoctors = doctors.filter(doc => {
+    if (formData.specialtyId && doc.specialtyId !== Number(formData.specialtyId)) return false;
     if (selectedService && doc.specialtyId !== selectedService.specialtyId) return false;
     if (doc.schedules && doc.schedules.length > 0) {
       return doc.schedules.some((s: any) => s.dayOfWeek === dayOfWeek);
     }
+    return true;
+  });
+
+  const filteredServices = services.filter(s => {
+    if (formData.specialtyId && s.specialtyId !== Number(formData.specialtyId)) return false;
     return true;
   });
 
@@ -243,15 +258,62 @@ export function PublicBookingPage() {
                         </div>
                       )}
 
-                      <div className="mt-6 space-y-4">
-                        <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input 
+                              type="text" placeholder="Your Full Name"
+                              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm"
+                              value={formData.fullName}
+                              onChange={e => setFormData({...formData, fullName: e.target.value})}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
                           <input 
-                            type="text" placeholder="Your Full Name"
-                            className="w-full pl-11 pr-4 py-4 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold"
-                            value={formData.fullName}
-                            onChange={e => setFormData({...formData, fullName: e.target.value})}
+                            type="date"
+                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm"
+                            value={formData.dateOfBirth}
+                            onChange={e => setFormData({...formData, dateOfBirth: e.target.value})}
                           />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Gender</label>
+                          <select 
+                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm appearance-none"
+                            value={formData.gender}
+                            onChange={e => setFormData({...formData, gender: e.target.value})}
+                          >
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nationality</label>
+                          <input 
+                            type="text" placeholder="Egyptian, etc."
+                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm"
+                            value={formData.nationality}
+                            onChange={e => setFormData({...formData, nationality: e.target.value})}
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">How did you hear about us?</label>
+                          <select 
+                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm appearance-none"
+                            value={formData.leadSourceId}
+                            onChange={e => setFormData({...formData, leadSourceId: e.target.value})}
+                          >
+                            <option value="">Select Source</option>
+                            {leadSources.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
                         </div>
                       </div>
 
@@ -329,23 +391,43 @@ export function PublicBookingPage() {
                   <p className="text-gray-500">Select service, doctor and time</p>
                 </div>
 
-                <div className="space-y-4">
-                  <select 
-                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none"
-                    value={formData.serviceId}
-                    onChange={e => setFormData({...formData, serviceId: e.target.value, doctorId: ''})}
-                  >
-                    <option value="">Choose Service</option>
-                    {services.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} EGP)</option>)}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Specialty (Required)</label>
+                    <select 
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
+                      value={formData.specialtyId}
+                      onChange={e => setFormData({...formData, specialtyId: e.target.value, serviceId: '', doctorId: ''})}
+                    >
+                      <option value="">Choose Specialty</option>
+                      {specialties.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
 
-                  <input 
-                    type="date"
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none"
-                    value={formData.date}
-                    onChange={e => setFormData({...formData, date: e.target.value, doctorId: ''})}
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Service (Optional)</label>
+                    <select 
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm appearance-none"
+                      value={formData.serviceId}
+                      onChange={e => setFormData({...formData, serviceId: e.target.value, doctorId: ''})}
+                      disabled={!formData.specialtyId}
+                    >
+                      <option value="">Choose Service (Optional)</option>
+                      {filteredServices.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} EGP)</option>)}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
+                    <input 
+                      type="date"
+                      min={format(new Date(), 'yyyy-MM-dd')}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none font-bold text-sm"
+                      value={formData.date}
+                      onChange={e => setFormData({...formData, date: e.target.value, doctorId: ''})}
+                    />
+                  </div>
+                </div>
 
                   <div className="grid grid-cols-1 gap-2">
                     <label className="text-xs font-bold text-gray-400 ml-1">Available Doctors</label>
@@ -394,7 +476,7 @@ export function PublicBookingPage() {
                   <Button 
                     className="flex-[2] py-4 rounded-2xl text-lg shadow-xl shadow-brand-500/20"
                     loading={loading}
-                    disabled={!formData.doctorId || !isTimeAvailable()}
+                    disabled={!formData.specialtyId || !formData.doctorId || !isTimeAvailable()}
                     onClick={handleBook}
                   >
                     Confirm Booking
