@@ -11,6 +11,8 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, Props>(({ appointment 
   const { data: invoiceSettings } = useInvoiceSettings();
   const { data: clinicSettings } = useClinicSettings();
 
+  if (!appointment) return null;
+
   const settings = invoiceSettings || {};
   const clinic = clinicSettings || {};
 
