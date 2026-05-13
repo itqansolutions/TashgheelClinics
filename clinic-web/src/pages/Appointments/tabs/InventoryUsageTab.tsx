@@ -50,7 +50,6 @@ export function InventoryUsageTab({ usedItems, onChange }: Props) {
     onChange(usedItems.map(i => i.productId === productId ? { ...i, quantity: qty } : i));
   };
 
-  const totalCost = usedItems.reduce((sum, i) => sum + (i.quantity * i.costAtTime), 0);
 
   return (
     <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-[500px]">
@@ -159,11 +158,7 @@ export function InventoryUsageTab({ usedItems, onChange }: Props) {
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-gray-200/50 shadow-sm shrink-0">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Internal Cost</span>
-            <span className="text-sm font-mono font-bold text-gray-500">{formatCurrency(totalCost)}</span>
-          </div>
-          <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+          <div className="flex justify-between items-center">
             <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Est. Patient Price</span>
             <span className="text-lg font-mono font-black text-brand-600">
               {formatCurrency(usedItems.reduce((sum, i) => sum + (i.quantity * i.priceAtTime), 0))}
