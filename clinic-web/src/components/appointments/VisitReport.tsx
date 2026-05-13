@@ -225,7 +225,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
               <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
                 <div className="flex gap-8 justify-center items-center mb-6">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-32">
+                    <div className="w-48">
                       <BodySvg
                         zone="front"
                         areaProps={(id: number) => ({
@@ -238,7 +238,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Front</span>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-32">
+                    <div className="w-48">
                       <BodySvg
                         zone="back"
                         areaProps={(id: number) => ({
