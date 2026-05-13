@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { formatCurrency } from '@/utils/format';
+import { Calendar } from 'lucide-react';
 
 interface BarData {
   label: string;
