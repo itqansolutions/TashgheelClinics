@@ -129,6 +129,12 @@ export class StockController {
     });
     res.json({ success: true, data: payment });
   }
+
+  async getProductLedger(req: Request, res: Response) {
+    const { id } = req.params;
+    const ledger = await stockRepo.getProductLedger(Number(id));
+    res.json({ success: true, data: ledger });
+  }
 }
 
 export const stockController = new StockController();
