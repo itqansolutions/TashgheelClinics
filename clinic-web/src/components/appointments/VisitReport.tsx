@@ -3,7 +3,7 @@ import { formatDateTime, getInitials, formatCurrency } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
 import { Button } from '@/components/ui/Button';
-import { Printer, X, Heart, ShieldCheck } from 'lucide-react';
+import { Printer, X, Heart, ShieldCheck, Stethoscope, CreditCard, Map } from 'lucide-react';
 
 interface Props {
   appointment: Appointment;
@@ -29,203 +29,190 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
     window.print();
   };
 
+  // Helper to ensure numeric values for calculations
+  const servicePrice = Number(appointment.service?.price || 0);
+  const additionalFee = Number(appointment.priceCharged || 0);
+  const discountPercent = Number(appointment.discountPct || 0);
+  const itemsTotal = usedItems.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.priceAtTime)), 0);
+  
+  const totalBeforeDiscount = servicePrice + additionalFee;
+  const discountAmount = totalBeforeDiscount * (discountPercent / 100);
+  const finalTotal = (totalBeforeDiscount - discountAmount) + itemsTotal;
+
   return (
-    <div className="fixed inset-0 z-[100] bg-gray-50/95 backdrop-blur-md overflow-y-auto pt-10 pb-20 px-4 sm:px-6 no-print-overlay">
-      {/* Action Bar (Non-print only) */}
-      <div className="max-w-[800px] mx-auto mb-6 flex items-center justify-between no-print" style={{ display: typeof window !== 'undefined' && window.matchMedia('print').matches ? 'none' : 'flex' }}>
-        <style>{`
-          @media print {
-            .no-print-bar { display: none !important; }
+    <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm overflow-y-auto pt-6 pb-20 px-4 no-print-overlay">
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background: white !important; margin: 0 !important; padding: 0 !important; }
+          .report-paper { 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            margin: 0 !important; 
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
           }
-        `}</style>
-        <div className="flex items-center gap-3 no-print-bar">
-          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg">
-            <Heart className="w-5 h-5 fill-white" />
+          @page { size: A4; margin: 10mm; }
+        }
+      `}</style>
+
+      {/* Action Bar (Non-print only) */}
+      <div className="max-w-[800px] mx-auto mb-4 flex items-center justify-between no-print">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+            <Heart className="w-4 h-4 fill-white" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Visit Summary</h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Review & Print</p>
+            <h2 className="text-xs font-bold text-white">Report Preview</h2>
+            <p className="text-[9px] text-brand-100 uppercase tracking-widest font-bold opacity-70">A4 Print Ready</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Printer className="w-4 h-4" />} onClick={handlePrint}>
-            Reprint Report
+          <Button variant="outline" size="sm" className="bg-white/10 text-white border-white/20 hover:bg-white/20" leftIcon={<Printer className="w-3.5 h-3.5" />} onClick={handlePrint}>
+            Print Report
           </Button>
-          <Button variant="primary" size="sm" leftIcon={<X className="w-4 h-4" />} onClick={onClose} className="bg-gray-900 hover:bg-black">
-            Close Review
+          <Button variant="primary" size="sm" leftIcon={<X className="w-3.5 h-3.5" />} onClick={onClose} className="bg-white text-gray-900 hover:bg-gray-100 border-none">
+            Close
           </Button>
         </div>
       </div>
 
       {/* The Paper */}
-      <div className="max-w-[800px] mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200 print:shadow-none print:border-none print:rounded-none report-paper">
-        {/* Header / Letterhead */}
-        <div className="bg-brand-600 px-10 py-12 text-white flex justify-between items-start relative overflow-hidden print:bg-white print:text-black print:border-b-2 print:border-gray-900 print:py-6">
+      <div className="max-w-[750px] mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden report-paper">
+        {/* Compact Header */}
+        <div className="bg-gray-900 px-8 py-8 text-white flex justify-between items-center relative print:bg-white print:text-black print:border-b print:border-gray-100 print:py-4">
           <div className="relative z-10">
-            <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{clinicName}</h1>
-            <p className="text-[11px] font-bold text-brand-100 mt-2 uppercase tracking-[0.2em] opacity-80 print:text-gray-500">Medical Consultation Report</p>
+            <h1 className="text-xl font-black uppercase tracking-tight leading-none print:text-gray-900">{clinicName}</h1>
+            <p className="text-[10px] font-bold text-brand-400 mt-1 uppercase tracking-[0.15em] print:text-gray-500">Medical Consultation Report</p>
           </div>
           <div className="text-right relative z-10">
-            <p className="text-[10px] font-bold text-brand-200 uppercase tracking-widest print:text-gray-400">Report Reference</p>
-            <p className="text-xl font-mono font-bold">#{appointment.id.toString().padStart(6, '0')}</p>
+            <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Reference No.</p>
+            <p className="text-lg font-mono font-bold">#{appointment.id.toString().padStart(6, '0')}</p>
           </div>
-          {/* Decorative heart icon */}
-          <Heart className="absolute -bottom-10 -right-10 w-48 h-48 text-white/5 fill-white/5 no-print" />
         </div>
 
-        <div className="p-10 space-y-10">
-          {/* Patient & Doctor Info Grid */}
-          <div className="grid grid-cols-2 gap-10">
-            <div className="space-y-6">
+        <div className="p-8 space-y-6">
+          {/* Patient & Doctor Info Grid - More Compact */}
+          <div className="grid grid-cols-2 gap-8 items-start">
+            <div className="space-y-4">
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Patient Details</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Patient Details</span>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 font-bold text-[10px] border border-gray-200">
                     {getInitials(patient.fullName)}
                   </div>
                   <div>
-                    <span className="text-base font-bold text-gray-900 block">{patient.fullName}</span>
-                    <span className="text-[11px] font-mono font-bold text-brand-600 uppercase">{patient.code}</span>
+                    <span className="text-sm font-bold text-gray-900 block leading-tight">{patient.fullName}</span>
+                    <span className="text-[10px] font-mono font-bold text-brand-600 uppercase">{patient.code}</span>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Gender</span>
-                  <span className="text-xs font-bold text-gray-800">{patient.gender === 'M' ? 'Male' : 'Female'}</span>
+              <div className="flex gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-gray-400 uppercase">Gender</span>
+                  <span className="text-[11px] font-bold text-gray-700">{patient.gender === 'M' ? 'Male' : 'Female'}</span>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Age</span>
-                  <span className="text-xs font-bold text-gray-800">
+                <div className="w-px h-6 bg-gray-100" />
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-gray-400 uppercase">Age</span>
+                  <span className="text-[11px] font-bold text-gray-700">
                     {patient.dateOfBirth ? `${new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()}Y` : 'N/A'}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6 text-right">
+            <div className="space-y-4 text-right">
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Consultation Time</span>
-                <span className="text-base font-bold text-gray-900">{formatDateTime(appointment.startTime)}</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Date & Time</span>
+                <span className="text-sm font-bold text-gray-900">{formatDateTime(appointment.startTime)}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Attending Specialist</span>
-                <span className="text-base font-bold text-gray-900">Dr. {appointment.doctor?.user?.fullName || appointment.doctor?.fullName}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wide">{appointment.doctor?.specialty?.name}</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Specialist</span>
+                <span className="text-sm font-bold text-gray-900">Dr. {appointment.doctor?.user?.fullName || appointment.doctor?.fullName}</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{appointment.doctor?.specialty?.name}</span>
               </div>
             </div>
           </div>
 
-          <hr className="border-gray-100" />
+          <hr className="border-gray-50" />
 
-          {/* Treatment & Financial Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="md:col-span-2 space-y-10">
-              {/* Clinical Notes */}
-              <div className="relative">
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-600" /> Clinical Notes & Procedure
+          {/* Compact Layout */}
+          <div className="grid grid-cols-3 gap-8">
+            <div className="col-span-2 space-y-6">
+              {/* Clinical Notes - Compact */}
+              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <Stethoscope className="w-3 h-3 text-brand-600" /> Clinical Notes
                 </h3>
-                <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap pl-3 border-l-2 border-gray-100 min-h-[120px]">
+                <div className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {notes || 'No clinical notes provided.'}
                 </div>
               </div>
 
-              {/* Financial Summary */}
-              <div className="relative">
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-600" /> Financial Summary
+              {/* Financial Summary - Compact & Corrected */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <CreditCard className="w-3 h-3 text-green-600" /> Financial Summary
                 </h3>
-                <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-500 font-bold uppercase">{appointment.service?.name || 'Primary Service'}</span>
-                      <span className="font-mono font-bold text-gray-900">{formatCurrency(appointment.service?.price || 0)}</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-gray-500 font-medium">{appointment.service?.name || 'Primary Service'}</span>
+                    <span className="font-mono font-bold text-gray-900">{formatCurrency(servicePrice)}</span>
+                  </div>
+                  {additionalFee > 0 && (
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-gray-500 font-medium">Additional Consultation Fee</span>
+                      <span className="font-mono font-bold text-gray-900">{formatCurrency(additionalFee)}</span>
                     </div>
-                    {appointment.priceCharged && appointment.priceCharged > 0 && (
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500 font-bold uppercase">Consultation / Additional Fee</span>
-                        <span className="font-mono font-bold text-gray-900">{formatCurrency(appointment.priceCharged)}</span>
-                      </div>
-                    )}
-                    {appointment.discountPct > 0 && (
-                      <div className="flex justify-between items-center text-xs text-red-600">
-                        <span className="font-bold uppercase">Applied Discount ({appointment.discountPct}%)</span>
-                        <span className="font-mono font-bold">-{formatCurrency(((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (appointment.discountPct / 100))}</span>
-                      </div>
-                    )}
-                    {usedItems.length > 0 && (
-                      <div className="space-y-2 py-2 border-t border-dashed border-gray-200 my-1">
-                        <p className="text-[9px] font-black text-gray-400 uppercase">Materials & Supplies</p>
-                        {usedItems.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-[11px]">
-                            <span className="text-gray-600">{item.name} (x{item.quantity})</span>
-                            <span className="font-mono font-bold text-gray-900">{formatCurrency(item.quantity * item.priceAtTime)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="pt-3 border-t border-gray-200 mt-2 flex justify-between items-center">
-                      <span className="text-sm font-black text-gray-900 uppercase tracking-wider">Total Amount</span>
-                      <span className="text-lg font-mono font-black text-brand-600">
-                        {formatCurrency(
-                          (((appointment.service?.price || 0) + (appointment.priceCharged || 0)) * (1 - (appointment.discountPct / 100))) + 
-                          usedItems.reduce((sum, i) => sum + (i.quantity * i.priceAtTime), 0)
-                        )}
-                      </span>
+                  )}
+                  {discountPercent > 0 && (
+                    <div className="flex justify-between items-center text-[11px] text-red-600">
+                      <span className="font-medium italic">Applied Discount ({discountPercent}%)</span>
+                      <span className="font-mono font-bold">-{formatCurrency(discountAmount)}</span>
                     </div>
+                  )}
+                  {usedItems.length > 0 && (
+                    <div className="pt-1 border-t border-dashed border-gray-100 mt-1">
+                      {usedItems.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-[10px] text-gray-500">
+                          <span>{item.name} (x{item.quantity})</span>
+                          <span className="font-mono font-bold">{formatCurrency(Number(item.quantity) * Number(item.priceAtTime))}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-gray-200 mt-1 flex justify-between items-center">
+                    <span className="text-xs font-black text-gray-900 uppercase">Total Amount</span>
+                    <span className="text-base font-mono font-black text-brand-600">
+                      {formatCurrency(finalTotal)}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Materials & Supplies Section (Detailed) */}
-              {usedItems.length > 0 && (
-                <div className="relative">
-                  <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600" /> Materials & Clinical Supplies
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {usedItems.map((item, idx) => (
-                      <div key={idx} className="bg-white px-4 py-3 rounded-2xl border border-gray-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-gray-900">{item.name}</p>
-                          <p className="text-[10px] text-gray-500 font-medium uppercase">{item.quantity} {item.unit || 'Units'}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-mono font-bold text-brand-600">{formatCurrency(item.quantity * item.priceAtTime)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Prescription */}
-              <div className="relative">
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-600" /> Medications & Home Care
+              {/* Prescription - Compact */}
+              <div className="bg-brand-50/30 border border-brand-100 p-4 rounded-xl">
+                <h3 className="text-[9px] font-black text-brand-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3 h-3" /> Medications & Home Care
                 </h3>
-                <div className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-3xl relative">
-                  <p className="text-sm text-gray-800 font-bold leading-relaxed whitespace-pre-wrap min-h-[80px]">
-                    {prescription || 'No medications or specific instructions provided.'}
-                  </p>
-                  <div className="absolute top-4 right-4 opacity-5 no-print">
-                    <ShieldCheck className="w-12 h-12" />
-                  </div>
-                </div>
+                <p className="text-[11px] text-gray-800 font-bold leading-relaxed whitespace-pre-wrap">
+                  {prescription || 'No medications or specific instructions provided.'}
+                </p>
               </div>
             </div>
 
-            {/* Visual Body Map */}
-            <div className="md:col-span-1 space-y-6">
-              <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-brand-600" /> Injection Map
+            {/* Visual Body Map - Smaller */}
+            <div className="col-span-1">
+              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <Map className="w-3 h-3 text-brand-600" /> Injection Map
               </h3>
               
-              <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
-                <div className="flex gap-8 justify-center items-center mb-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-48">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col items-center">
+                <div className="grid grid-cols-2 gap-4 justify-center items-center mb-4">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-28">
                       <BodySvg
                         zone="front"
                         areaProps={(id: number) => ({
@@ -235,10 +222,10 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                         })}
                       />
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Front</span>
+                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Front View</span>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-48">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-28">
                       <BodySvg
                         zone="back"
                         areaProps={(id: number) => ({
@@ -248,53 +235,46 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                         })}
                       />
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Back</span>
+                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Back View</span>
                   </div>
                 </div>
 
-                {/* List of areas */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Treated Zones Details</p>
-                  {bodyAreas?.map((ba) => (
-                    <div key={ba.id} className="flex flex-col px-4 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                        <span className="text-xs font-bold text-gray-900">{ba.area.name}</span>
+                <div className="w-full space-y-1.5">
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1">Treated Zones</p>
+                  <div className="max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    {bodyAreas?.map((ba) => (
+                      <div key={ba.id} className="py-1.5 border-b border-gray-50 last:border-0">
+                        <p className="text-[10px] font-bold text-gray-900 leading-tight">{ba.area.name}</p>
+                        {ba.notes && <p className="text-[9px] text-gray-500 leading-tight mt-0.5">{ba.notes}</p>}
                       </div>
-                      {ba.notes && (
-                        <span className="text-[11px] text-gray-600 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100/50 mt-1">
-                          {ba.notes}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                  {(!bodyAreas || bodyAreas.length === 0) && (
-                    <p className="text-[10px] text-gray-400 italic text-center py-4">No specific injection zones recorded.</p>
-                  )}
+                    ))}
+                    {(!bodyAreas || bodyAreas.length === 0) && (
+                      <p className="text-[8px] text-gray-400 italic text-center py-2">No zones recorded.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Signature Footer */}
-          <div className="mt-16 pt-10 border-t border-gray-100 flex justify-between items-end">
-            <div className="text-[10px] text-gray-400 space-y-1">
+          {/* Professional Footer */}
+          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-end">
+            <div className="text-[8px] text-gray-400 space-y-0.5">
               <p className="font-black text-gray-600 uppercase tracking-widest mb-1">{clinicName}</p>
-              <p className="font-medium">{clinicAddress}</p>
-              <p className="font-medium">Tel: {clinicPhone}</p>
-              <p className="mt-4 italic opacity-75">This is a computer-generated medical report.</p>
+              <p>{clinicAddress}</p>
+              <p>Tel: {clinicPhone}</p>
+              <p className="mt-2 italic opacity-50 uppercase font-bold tracking-tighter">Computer Generated Medical Record</p>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="w-40 h-16 border-b-2 border-gray-200 mb-2 flex items-center justify-center text-gray-100 text-3xl font-black opacity-30 select-none">
+              <div className="w-32 h-12 border-b border-gray-200 mb-1 flex items-center justify-center text-gray-50 text-2xl font-black opacity-20 select-none">
                 {getInitials(appointment.doctor?.user?.fullName || appointment.doctor?.fullName || 'Doctor')}
               </div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Medical Specialist Signature</p>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Specialist Signature</p>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }
