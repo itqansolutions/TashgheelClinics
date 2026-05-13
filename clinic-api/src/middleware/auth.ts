@@ -31,3 +31,19 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     sendError(res, 'Invalid or expired token', 401);
   }
 }
+
+export function authorize(roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      sendError(res, 'Authentication required', 401);
+      return;
+    }
+
+    if (!roles.includes(req.user.role)) {
+      sendError(res, 'Access forbidden', 403);
+      return;
+    }
+
+    next();
+  };
+}
