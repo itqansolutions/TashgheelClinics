@@ -33,6 +33,7 @@ export function useCreateFinancialTransaction() {
     mutationFn: financeApi.createTransaction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['finance'] });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
     }
   });
 }
@@ -44,6 +45,7 @@ export function useCollectPayment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FINANCE_KEYS.queue });
       queryClient.invalidateQueries({ queryKey: ['finance'] });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
     }
   });
 }

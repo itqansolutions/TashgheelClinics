@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useFinanceQueue, useFinanceTransactions } from '@/hooks/useFinance';
+import { useFinanceQueue, useFinanceTransactions, useCollectPayment } from '@/hooks/useFinance';
+import { useFinancialSummary } from '@/hooks/useReports';
 import { reportsApi } from '@/api/reports';
 import { useReactToPrint } from 'react-to-print';
 import { PageLoader } from '@/components/ui/Loader';
@@ -43,11 +44,9 @@ export function FinancePage() {
 
   const { data: queueData, isLoading: isQueueLoading } = useFinanceQueue();
   const { data: ledgerData, isLoading: isLedgerLoading } = useFinanceTransactions();
-  const [finSum, setFinSum] = useState<any>(null);
+  const { data: summaryData } = useFinancialSummary();
 
-  useEffect(() => {
-    reportsApi.getFinancialSummary().then(res => setFinSum(res.data));
-  }, []);
+  const finSum = summaryData || null;
 
   const queue = queueData?.data || [];
   const ledger = ledgerData?.data || [];
