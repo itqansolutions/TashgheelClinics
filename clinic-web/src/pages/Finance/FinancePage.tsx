@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useFinanceQueue, useFinanceTransactions } from '@/hooks/useFinance';
+import { reportsApi } from '@/api/reports';
 import { useReactToPrint } from 'react-to-print';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
@@ -42,6 +43,11 @@ export function FinancePage() {
 
   const { data: queueData, isLoading: isQueueLoading } = useFinanceQueue();
   const { data: ledgerData, isLoading: isLedgerLoading } = useFinanceTransactions();
+  const [finSum, setFinSum] = useState<any>(null);
+
+  useEffect(() => {
+    reportsApi.getFinancialSummary().then(res => setFinSum(res.data));
+  }, []);
 
   const queue = queueData?.data || [];
   const ledger = ledgerData?.data || [];
@@ -77,7 +83,10 @@ export function FinancePage() {
         <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-brand-200 transition-all">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Revenue (MTD)</p>
-            <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(45800)}</h3>
+            <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(finSum?.totalIncome || 0)}</h3>
+            <p className="text-[9px] font-medium text-gray-400 mt-0.5">
+              Services: {formatCurrency(finSum?.breakdown?.services || 0)} + Products: {formatCurrency(finSum?.breakdown?.products || 0)}
+            </p>
             <div className="flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-500" />
               <span className="text-[10px] font-bold text-green-600">+12% vs last month</span>
@@ -91,7 +100,10 @@ export function FinancePage() {
         <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-red-200 transition-all">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Expenses (MTD)</p>
-            <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(12400)}</h3>
+            <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(finSum?.totalExpenses || 0)}</h3>
+            <p className="text-[9px] font-medium text-gray-400 mt-0.5">
+              General: {formatCurrency(finSum?.breakdown?.general || 0)} + Purchases: {formatCurrency(finSum?.breakdown?.purchases || 0)}
+            </p>
             <div className="flex items-center gap-1 mt-2">
               <ArrowDownLeft className="w-3 h-3 text-red-500" />
               <span className="text-[10px] font-bold text-red-600">+5% vs last month</span>
@@ -105,7 +117,10 @@ export function FinancePage() {
         <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-green-200 transition-all">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Net Profit (MTD)</p>
-            <h3 className="text-2xl font-mono font-black text-brand-600">{formatCurrency(33400)}</h3>
+            <h3 className="text-2xl font-mono font-black text-brand-600">{formatCurrency(finSum?.netProfit || 0)}</h3>
+            <p className="text-[9px] font-medium text-gray-400 mt-0.5">
+              Revenue: {formatCurrency(finSum?.totalIncome || 0)} - Expenses: {formatCurrency(finSum?.totalExpenses || 0)}
+            </p>
             <div className="flex items-center gap-1 mt-2 text-[10px] font-bold text-brand-500 uppercase tracking-widest">
               Healthy Margin
             </div>

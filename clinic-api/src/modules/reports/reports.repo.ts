@@ -2,33 +2,46 @@ import prisma from '../../config/db';
 
 export class ReportsRepository {
   async getFinancialSummary() {
-    const [income, expenses, purchaseTotal, sessionProductsCost] = await Promise.all([
+    const [servicesIncome, productsIncome, otherIncome, generalExpenses, purchaseTotal] = await Promise.all([
       prisma.financialTransaction.aggregate({
-        where: { type: 'Income' },
+        where: { type: 'Income', category: 'Medical Services' },
         _sum: { amount: true }
       }),
       prisma.financialTransaction.aggregate({
-        where: { type: 'Expense' },
+        where: { type: 'Income', category: 'Product Sales' },
+        _sum: { amount: true }
+      }),
+      prisma.financialTransaction.aggregate({
+        where: { type: 'Income', category: { notIn: ['Medical Services', 'Product Sales'] } },
+        _sum: { amount: true }
+      }),
+      prisma.financialTransaction.aggregate({
+        where: { type: 'Expense', category: { not: 'Procurement' } },
         _sum: { amount: true }
       }),
       prisma.purchase.aggregate({
         _sum: { totalAmount: true }
-      }),
-      prisma.sessionItem.aggregate({
-        _sum: { costAtTime: true }
       })
     ]);
 
-    const totalIncome = Number(income._sum.amount || 0);
-    const totalExpenses = Number(expenses._sum.amount || 0);
-    const netProfit = totalIncome - totalExpenses;
+    const totalIncome = Number(servicesIncome._sum.amount || 0) + 
+                      Number(productsIncome._sum.amount || 0) + 
+                      Number(otherIncome._sum.amount || 0);
+    
+    const totalExpenses = Number(generalExpenses._sum.amount || 0) + 
+                         Number(purchaseTotal._sum.totalAmount || 0);
 
     return {
       totalIncome,
       totalExpenses,
-      netProfit,
-      purchaseTotal: Number(purchaseTotal._sum.totalAmount || 0),
-      productsCost: Number(sessionProductsCost._sum.costAtTime || 0)
+      netProfit: totalIncome - totalExpenses,
+      breakdown: {
+        services: Number(servicesIncome._sum.amount || 0),
+        products: Number(productsIncome._sum.amount || 0),
+        other: Number(otherIncome._sum.amount || 0),
+        general: Number(generalExpenses._sum.amount || 0),
+        purchases: Number(purchaseTotal._sum.totalAmount || 0)
+      }
     };
   }
 
