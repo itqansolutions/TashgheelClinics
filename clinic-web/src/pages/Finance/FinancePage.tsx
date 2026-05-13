@@ -84,9 +84,14 @@ export function FinancePage() {
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Revenue (MTD)</p>
             <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(finSum?.totalIncome || 0)}</h3>
-            <p className="text-[9px] font-medium text-gray-400 mt-0.5">
-              Services: {formatCurrency(finSum?.breakdown?.services || 0)} + Products: {formatCurrency(finSum?.breakdown?.products || 0)}
-            </p>
+            <div className="flex flex-col gap-0.5 mt-1">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                Medical Services: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.services || 0)}</span>
+              </p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                Product Sales: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.products || 0)}</span>
+              </p>
+            </div>
             <div className="flex items-center gap-1 mt-2">
               <ArrowUpRight className="w-3 h-3 text-green-500" />
               <span className="text-[10px] font-bold text-green-600">+12% vs last month</span>
@@ -101,9 +106,14 @@ export function FinancePage() {
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Expenses (MTD)</p>
             <h3 className="text-2xl font-mono font-black text-gray-900">{formatCurrency(finSum?.totalExpenses || 0)}</h3>
-            <p className="text-[9px] font-medium text-gray-400 mt-0.5">
-              General: {formatCurrency(finSum?.breakdown?.general || 0)} + Purchases: {formatCurrency(finSum?.breakdown?.purchases || 0)}
-            </p>
+            <div className="flex flex-col gap-0.5 mt-1">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                General Expenses: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.general || 0)}</span>
+              </p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                Stock Purchases: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.purchases || 0)}</span>
+              </p>
+            </div>
             <div className="flex items-center gap-1 mt-2">
               <ArrowDownLeft className="w-3 h-3 text-red-500" />
               <span className="text-[10px] font-bold text-red-600">+5% vs last month</span>
