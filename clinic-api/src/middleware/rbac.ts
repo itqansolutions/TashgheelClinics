@@ -15,14 +15,15 @@ export function rbac(...allowedRoles: Role[]) {
     }
 
     const userRole = (req.user.role as string || '').trim();
-    const isSystemAdmin = userRole.toLowerCase() === 'system admin';
+    const isSystemAdmin = userRole.toLowerCase() === 'system admin' || userRole.toLowerCase() === 'admin';
 
     // Check if user has explicit role OR if they are a System Admin (super user)
     const hasAccess = isSystemAdmin || allowedRoles.some(role => role.toLowerCase() === userRole.toLowerCase());
 
     if (!hasAccess) {
-      console.warn(`[RBAC] Access Denied for user ID ${req.user.sub} with role "${userRole}". Required: ${allowedRoles.join(', ')}`);
-      sendError(res, `Access denied. Required roles: ${allowedRoles.join(', ')}`, 403);
+      const errorMsg = `Access denied for role "${userRole}". Required: ${allowedRoles.join(', ')}`;
+      console.warn(`[RBAC] ${errorMsg} (User ID: ${req.user.sub})`);
+      sendError(res, errorMsg, 403);
       return;
     }
 

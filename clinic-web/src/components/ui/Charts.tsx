@@ -97,10 +97,15 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
   const padding = 40;
   
   const getX = (i: number) => {
-    if (data.length < 2) return width / 2;
+    if (!width || isNaN(width) || data.length < 2) return (width || 600) / 2;
     return (i / (data.length - 1)) * (width - padding * 2) + padding;
   };
-  const getY = (v: number) => height - ((v / max) * (height - padding * 2) + padding);
+  const getY = (v: number) => {
+    const val = Number(v) || 0;
+    const maxVal = Number(max) || 100;
+    const h = Number(height) || 300;
+    return h - ((val / maxVal) * (h - padding * 2) + padding);
+  };
 
   const incomePoints = data.length > 1 
     ? data.map((d, i) => `${getX(i)},${getY(d.income)}`).join(' ')
