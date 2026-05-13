@@ -280,6 +280,7 @@ export function ConsultationPage() {
                         <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-brand-500" />
                         {hint}
                       </button>
+                    ))}
                   </div>
                 </div>
               </div>
