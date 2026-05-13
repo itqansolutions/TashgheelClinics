@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/response';
 
-export type Role = 'Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant';
+export type Role = 'Admin' | 'System Admin' | 'Reception' | 'Doctor' | 'Nurse' | 'Manager' | 'Accountant';
 
 /**
  * Usage: router.delete('/:id', authenticate, rbac('Admin'), handler)
@@ -14,7 +14,12 @@ export function rbac(...allowedRoles: Role[]) {
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role as Role)) {
+    const userRole = req.user.role as Role;
+
+    // Check if user has explicit role OR if they are a System Admin (super user)
+    const hasAccess = allowedRoles.includes(userRole) || userRole === 'System Admin';
+
+    if (!hasAccess) {
       sendError(res, `Access denied. Required roles: ${allowedRoles.join(', ')}`, 403);
       return;
     }
@@ -26,4 +31,4 @@ export function rbac(...allowedRoles: Role[]) {
 // Convenience exports for common role combos
 export const adminOnly = rbac('Admin');
 export const adminOrReception = rbac('Admin', 'Reception');
-export const allRoles = rbac('Admin', 'Reception', 'Doctor');
+export const allRoles = rbac('Admin', 'Reception', 'Doctor', 'Nurse', 'Manager', 'Accountant');
