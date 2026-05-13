@@ -1,27 +1,19 @@
-import { apiFetch } from './apiFetch';
+import api from './client';
 
 export const stockApi = {
   // Products
-  getProducts: (filters: any = {}) => {
-    const query = new URLSearchParams(filters).toString();
-    return apiFetch(`/stock/products?${query}`);
-  },
-  createProduct: (data: any) => apiFetch('/stock/products', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
+  getProducts: (filters: any = {}) => api.get('/stock/products', { params: filters }),
+  createProduct: (data: any) => api.post('/stock/products', data),
 
   // Vendors
-  getVendors: () => apiFetch('/stock/vendors'),
-  createVendor: (data: any) => apiFetch('/stock/vendors', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
+  getVendors: () => api.get('/stock/vendors'),
+  createVendor: (data: any) => api.post('/stock/vendors', data),
 
   // Balance & Purchases
-  getBalances: () => apiFetch('/stock/balance'),
-  recordPurchase: (data: any) => apiFetch('/stock/purchase', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  })
+  getBalances: () => api.get('/stock/balance'),
+  recordPurchase: (data: any) => api.post('/stock/purchase', data),
+  
+  // Vendor Statements & Payments
+  getVendorStatement: (vendorId: number) => api.get(`/stock/vendors/${vendorId}/statement`),
+  recordVendorPayment: (data: any) => api.post('/stock/vendors/payment', data),
 };

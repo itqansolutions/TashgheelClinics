@@ -234,7 +234,7 @@ export function RecordPurchaseModal({ isOpen, onClose }: Props) {
               <Button 
                 onClick={handleSubmit}
                 className="px-10 rounded-2xl bg-brand-600 hover:bg-brand-700 shadow-xl shadow-brand-100 py-6"
-                isLoading={recordPurchaseMutation.isPending}
+                loading={recordPurchaseMutation.isPending}
                 leftIcon={<DollarSign className="w-4 h-4" />}
               >
                 Post Purchase Order

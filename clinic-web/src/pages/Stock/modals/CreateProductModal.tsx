@@ -153,7 +153,7 @@ export function CreateProductModal({ isOpen, onClose }: Props) {
             <Button 
               type="submit" 
               className="flex-[2] rounded-2xl bg-brand-600 hover:bg-brand-700 py-6 shadow-lg shadow-brand-100"
-              isLoading={createMutation.isPending}
+              loading={createMutation.isPending}
             >
               Create Product
             </Button>

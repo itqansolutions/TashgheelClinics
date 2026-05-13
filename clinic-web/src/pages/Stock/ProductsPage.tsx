@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useProducts } from '@/hooks/useStock';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
-import { Package, Plus, Search, Tag, DollarSign, Layers, Boxes, User, ArrowRight } from 'lucide-react';
+import { Package, Plus, Search, Tag, Layers, User, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import { CreateProductModal } from './modals/CreateProductModal';
 

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useProducts } from '@/hooks/useStock';
-import { Button } from '@/components/ui/Button';
-import { Search, Plus, Trash2, Package, Boxes, Scale } from 'lucide-react';
+import { Search, Plus, Trash2, Package, Boxes, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 
 interface UsedItem {
@@ -175,6 +174,3 @@ export function InventoryUsageTab({ usedItems, onChange }: Props) {
     </div>
   );
 }
-
-// Add missing icon
-import { ShoppingCart } from 'lucide-react';
