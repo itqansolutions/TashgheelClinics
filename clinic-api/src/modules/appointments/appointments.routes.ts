@@ -8,6 +8,8 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/doctor-me', appointmentsController.getDoctorMe);
+router.get('/available-slots', appointmentsController.getAvailableSlots);
+router.get('/available-doctors', appointmentsController.getAvailableDoctors);
 router.get('/',          appointmentsController.getAll);
 router.get('/:id',  appointmentsController.getOne);
 router.post('/',    appointmentsController.create);

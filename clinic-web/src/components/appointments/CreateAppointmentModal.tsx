@@ -4,9 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Clock, User, Stethoscope, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { useCreateAppointment } from '@/hooks/useAppointments';
+import { useCreateAppointment, useAvailableSlots, useAvailableDoctors } from '@/hooks/useAppointments';
 import { usePatientList, useCreatePatient } from '@/hooks/usePatients';
-import { useDoctorList } from '@/hooks/useDoctors';
 import { useSpecialtyList } from '@/hooks/useSpecialties';
 import { useLeadSources } from '@/hooks/useLookups';
 
@@ -50,7 +49,6 @@ interface Props {
 export function CreateAppointmentModal({ isOpen, onClose }: Props) {
   const [patientSearch, setPatientSearch] = useState('');
   const { data: patients } = usePatientList({ search: patientSearch, limit: 10 });
-  const { data: doctors } = useDoctorList({ limit: 100 });
   const { data: specialties } = useSpecialtyList();
   const { data: leadSources } = useLeadSources();
   
@@ -67,6 +65,12 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
 
   const isNewPatient = watch('isNewPatient');
   const selectedPatientId = watch('patientId');
+  const selectedDate = watch('date');
+  const selectedDoctorId = watch('doctorId');
+  const selectedTime = watch('time');
+
+  const { data: availableDoctors, isLoading: isLoadingDoctors } = useAvailableDoctors(selectedDate);
+  const { data: slots, isLoading: isLoadingSlots } = useAvailableSlots(selectedDoctorId, selectedDate);
   
   const allServices = specialties?.flatMap((s: any) => 
     s.services.map((svc: any) => ({ ...svc, specialtyName: s.name }))
@@ -95,7 +99,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
 
     if (!finalPatientId) return;
 
-    const startTime = new Date(`${values.date}T${values.time}`);
+    const startTime = new Date(values.time); // slots.time is full ISO string
     const service = allServices.find((s: any) => s.id === values.serviceId);
     const duration = service?.durationMin || 30;
     const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -291,15 +295,28 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
               
               <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Select Doctor</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Date</label>
+                  <input
+                    type="date"
+                    {...register('date')}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
+                  />
+                  {errors.date && <p className="text-xs text-red-500 font-bold">{errors.date.message}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Available Doctors for this Day</label>
                   <select
                     {...register('doctorId', { valueAsNumber: true })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
+                    className="w-full px-4 py-3 bg-brand-50/50 border-2 border-brand-100 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
                   >
-                    <option value="">Choose your specialist</option>
-                    {doctors?.data?.map((d: any) => (
+                    <option value="">{isLoadingDoctors ? 'Loading available doctors...' : 'Choose your specialist'}</option>
+                    {availableDoctors?.map((d: any) => (
                       <option key={d.id} value={d.id}>Dr. {d.user?.fullName || d.fullName} ({d.specialty?.name})</option>
                     ))}
+                    {!isLoadingDoctors && availableDoctors?.length === 0 && (
+                      <option disabled>No doctors available on this day</option>
+                    )}
                   </select>
                   {errors.doctorId && <p className="text-xs text-red-500 font-bold">{errors.doctorId.message}</p>}
                 </div>
@@ -324,38 +341,54 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
 
             <div className="space-y-6">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-brand-500" /> Scheduling
+                <Clock className="w-3.5 h-3.5 text-brand-500" /> Available Time Slots
               </h3>
               
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Date</label>
-                  <input
-                    type="date"
-                    {...register('date')}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
-                  />
-                  {errors.date && <p className="text-xs text-red-500 font-bold">{errors.date.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Preferred Time</label>
-                  <input
-                    type="time"
-                    {...register('time')}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
-                  />
-                  {errors.time && <p className="text-xs text-red-500 font-bold">{errors.time.message}</p>}
-                </div>
-              </div>
+              <div className="space-y-4">
+                {!selectedDoctorId ? (
+                  <div className="p-8 text-center bg-gray-50 rounded-[1.5rem] border border-dashed border-gray-200">
+                    <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select doctor to see slots</p>
+                  </div>
+                ) : isLoadingSlots ? (
+                  <div className="p-8 text-center">
+                    <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs font-bold text-gray-400">Fetching free slots...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {slots?.map((slot: any) => (
+                      <button
+                        key={slot.time}
+                        type="button"
+                        onClick={() => setValue('time', slot.time)}
+                        className={`py-3 px-2 rounded-xl text-[11px] font-black transition-all border ${
+                          selectedTime === slot.time
+                            ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                            : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    ))}
+                    {slots?.length === 0 && (
+                      <div className="col-span-full p-8 text-center bg-red-50 rounded-[1.5rem] border border-red-100">
+                        <p className="text-xs font-bold text-red-400 uppercase tracking-widest">No slots available</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {errors.time && <p className="text-xs text-red-500 font-bold ml-1">{errors.time.message}</p>}
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Internal Notes</label>
-                <textarea
-                  {...register('notes')}
-                  rows={2}
-                  placeholder="Private clinical notes..."
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm"
-                />
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Internal Notes</label>
+                  <textarea
+                    {...register('notes')}
+                    rows={2}
+                    placeholder="Private clinical notes..."
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm"
+                  />
+                </div>
               </div>
             </div>
           </div>

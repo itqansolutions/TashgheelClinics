@@ -34,4 +34,10 @@ export const appointmentsApi = {
     
   getDoctorMe: (params?: any) =>
     api.get('/appointments/doctor-me', { params }).then(res => res.data),
+
+  getAvailableSlots: (doctorId: number, date: string) =>
+    api.get('/appointments/available-slots', { params: { doctorId, date } }).then(res => res.data),
+
+  getAvailableDoctors: (date: string) =>
+    api.get('/appointments/available-doctors', { params: { date } }).then(res => res.data),
 };

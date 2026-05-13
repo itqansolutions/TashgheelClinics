@@ -90,5 +90,23 @@ export const appointmentsController = {
       );
       sendSuccess(res, result.data, 'OK', 200, result.meta);
     } catch (e) { next(e); }
+  },
+
+  async getAvailableSlots(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { doctorId, date } = req.query;
+      const { appointmentsRepo } = await import('./appointments.repo');
+      const slots = await appointmentsRepo.getAvailableSlots(Number(doctorId), String(date));
+      sendSuccess(res, slots);
+    } catch (e) { next(e); }
+  },
+
+  async getAvailableDoctors(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { date } = req.query;
+      const { appointmentsRepo } = await import('./appointments.repo');
+      const doctors = await appointmentsRepo.getAvailableDoctors(String(date));
+      sendSuccess(res, doctors);
+    } catch (e) { next(e); }
   }
 };

@@ -59,3 +59,25 @@ export function useDoctorAppointments(filters?: any, options: any = {}) {
     ...options
   });
 }
+
+export function useAvailableSlots(doctorId: number, date: string) {
+  return useQuery({
+    queryKey: [...APPOINTMENTS_KEY, 'available-slots', doctorId, date],
+    queryFn: async () => {
+      const res = await appointmentsApi.getAvailableSlots(doctorId, date);
+      return res.data;
+    },
+    enabled: !!doctorId && !!date
+  });
+}
+
+export function useAvailableDoctors(date: string) {
+  return useQuery({
+    queryKey: [...APPOINTMENTS_KEY, 'available-doctors', date],
+    queryFn: async () => {
+      const res = await appointmentsApi.getAvailableDoctors(date);
+      return res.data;
+    },
+    enabled: !!date
+  });
+}

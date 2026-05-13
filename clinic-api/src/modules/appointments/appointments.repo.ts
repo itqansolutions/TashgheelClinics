@@ -177,5 +177,86 @@ export const appointmentsRepo = {
 
   delete(id: number) {
     return prisma.appointment.delete({ where: { id } });
+  },
+
+  async getAvailableSlots(doctorId: number, date: string) {
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getUTCDay();
+
+    // 1. Get Doctor Schedule for this day
+    const schedules = await prisma.doctorSchedule.findMany({
+      where: { doctorId, dayOfWeek, isActive: true }
+    });
+
+    if (schedules.length === 0) return [];
+
+    // 2. Get existing appointments for this doctor on this day
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0,0,0,0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23,59,59,999);
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        doctorId,
+        startTime: { gte: startOfDay, lte: endOfDay },
+        status: { not: 'Cancelled' }
+      },
+      select: { startTime: true, endTime: true }
+    });
+
+    const slots: any[] = [];
+    const slotDuration = 30; // default 30 mins
+
+    for (const schedule of schedules) {
+      const [startH, startM] = schedule.startTime.split(':').map(Number);
+      const [endH, endM] = schedule.endTime.split(':').map(Number);
+
+      let current = new Date(date);
+      current.setUTCHours(startH, startM, 0, 0);
+
+      const end = new Date(date);
+      end.setUTCHours(endH, endM, 0, 0);
+
+      while (current < end) {
+        const slotEnd = new Date(current.getTime() + slotDuration * 60000);
+        
+        // Check if this slot overlaps with any appointment
+        const isTaken = appointments.some(apt => {
+          const aptStart = new Date(apt.startTime);
+          const aptEnd = new Date(apt.endTime);
+          return (current < aptEnd && slotEnd > aptStart);
+        });
+
+        if (!isTaken) {
+          slots.push({
+            time: current.toISOString(),
+            label: current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+          });
+        }
+
+        current = new Date(current.getTime() + slotDuration * 60000);
+      }
+    }
+
+    return slots;
+  },
+
+  async getAvailableDoctors(date: string) {
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getUTCDay();
+
+    return prisma.doctor.findMany({
+      where: {
+        isActive: true,
+        schedules: {
+          some: { dayOfWeek, isActive: true }
+        }
+      },
+      include: {
+        user: { select: { fullName: true } },
+        specialty: { select: { name: true } }
+      }
+    });
   }
 };
