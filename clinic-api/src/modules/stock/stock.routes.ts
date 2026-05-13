@@ -22,4 +22,7 @@ router.post('/vendors', rbac('Admin', 'Manager'), stockController.createVendor);
 router.get('/vendors/:id/statement', rbac('Admin', 'Manager', 'Accountant'), stockController.getVendorStatement);
 router.post('/vendors/payment', rbac('Admin', 'Manager', 'Accountant'), stockController.recordVendorPayment);
 
+// Ledger
+router.get('/ledger/:id', rbac('Admin', 'Manager', 'Accountant'), stockController.getProductLedger);
+
 export default router;

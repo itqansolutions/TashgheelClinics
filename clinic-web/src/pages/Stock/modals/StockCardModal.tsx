@@ -5,8 +5,8 @@ import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Loader';
 import { formatDate, formatCurrency } from '@/utils/format';
 import { 
-  Package, TrendingUp, TrendingDown, 
-  History, AlertCircle, Info, ArrowUpRight, 
+  Package, 
+  History, ArrowUpRight, 
   ArrowDownRight, RefreshCw
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -30,7 +30,7 @@ export function StockCardModal({ isOpen, onClose, product }: Props) {
   const ledger = ledgerData?.data || [];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Stock Card / Product History" size="xl">
+    <Modal open={isOpen} onClose={onClose} title="Stock Card / Product History" size="xl">
       {isLoading ? (
         <div className="py-20 flex justify-center"><PageLoader /></div>
       ) : (
