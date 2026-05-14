@@ -33,7 +33,7 @@ export class StockRepository {
 
       if (!product) throw new Error('Product not found');
 
-      const balanceBefore = product.currentStock;
+      const balanceBefore = Number(product.currentStock);
       const balanceAfter = balanceBefore + data.quantity;
 
       // Negative stock protection
@@ -59,7 +59,7 @@ export class StockRepository {
       // Update product balance and average cost if it's a purchase
       let newAverageCost = product.averageCost;
       if (data.type === 'Purchase' && data.quantity > 0) {
-        const currentTotalCost = product.averageCost.toNumber() * balanceBefore;
+        const currentTotalCost = product.averageCost.toNumber() * Number(balanceBefore);
         const purchaseTotalCost = data.cost * data.quantity;
         newAverageCost = (currentTotalCost + purchaseTotalCost) / balanceAfter as any;
       }
