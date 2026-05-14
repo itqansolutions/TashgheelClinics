@@ -50,7 +50,7 @@ export class StockController {
           const product = await tx.product.findUnique({ where: { id: Number(item.productId) } });
           if (!product) throw new Error(`Product ${item.productId} not found`);
 
-          const balanceBefore = product.currentStock;
+          const balanceBefore = Number(product.currentStock);
           const balanceAfter = balanceBefore + Number(item.quantity);
 
           // Calculate new average cost

@@ -118,7 +118,7 @@ export const appointmentsRepo = {
         
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;
-          const deduct = Math.min(batch.remainingQuantity, remainingToDeduct);
+          const deduct = Math.min(Number(batch.remainingQuantity), remainingToDeduct);
           
           await tx.purchaseItem.update({
             where: { id: batch.id },
@@ -147,7 +147,7 @@ export const appointmentsRepo = {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product) throw new Error(`Product ${item.productId} not found`);
 
-        const balanceBefore = product.currentStock;
+        const balanceBefore = Number(product.currentStock);
         const balanceAfter = balanceBefore - item.quantity;
 
         // Update product balance
