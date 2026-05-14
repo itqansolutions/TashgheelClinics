@@ -1,5 +1,6 @@
 import prisma from '../../config/db';
 import { PaginationResult } from '../../utils/pagination';
+import { AppError } from '../../middleware/errorHandler';
 
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Done' | 'Cancelled' | string;
 
@@ -118,18 +119,19 @@ export const appointmentsRepo = {
         
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;
-          const deduct = Math.min(Number(batch.remainingQuantity), remainingToDeduct);
+          const currentBatchQty = Number(batch.remainingQuantity);
+          const deduct = Math.min(currentBatchQty, remainingToDeduct);
           
           await tx.purchaseItem.update({
             where: { id: batch.id },
-            data: { remainingQuantity: { decrement: deduct } }
+            data: { remainingQuantity: currentBatchQty - deduct }
           });
           
           remainingToDeduct -= deduct;
         }
 
         if (remainingToDeduct > 0) {
-          throw new Error(`Insufficient batch stock for item ID ${item.productId}. Still need ${remainingToDeduct}`);
+          throw new AppError(`Insufficient batch stock for item ID ${item.productId}. Still need ${remainingToDeduct.toFixed(2)}. Please ensure you have recorded purchases (batches) for this product before using it.`, 400);
         }
 
         // Record usage in SessionItem
