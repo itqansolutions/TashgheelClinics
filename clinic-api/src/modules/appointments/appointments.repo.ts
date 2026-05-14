@@ -130,9 +130,9 @@ export const appointmentsRepo = {
           remainingToDeduct -= deduct;
         }
 
-        if (remainingToDeduct > 0) {
-          throw new AppError(`Insufficient batch stock for item ID ${item.productId}. Still need ${remainingToDeduct.toFixed(2)}. Please ensure you have recorded purchases (batches) for this product before using it.`, 400);
-        }
+        // Note: We allow deduction even if batches are insufficient or missing, 
+        // as requested by the user to work without strict batch tracking if needed.
+        // The total stock deduction still happens below.
 
         // Record usage in SessionItem
         await tx.sessionItem.create({
