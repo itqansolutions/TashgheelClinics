@@ -6,10 +6,12 @@ import { Package, Plus, Search, Tag, Layers, User, ArrowRight } from 'lucide-rea
 import { formatCurrency } from '@/utils/format';
 import { CreateProductModal } from './modals/CreateProductModal';
 import { UpdateProductModal } from './modals/UpdateProductModal';
+import { StockCardModal } from './modals/StockCardModal';
 
 export function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [search, setSearch] = useState('');
   const { data, isLoading } = useProducts();
@@ -112,6 +114,10 @@ export function ProductsPage() {
                         variant="ghost" 
                         size="sm" 
                         className="rounded-xl h-8 text-[10px] font-black uppercase tracking-widest"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsCardModalOpen(true);
+                        }}
                       >
                         View Card
                       </Button>
@@ -151,6 +157,12 @@ export function ProductsPage() {
       <UpdateProductModal 
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
+        product={selectedProduct}
+      />
+
+      <StockCardModal
+        isOpen={isCardModalOpen}
+        onClose={() => setIsCardModalOpen(false)}
         product={selectedProduct}
       />
     </div>
