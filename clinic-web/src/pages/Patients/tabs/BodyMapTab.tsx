@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Info } from 'lucide-react';
+import { Save, Info, StickyNote } from 'lucide-react';
 import { usePatientAreas } from '@/hooks/usePatients';
 import { useBodyAreas } from '@/hooks/useLookups';
 import { patientsApi } from '@/api/index';
@@ -19,16 +19,22 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
   const [zone, setZone]                 = useState<Zone>('front');
   const [activeAreaId, setActiveAreaId] = useState<number | null>(null);
   const [areaNote, setAreaNote]         = useState('');
+  // Track notes per area locally so edits aren't lost when switching areas
+  const [localNotes, setLocalNotes]     = useState<Record<number, string>>({});
   const [dirty, setDirty]               = useState(false);
 
+  // Initialise selections from DB on first load — also seed localNotes from saved data
   if (!initialized && patientAreas.length > 0) {
     setSelectedIds(new Set(patientAreas.map((a: PatientArea) => a.areaId)));
+    const notes: Record<number, string> = {};
+    patientAreas.forEach((a: PatientArea) => { if (a.notes) notes[a.areaId] = a.notes; });
+    setLocalNotes(notes);
     setInitialized(true);
   }
-  const { data: bodyAreas = [], isLoading: bodyLoading }     = useBodyAreas(zone);
+
+  const { data: bodyAreas = [], isLoading: bodyLoading } = useBodyAreas(zone);
   const qc = useQueryClient();
 
-  // Initialise selections from DB on first load
   const savedIds = new Set(patientAreas.map((a: PatientArea) => a.areaId));
 
   const updateAreasMutation = useMutation({
@@ -46,32 +52,62 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
       const next = new Set(prev);
       if (next.has(areaId)) {
         next.delete(areaId);
-        if (activeAreaId === areaId) setActiveAreaId(null);
+        if (activeAreaId === areaId) { setActiveAreaId(null); setAreaNote(''); }
       } else {
         next.add(areaId);
         setActiveAreaId(areaId);
-        const existing = patientAreas.find((a: PatientArea) => a.areaId === areaId);
-        setAreaNote(existing?.notes ?? '');
+        // Use localNotes first, fall back to saved data
+        const savedNote = localNotes[areaId]
+          ?? patientAreas.find((a: PatientArea) => a.areaId === areaId)?.notes
+          ?? '';
+        setAreaNote(savedNote);
       }
       setDirty(true);
       return next;
     });
-  }, [canEdit, activeAreaId, patientAreas]);
+  }, [canEdit, activeAreaId, patientAreas, localNotes]);
+
+  const handleAreaClick = (areaId: number) => {
+    // Save current note to localNotes before switching
+    if (activeAreaId !== null) {
+      setLocalNotes((prev) => ({ ...prev, [activeAreaId]: areaNote }));
+    }
+    setActiveAreaId(areaId);
+    // Use the latest local note, fall back to saved DB value
+    const note = localNotes[areaId]
+      ?? patientAreas.find((a: PatientArea) => a.areaId === areaId)?.notes
+      ?? '';
+    setAreaNote(note);
+  };
+
+  const handleNoteChange = (value: string) => {
+    setAreaNote(value);
+    if (activeAreaId !== null) {
+      setLocalNotes((prev) => ({ ...prev, [activeAreaId]: value }));
+    }
+    setDirty(true);
+  };
 
   const handleSave = () => {
-    const areas = Array.from(selectedIds).map((areaId) => {
-      const existing = patientAreas.find((a: PatientArea) => a.areaId === areaId);
-      return {
-        areaId,
-        notes: activeAreaId === areaId ? areaNote : (existing?.notes ?? undefined),
-      };
-    });
+    // Flush current areaNote into localNotes before saving
+    const mergedNotes = activeAreaId !== null
+      ? { ...localNotes, [activeAreaId]: areaNote }
+      : { ...localNotes };
+
+    const areas = Array.from(allSelected).map((areaId) => ({
+      areaId,
+      notes: mergedNotes[areaId] || undefined,
+    }));
     updateAreasMutation.mutate(areas);
   };
 
   const allSelected = new Set([...savedIds, ...selectedIds]);
 
   if (areasLoading || bodyLoading) return <div className="p-5"><PageLoader /></div>;
+
+  // Compute effective note for a given areaId (local override > saved DB)
+  const getNote = (areaId: number): string =>
+    localNotes[areaId] ?? patientAreas.find((a: PatientArea) => a.areaId === areaId)?.notes ?? '';
 
   return (
     <div className="p-5">
@@ -120,13 +156,13 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
             bodyAreas={bodyAreas}
             selectedIds={allSelected}
             activeAreaId={activeAreaId}
-            onToggle={toggleArea}
+            onToggle={canEdit ? toggleArea : handleAreaClick}
             canEdit={canEdit}
           />
         </div>
 
         {/* Area list + note panel */}
-        <div className="w-56 shrink-0 space-y-3">
+        <div className="w-60 shrink-0 space-y-3">
           {/* Selected areas list */}
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -134,30 +170,38 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
             </p>
             {allSelected.size === 0 ? (
               <p className="text-xs text-gray-400 text-center py-3">
-                Click on the body to select areas
+                {canEdit ? 'Click on the body to select areas' : 'No areas marked'}
               </p>
             ) : (
               <div className="space-y-1 max-h-56 overflow-y-auto">
                 {bodyAreas
                   .filter((a) => allSelected.has(a.id))
                   .map((area) => {
-                    const pa = patientAreas.find((p: PatientArea) => p.areaId === area.id);
+                    const note = getNote(area.id);
                     return (
                       <div
                         key={area.id}
-                        onClick={() => {
-                          setActiveAreaId(area.id);
-                          setAreaNote(pa?.notes ?? '');
-                        }}
+                        onClick={() => handleAreaClick(area.id)}
                         className={clsx(
-                          'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-xs transition-colors',
+                          'px-2 py-1.5 rounded-lg cursor-pointer text-xs transition-colors',
                           activeAreaId === area.id
-                            ? 'bg-brand-50 text-brand-700'
+                            ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
                             : 'hover:bg-white text-gray-700'
                         )}
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0" />
-                        {area.name}
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0" />
+                          <span className="font-medium">{area.name}</span>
+                          {note && (
+                            <StickyNote className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
+                          )}
+                        </div>
+                        {/* Show note preview in the list */}
+                        {note && activeAreaId !== area.id && (
+                          <p className="text-[10px] text-gray-400 mt-0.5 ml-3.5 line-clamp-1">
+                            {note}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -165,26 +209,47 @@ export function BodyMapTab({ patientId, canEdit }: { patientId: number; canEdit:
             )}
           </div>
 
-          {/* Note panel for active area */}
-          {activeAreaId && allSelected.has(activeAreaId) && canEdit && (
-            <div className="bg-brand-50 rounded-xl p-3 border border-brand-100">
-              <p className="text-[11px] font-semibold text-brand-700 mb-1.5">
+          {/* Note panel for active area — visible in BOTH edit and view modes */}
+          {activeAreaId !== null && allSelected.has(activeAreaId) && (
+            <div className={clsx(
+              'rounded-xl p-3 border',
+              canEdit
+                ? 'bg-brand-50 border-brand-100'
+                : 'bg-amber-50 border-amber-100'
+            )}>
+              <p className={clsx(
+                'text-[11px] font-semibold mb-1.5',
+                canEdit ? 'text-brand-700' : 'text-amber-700'
+              )}>
                 {bodyAreas.find((a) => a.id === activeAreaId)?.name} — Note
               </p>
-              <textarea
-                value={areaNote}
-                onChange={(e) => { setAreaNote(e.target.value); setDirty(true); }}
-                placeholder="Add clinical note for this area…"
-                rows={3}
-                className="w-full text-xs px-2 py-1.5 rounded-lg border border-brand-200 bg-white resize-none focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
+              {canEdit ? (
+                <textarea
+                  value={areaNote}
+                  onChange={(e) => handleNoteChange(e.target.value)}
+                  placeholder="Add clinical note for this area…"
+                  rows={3}
+                  className="w-full text-xs px-2 py-1.5 rounded-lg border border-brand-200 bg-white resize-none focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              ) : (
+                /* READ-ONLY: display saved note */
+                <p className="text-xs text-amber-800 leading-relaxed whitespace-pre-wrap">
+                  {getNote(activeAreaId) || (
+                    <span className="text-amber-400 italic">No note added for this area.</span>
+                  )}
+                </p>
+              )}
             </div>
           )}
 
           {/* Hint */}
           <div className="flex items-start gap-1.5 text-[11px] text-gray-400">
             <Info className="w-3 h-3 mt-0.5 shrink-0" />
-            <span>Click a highlighted area to add clinical notes.</span>
+            <span>
+              {canEdit
+                ? 'Click a highlighted area to view or add clinical notes.'
+                : 'Click a highlighted area to view its clinical notes.'}
+            </span>
           </div>
         </div>
       </div>
@@ -199,7 +264,6 @@ export function BodySvg({
   selectedIds = new Set(), 
   activeAreaId = null, 
   onToggle = () => {}, 
-  canEdit = false,
   areaProps: customAreaProps
 }: {
   zone: Zone;
@@ -207,7 +271,7 @@ export function BodySvg({
   selectedIds?: Set<number>;
   activeAreaId?: number | null;
   onToggle?: (id: number) => void;
-  canEdit?: boolean;
+  canEdit?: boolean; // kept in type for backwards compat but unused internally
   areaProps?: (id: number) => React.SVGProps<SVGPathElement>;
 }) {
   // Build a lookup: svgId → areaId
@@ -223,8 +287,9 @@ export function BodySvg({
       fill: activeAreaId === areaId ? '#2563eb' : (selectedIds.has(areaId) ? '#93c5fd' : '#e5e7eb'),
       stroke: activeAreaId === areaId ? '#1d4ed8' : (selectedIds.has(areaId) ? '#3b82f6' : '#d1d5db'),
       strokeWidth: 1.5,
-      className: `transition-colors duration-200 ${canEdit ? 'cursor-pointer hover:opacity-80' : ''}`,
-      onClick: () => canEdit && onToggle(areaId),
+      // Always allow clicking to view notes, but only show pointer cursor in edit mode for toggling
+      className: `transition-colors duration-200 cursor-pointer hover:opacity-80`,
+      onClick: () => onToggle(areaId),
       style: { transition: 'fill 0.15s, stroke 0.15s' }
     };
   };
