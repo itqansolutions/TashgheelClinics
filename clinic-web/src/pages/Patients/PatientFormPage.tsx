@@ -16,14 +16,15 @@ import { clsx } from 'clsx';
 // ── Schema ────────────────────────────────────────────────────────────────
 const schema = z.object({
   // Step 1
-  fullName:     z.string().min(2, 'Name must be at least 2 characters').max(200),
-  phone:        z.string().max(30).optional().or(z.literal('')),
-  email:        z.string().email('Invalid email').optional().or(z.literal('')),
-  dateOfBirth:  z.string().optional(),
-  gender:       z.enum(['M', 'F', '']).optional(),
-  nationality:  z.enum(['Egyptian', 'Foreigner', '']).optional(),
-  countryId:    z.string().optional(),
-  leadSourceId: z.string().optional(),
+  fullName:        z.string().min(2, 'Name must be at least 2 characters').max(200),
+  phone:           z.string().max(30).optional().or(z.literal('')),
+  email:           z.string().email('Invalid email').optional().or(z.literal('')),
+  dateOfBirth:     z.string().optional(),
+  gender:          z.enum(['M', 'F', '']).optional(),
+  nationality:     z.enum(['Egyptian', 'Foreigner', '']).optional(),
+  countryId:       z.string().optional(),
+  leadSourceId:    z.string().optional(),
+  otherLeadSource: z.string().optional(),
   // Step 2
   medicalHistory: z.string().optional(),
   notes:          z.string().optional(),
@@ -50,12 +51,16 @@ export function PatientFormPage() {
     defaultValues: {
       fullName: '', phone: '', email: '', dateOfBirth: '',
       gender: '', nationality: '', countryId: '', leadSourceId: '',
+      otherLeadSource: '',
       medicalHistory: '', notes: '',
     },
   });
 
   const { register, handleSubmit, trigger, watch, formState: { errors, isSubmitting } } = methods;
   const values = watch();
+
+  const selectedLeadSource = leadSources?.find((ls) => String(ls.id) === values.leadSourceId);
+  const isOtherLeadSource = selectedLeadSource?.name?.toLowerCase() === 'other';
 
   // Validate only step 1 fields before advancing
   const handleNext = async () => {
@@ -77,7 +82,9 @@ export function PatientFormPage() {
       countryId:    data.countryId ? Number(data.countryId) : undefined,
       leadSourceId: data.leadSourceId ? Number(data.leadSourceId) : undefined,
       medicalHistory: data.medicalHistory || undefined,
-      notes:        data.notes || undefined,
+      notes:        data.otherLeadSource
+        ? `[Lead Source Other: ${data.otherLeadSource}]${data.notes ? ' ' + data.notes : ''}`
+        : data.notes || undefined,
     };
     const res = await create.mutateAsync(payload);
     navigate(`/patients/${(res.data.data as { id: number }).id}`);
@@ -202,6 +209,14 @@ export function PatientFormPage() {
                   placeholder="Select lead source"
                   {...register('leadSourceId')}
                 />
+
+                {isOtherLeadSource && (
+                  <Input
+                    label="Please specify the source"
+                    placeholder="e.g. Referred by a friend, Radio, etc."
+                    {...register('otherLeadSource')}
+                  />
+                )}
               </div>
             )}
 
@@ -245,8 +260,13 @@ export function PatientFormPage() {
                   <ConfirmRow label="Gender"       value={values.gender === 'M' ? 'Male' : values.gender === 'F' ? 'Female' : '—'} />
                   <ConfirmRow label="Nationality"  value={values.nationality || '—'} />
                   <ConfirmRow label="Date of Birth" value={values.dateOfBirth || '—'} />
-                  <ConfirmRow label="Lead Source"
-                    value={leadSources?.find((ls) => String(ls.id) === values.leadSourceId)?.name ?? '—'}
+                  <ConfirmRow
+                    label="Lead Source"
+                    value={
+                      isOtherLeadSource
+                        ? `Other — ${values.otherLeadSource || '(not specified)'}`
+                        : selectedLeadSource?.name ?? '—'
+                    }
                   />
                   {values.medicalHistory && (
                     <ConfirmRow label="Medical History" value={values.medicalHistory} multiline />

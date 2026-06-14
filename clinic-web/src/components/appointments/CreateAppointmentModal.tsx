@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Calendar, Clock, User, Stethoscope, Search } from 'lucide-react';
+import { X, Calendar, Clock, User, Stethoscope, Search, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useCreateAppointment, useAvailableSlots, useAvailableDoctors } from '@/hooks/useAppointments';
 import { usePatientList, useCreatePatient } from '@/hooks/usePatients';
 import { useSpecialtyList } from '@/hooks/useSpecialties';
 import { useLeadSources } from '@/hooks/useLookups';
+import { useDoctorList } from '@/hooks/useDoctors';
 
 const schema = z.object({
   // Appointment Details
-  doctorId: z.number().min(1, 'Please select a doctor'),
-  serviceId: z.number().min(1, 'Please select a service'),
+  doctorId: z.number({ invalid_type_error: 'Please select a doctor' }).min(1, 'Please select a doctor'),
+  serviceId: z.number({ invalid_type_error: 'Please select a service' }).min(1, 'Please select a service'),
   date: z.string().min(1, 'Please select a date'),
   time: z.string().min(1, 'Please select a time'),
   notes: z.string().optional(),
@@ -41,6 +42,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+// Selection mode: choose doctor first, then date — or choose date first, then doctor
+type SelectionMode = 'doctor-first' | 'date-first';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -48,10 +52,13 @@ interface Props {
 
 export function CreateAppointmentModal({ isOpen, onClose }: Props) {
   const [patientSearch, setPatientSearch] = useState('');
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>('date-first');
+
   const { data: patients } = usePatientList({ search: patientSearch, limit: 10 });
   const { data: specialties } = useSpecialtyList();
   const { data: leadSources } = useLeadSources();
-  
+  const { data: allDoctorsData } = useDoctorList({ limit: 100 }); // all registered doctors
+
   const createMutation = useCreateAppointment();
   const createPatientMutation = useCreatePatient();
 
@@ -69,12 +76,26 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
   const selectedDoctorId = watch('doctorId');
   const selectedTime = watch('time');
 
-  const { data: availableDoctors, isLoading: isLoadingDoctors } = useAvailableDoctors(selectedDate);
-  const { data: slots, isLoading: isLoadingSlots } = useAvailableSlots(selectedDoctorId, selectedDate);
+  // When date-first: show available doctors for selected date
+  const { data: availableDoctors, isLoading: isLoadingAvailDoctors } = useAvailableDoctors(
+    selectionMode === 'date-first' ? selectedDate : ''
+  );
+
+  // When doctor-first: we show all doctors, then get their available dates
+  // For slots, we always need both doctorId and date
+  const { data: slots, isLoading: isLoadingSlots } = useAvailableSlots(
+    selectedDoctorId,
+    selectedDate
+  );
   
   const allServices = specialties?.flatMap((s: any) => 
-    s.services.map((svc: any) => ({ ...svc, specialtyName: s.name }))
-  ) || [];
+    s.services?.map((svc: any) => ({ ...svc, specialtyName: s.name }))
+  ).filter(Boolean) || [];
+
+  // The doctor list to display depends on mode
+  const doctorList = selectionMode === 'date-first'
+    ? availableDoctors || []
+    : allDoctorsData?.data || allDoctorsData || [];
 
   const onSubmit = async (values: FormValues) => {
     let finalPatientId = values.patientId;
@@ -99,7 +120,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
 
     if (!finalPatientId) return;
 
-    const startTime = new Date(values.time); // slots.time is full ISO string
+    const startTime = new Date(values.time);
     const service = allServices.find((s: any) => s.id === values.serviceId);
     const duration = service?.durationMin || 30;
     const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -123,10 +144,13 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-white/20">
         {/* Header */}
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-brand-600 to-brand-500 text-white relative">
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-brand-600 to-brand-500 text-white relative shrink-0">
           <div className="flex items-center gap-4 relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
               <Calendar className="w-8 h-8 text-white" />
@@ -136,19 +160,19 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
               <p className="text-brand-100 text-sm font-medium opacity-90 tracking-wide">Schedule a professional visit</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-3 hover:bg-white/20 rounded-2xl transition-all hover:rotate-90 duration-300"
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-3 hover:bg-white/20 rounded-2xl transition-all hover:rotate-90 duration-300 relative z-10"
           >
             <X className="w-6 h-6" />
           </button>
-          
           {/* Decorative pattern */}
           <div className="absolute top-0 right-0 w-64 h-full bg-white/5 skew-x-[-20deg] translate-x-20" />
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-8 overflow-y-auto space-y-8 custom-scrollbar flex-1">
           
           {/* Patient Section */}
           <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-6">
@@ -286,41 +310,162 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
             {errors.patientId && <p className="text-xs text-red-500 font-bold ml-1">Please select or register a patient</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Appointment Details Grid */}
-            <div className="space-y-6">
+          {/* Scheduling Section */}
+          <div className="space-y-4">
+            {/* Mode toggle: how to select */}
+            <div className="flex items-center justify-between">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Stethoscope className="w-3.5 h-3.5 text-brand-500" /> Medical Service
+                <Stethoscope className="w-3.5 h-3.5 text-brand-500" /> Scheduling
               </h3>
-              
-              <div className="grid grid-cols-1 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Date</label>
-                  <input
-                    type="date"
-                    {...register('date')}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
-                  />
-                  {errors.date && <p className="text-xs text-red-500 font-bold">{errors.date.message}</p>}
-                </div>
+              <div className="flex bg-gray-100 p-1 rounded-xl text-[10px] font-black uppercase tracking-wider">
+                <button
+                  type="button"
+                  onClick={() => { setSelectionMode('date-first'); setValue('doctorId', undefined as any); setValue('time', ''); }}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${selectionMode === 'date-first' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <Calendar className="w-3 h-3" /> Date → Doctor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectionMode('doctor-first'); setValue('time', ''); }}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${selectionMode === 'doctor-first' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <User className="w-3 h-3" /> Doctor → Date
+                </button>
+              </div>
+            </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Available Doctors for this Day</label>
-                  <select
-                    {...register('doctorId', { valueAsNumber: true })}
-                    className="w-full px-4 py-3 bg-brand-50/50 border-2 border-brand-100 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
-                  >
-                    <option value="">{isLoadingDoctors ? 'Loading available doctors...' : 'Choose your specialist'}</option>
-                    {availableDoctors?.map((d: any) => (
-                      <option key={d.id} value={d.id}>Dr. {d.user?.fullName || d.fullName} ({d.specialty?.name})</option>
-                    ))}
-                    {!isLoadingDoctors && availableDoctors?.length === 0 && (
-                      <option disabled>No doctors available on this day</option>
-                    )}
-                  </select>
-                  {errors.doctorId && <p className="text-xs text-red-500 font-bold">{errors.doctorId.message}</p>}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left column */}
+              <div className="space-y-5">
+                {selectionMode === 'date-first' ? (
+                  <>
+                    {/* STEP 1: Pick Date */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-1">
+                        <span className="w-5 h-5 rounded-full bg-brand-600 text-white text-[9px] flex items-center justify-center font-black">1</span>
+                        Select a Date
+                      </label>
+                      <input
+                        type="date"
+                        {...register('date')}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
+                        onChange={(e) => { setValue('date', e.target.value); setValue('doctorId', undefined as any); setValue('time', ''); }}
+                      />
+                      {errors.date && <p className="text-xs text-red-500 font-bold">{errors.date.message}</p>}
+                    </div>
 
+                    {/* STEP 2: Pick Doctor (filtered by date) */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-1">
+                        <span className="w-5 h-5 rounded-full bg-brand-600 text-white text-[9px] flex items-center justify-center font-black">2</span>
+                        Available Doctors on This Day
+                      </label>
+                      {isLoadingAvailDoctors ? (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl text-xs text-gray-400 font-bold">
+                          <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                          Loading available doctors...
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-44 overflow-y-auto custom-scrollbar pr-1">
+                          {doctorList.length === 0 ? (
+                            <div className="p-4 text-center bg-orange-50 border border-orange-100 rounded-xl">
+                              <p className="text-xs font-bold text-orange-500">No doctors scheduled on this day</p>
+                            </div>
+                          ) : (
+                            doctorList.map((d: any) => {
+                              const name = d.user?.fullName || d.fullName || 'Unknown';
+                              const specialty = d.specialty?.name || '';
+                              return (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onClick={() => { setValue('doctorId', d.id); setValue('time', ''); }}
+                                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                    selectedDoctorId === d.id
+                                      ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                                      : 'bg-white border-gray-100 hover:border-brand-200 hover:bg-brand-50/30'
+                                  }`}
+                                >
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${selectedDoctorId === d.id ? 'bg-white/20' : 'bg-brand-50'}`}>
+                                    <User className={`w-4 h-4 ${selectedDoctorId === d.id ? 'text-white' : 'text-brand-600'}`} />
+                                  </div>
+                                  <div>
+                                    <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>Dr. {name}</p>
+                                    <p className={`text-[10px] ${selectedDoctorId === d.id ? 'text-brand-100' : 'text-gray-500'}`}>{specialty}</p>
+                                  </div>
+                                  {selectedDoctorId === d.id && <ArrowRight className="w-4 h-4 text-white ml-auto" />}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                      {errors.doctorId && <p className="text-xs text-red-500 font-bold">{errors.doctorId.message}</p>}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* DOCTOR-FIRST: Pick Doctor from all */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-1">
+                        <span className="w-5 h-5 rounded-full bg-brand-600 text-white text-[9px] flex items-center justify-center font-black">1</span>
+                        Select a Doctor
+                      </label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                        {(!doctorList || doctorList.length === 0) ? (
+                          <div className="p-4 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                            <p className="text-xs font-bold text-gray-400">No registered doctors found</p>
+                          </div>
+                        ) : (
+                          doctorList.map((d: any) => {
+                            const name = d.user?.fullName || d.fullName || 'Unknown';
+                            const specialty = d.specialty?.name || '';
+                            return (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => { setValue('doctorId', d.id); setValue('time', ''); }}
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                  selectedDoctorId === d.id
+                                    ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                                    : 'bg-white border-gray-100 hover:border-brand-200 hover:bg-brand-50/30'
+                                }`}
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${selectedDoctorId === d.id ? 'bg-white/20' : 'bg-brand-50'}`}>
+                                  <User className={`w-4 h-4 ${selectedDoctorId === d.id ? 'text-white' : 'text-brand-600'}`} />
+                                </div>
+                                <div>
+                                  <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>Dr. {name}</p>
+                                  <p className={`text-[10px] ${selectedDoctorId === d.id ? 'text-brand-100' : 'text-gray-500'}`}>{specialty}</p>
+                                </div>
+                                {selectedDoctorId === d.id && <ArrowRight className="w-4 h-4 text-white ml-auto" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      {errors.doctorId && <p className="text-xs text-red-500 font-bold">{errors.doctorId.message}</p>}
+                    </div>
+
+                    {/* DOCTOR-FIRST: Pick Date */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-1">
+                        <span className="w-5 h-5 rounded-full bg-brand-600 text-white text-[9px] flex items-center justify-center font-black">2</span>
+                        Select a Date
+                      </label>
+                      <input
+                        type="date"
+                        {...register('date')}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-bold"
+                        onChange={(e) => { setValue('date', e.target.value); setValue('time', ''); }}
+                      />
+                      {errors.date && <p className="text-xs text-red-500 font-bold">{errors.date.message}</p>}
+                    </div>
+                  </>
+                )}
+
+                {/* Service */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Procedure / Service</label>
                   <select
@@ -337,57 +482,63 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
                   {errors.serviceId && <p className="text-xs text-red-500 font-bold">{errors.serviceId.message}</p>}
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-brand-500" /> Available Time Slots
-              </h3>
-              
+              {/* Right column: Time Slots */}
               <div className="space-y-4">
-                {!selectedDoctorId ? (
-                  <div className="p-8 text-center bg-gray-50 rounded-[1.5rem] border border-dashed border-gray-200">
-                    <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select doctor to see slots</p>
-                  </div>
-                ) : isLoadingSlots ? (
-                  <div className="p-8 text-center">
-                    <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-xs font-bold text-gray-400">Fetching free slots...</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                    {slots?.map((slot: any) => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        onClick={() => setValue('time', slot.time)}
-                        className={`py-3 px-2 rounded-xl text-[11px] font-black transition-all border ${
-                          selectedTime === slot.time
-                            ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
-                            : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
-                        }`}
-                      >
-                        {slot.label}
-                      </button>
-                    ))}
-                    {slots?.length === 0 && (
-                      <div className="col-span-full p-8 text-center bg-red-50 rounded-[1.5rem] border border-red-100">
-                        <p className="text-xs font-bold text-red-400 uppercase tracking-widest">No slots available</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {errors.time && <p className="text-xs text-red-500 font-bold ml-1">{errors.time.message}</p>}
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-brand-500" /> Available Time Slots
+                </h3>
+                
+                <div className="space-y-4">
+                  {!selectedDoctorId ? (
+                    <div className="p-8 text-center bg-gray-50 rounded-[1.5rem] border border-dashed border-gray-200">
+                      <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select a doctor to see slots</p>
+                    </div>
+                  ) : !selectedDate ? (
+                    <div className="p-8 text-center bg-gray-50 rounded-[1.5rem] border border-dashed border-gray-200">
+                      <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select a date to see slots</p>
+                    </div>
+                  ) : isLoadingSlots ? (
+                    <div className="p-8 text-center">
+                      <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-xs font-bold text-gray-400">Fetching free slots...</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                      {slots?.map((slot: any) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          onClick={() => setValue('time', slot.time)}
+                          className={`py-3 px-2 rounded-xl text-[11px] font-black transition-all border ${
+                            selectedTime === slot.time
+                              ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                              : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
+                          }`}
+                        >
+                          {slot.label}
+                        </button>
+                      ))}
+                      {slots?.length === 0 && (
+                        <div className="col-span-full p-8 text-center bg-red-50 rounded-[1.5rem] border border-red-100">
+                          <p className="text-xs font-bold text-red-400 uppercase tracking-widest">No slots available for this day</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {errors.time && <p className="text-xs text-red-500 font-bold ml-1">{errors.time.message}</p>}
 
-                <div className="space-y-1.5 pt-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Internal Notes</label>
-                  <textarea
-                    {...register('notes')}
-                    rows={2}
-                    placeholder="Private clinical notes..."
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm"
-                  />
+                  <div className="space-y-1.5 pt-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Internal Notes</label>
+                    <textarea
+                      {...register('notes')}
+                      rows={2}
+                      placeholder="Private clinical notes..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -407,7 +558,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
               className="flex-1 py-6 h-auto text-sm font-black uppercase tracking-widest rounded-[1.5rem] bg-brand-600 hover:bg-brand-700 shadow-2xl shadow-brand-200 transition-all"
               loading={createMutation.isPending || createPatientMutation.isPending}
             >
-              Confirm Appointment & Register
+              Confirm Appointment &amp; Register
             </Button>
           </div>
         </form>

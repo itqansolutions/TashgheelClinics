@@ -61,8 +61,8 @@ export function MakeTransactionModal({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 animate-in fade-in zoom-in duration-300">
-        <div className={`p-8 flex justify-between items-center text-white ${type === 'Expense' ? 'bg-red-600' : 'bg-brand-600'}`}>
+      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 animate-in fade-in zoom-in duration-300 max-h-[92vh]">
+        <div className={`p-8 flex justify-between items-center text-white shrink-0 ${type === 'Expense' ? 'bg-red-600' : 'bg-brand-600'}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
               {type === 'Expense' ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
@@ -77,7 +77,7 @@ export function MakeTransactionModal({ isOpen, onClose }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
           {/* Type Toggle */}
           <div className="flex bg-gray-100 p-1.5 rounded-[1.5rem]">
             <button
