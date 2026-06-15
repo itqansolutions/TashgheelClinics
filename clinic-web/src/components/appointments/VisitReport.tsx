@@ -1,4 +1,5 @@
 import { useClinicSettings } from '@/hooks/useSettings';
+import { useBodyAreas } from '@/hooks/useLookups';
 import { formatDateTime, getInitials, formatCurrency } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
@@ -17,6 +18,8 @@ interface Props {
 
 export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, usedItems = [], onClose }: Props) {
   const { data: settings } = useClinicSettings();
+  const { data: frontBodyAreas = [] } = useBodyAreas('front');
+  const { data: backBodyAreas = [] } = useBodyAreas('back');
   
   const clinicName = settings?.clinic_name || 'Tashgheel Clinic';
   const clinicAddress = settings?.clinic_address || 'Address not set';
@@ -215,6 +218,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                     <div className="w-28">
                       <BodySvg
                         zone="front"
+                        bodyAreas={frontBodyAreas}
                         areaProps={(id: number) => ({
                           fill: selectedFrontIds.has(id) ? '#2563eb' : '#e5e7eb',
                           stroke: selectedFrontIds.has(id) ? '#1e40af' : '#d1d5db',
@@ -228,6 +232,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                     <div className="w-28">
                       <BodySvg
                         zone="back"
+                        bodyAreas={backBodyAreas}
                         areaProps={(id: number) => ({
                           fill: selectedBackIds.has(id) ? '#2563eb' : '#e5e7eb',
                           stroke: selectedBackIds.has(id) ? '#1e40af' : '#d1d5db',

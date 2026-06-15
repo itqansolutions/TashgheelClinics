@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { formatDateTime, formatCurrency } from '@/utils/format';
 import { useUpdateAppointment } from '@/hooks/useAppointments';
 import { useRole } from '@/store/authStore';
+import { usePatientAreas } from '@/hooks/usePatients';
 
 interface Props {
   appointment: any;
@@ -18,6 +19,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
   const navigate = useNavigate();
   const role = useRole();
   const [isPrinting, setIsPrinting] = useState(false);
+  const { data: patientAreas = [] } = usePatientAreas(appointment?.patientId as number);
 
   if (!isOpen || !appointment) return null;
 
@@ -146,9 +148,9 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
             patient={appointment.patient}
             notes={appointment.notes}
             prescription={appointment.prescription}
-            bodyAreas={[]} // Areas could be fetched if needed, but for now empty
+            bodyAreas={patientAreas}
           />
-        ) /* Note: Areas should ideally be part of the appointment fetch or passed down */}
+        )}
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col gap-3 shrink-0">
