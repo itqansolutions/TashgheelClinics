@@ -119,7 +119,7 @@ export function DashboardPage() {
                     <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTime(appt.startTime)}</span>
                       {appt.service && <span className="truncate">{appt.service.name}</span>}
-                      {appt.doctor  && <span className="truncate">· Dr. {appt.doctor.user.fullName}</span>}
+                      {appt.doctor  && <span className="truncate">· Dr. {appt.doctor.user?.fullName || appt.doctor.fullName}</span>}
                     </div>
                   </div>
                   <StatusBadge status={appt.status} />

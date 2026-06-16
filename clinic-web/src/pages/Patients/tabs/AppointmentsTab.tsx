@@ -45,7 +45,7 @@ export function AppointmentsTab({ patientId }: { patientId: number }) {
                 <div className="flex items-center gap-1 mt-0.5">
                   <User className="w-3 h-3 text-gray-400" />
                   <span className="text-xs text-gray-500">
-                    {appt.doctor.user.fullName}
+                    {appt.doctor.user?.fullName || appt.doctor.fullName}
                   </span>
                 </div>
               )}
