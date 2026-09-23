@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../../config/db';
 
 export class VendorRepository {
   async getAll() {
@@ -10,7 +9,7 @@ export class VendorRepository {
   }
 
   async getById(id: number) {
-    return prisma.vendor.findUnique({
+    return prisma.vendor.findFirst({
       where: { id },
       include: {
         purchases: {

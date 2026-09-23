@@ -1,6 +1,7 @@
 import app from './app';
 import { env } from './config/env';
 import { connectDB, disconnectDB } from './config/db';
+import { startTrialExpirationWorker } from './workers/trialExpirationWorker';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,6 +14,9 @@ async function bootstrap() {
 
   // Connect to database
   await connectDB();
+
+  // Start background workers (after DB is ready)
+  startTrialExpirationWorker();
 
   const server = app.listen(env.PORT, () => {
     console.log(`\n🚀  Clinic API running on http://localhost:${env.PORT}`);

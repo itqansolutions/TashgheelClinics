@@ -2,8 +2,12 @@ import { Router } from 'express';
 import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { AppError } from '../../middleware/errorHandler';
+import { resolvePublicTenant } from '../../middleware/resolveTenant';
 
 const router = Router();
+
+// Enforce public tenant isolation on all public booking routes
+router.use(resolvePublicTenant);
 
 /**
  * @route GET /api/public/settings
@@ -185,7 +189,7 @@ router.post('/book', async (req, res, next) => {
       });
     }
 
-    const service = serviceId ? await prisma.service.findUnique({ where: { id: Number(serviceId) } }) : null;
+    const service = serviceId ? await prisma.service.findFirst({ where: { id: Number(serviceId) } }) : null;
     
     const start = new Date(startTime);
     const duration = service?.durationMin || 30;

@@ -24,9 +24,11 @@ router.put('/clinic', adminOnly,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { key, value } = req.body as { key: string; value: string };
-      const setting = await prisma.clinicSetting.upsert({
-        where: { key }, update: { value }, create: { key, value },
-      });
+      // Phase 1 bridge: key is no longer @id — use findFirst + update/create
+      const existing = await prisma.clinicSetting.findFirst({ where: { key } });
+      const setting = existing
+        ? await prisma.clinicSetting.update({ where: { id: existing.id }, data: { value } })
+        : await prisma.clinicSetting.create({ data: { key, value } });
       sendSuccess(res, setting, 'Setting updated');
     } catch (e) { next(e); }
   }
@@ -39,9 +41,12 @@ router.put('/clinic/bulk', adminOnly,
     try {
       const { settings } = req.body as { settings: Record<string, string> };
       await Promise.all(
-        Object.entries(settings).map(([key, value]) =>
-          prisma.clinicSetting.upsert({ where: { key }, update: { value }, create: { key, value } })
-        )
+        Object.entries(settings).map(async ([key, value]) => {
+          const existing = await prisma.clinicSetting.findFirst({ where: { key } });
+          return existing
+            ? prisma.clinicSetting.update({ where: { id: existing.id }, data: { value } })
+            : prisma.clinicSetting.create({ data: { key, value } });
+        })
       );
       sendSuccess(res, null, 'Settings updated');
     } catch (e) { next(e); }

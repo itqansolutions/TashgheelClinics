@@ -41,7 +41,7 @@ export const usersService = {
     const raw = await usersRepo.findById(id);
     if (!raw) throw new AppError('User not found', 404);
     // Need passwordHash — fetch full record
-    const full = await import('../../config/db').then(m => m.default.user.findUnique({ where: { id } }));
+    const full = await import('../../config/db').then(m => m.default.user.findFirst({ where: { id } }));
     const match = await bcrypt.compare(currentPassword, full!.passwordHash);
     if (!match) throw new AppError('Current password is incorrect', 400);
     const hash = await bcrypt.hash(newPassword, 12);

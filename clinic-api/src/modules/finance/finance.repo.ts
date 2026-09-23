@@ -86,14 +86,16 @@ export class FinanceRepository {
   }
 
   async updateInvoiceSettings(settings: Record<string, string>) {
-    return prisma.$transaction(
-      Object.entries(settings).map(([key, value]) =>
-        prisma.invoiceSetting.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value }
-        })
-      )
+    // Phase 1 bridge: key is no longer @id — use findFirst + update/create
+    // Note: $transaction doesn't accept async callbacks returning Promise<T>[]
+    // Use Promise.all for sequential-safe parallel execution instead
+    await Promise.all(
+      Object.entries(settings).map(async ([key, value]) => {
+        const existing = await prisma.invoiceSetting.findFirst({ where: { key } });
+        return existing
+          ? prisma.invoiceSetting.update({ where: { id: existing.id }, data: { value } })
+          : prisma.invoiceSetting.create({ data: { key, value } });
+      })
     );
   }
 }

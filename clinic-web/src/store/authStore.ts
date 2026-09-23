@@ -41,4 +41,6 @@ export const useAuthStore = create<AuthState>()(
 // Selector hooks for convenience
 export const useUser = () => useAuthStore((s) => s.user);
 export const useRole = () => useAuthStore((s) => s.user?.role);
+export const useTenant = () => useAuthStore((s) => s.user?.tenant);
+export const useSystemRole = () => useAuthStore((s) => s.user?.systemRole);
 export const useIsAuthenticated = () => useAuthStore((s) => s.isAuthenticated);

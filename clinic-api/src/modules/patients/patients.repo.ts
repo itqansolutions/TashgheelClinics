@@ -66,11 +66,12 @@ export const patientsRepo = {
   },
 
   findById(id: number) {
-    return prisma.patient.findUnique({ where: { id }, include: FULL_INCLUDE });
+    return prisma.patient.findFirst({ where: { id }, include: FULL_INCLUDE });
   },
 
   findByCode(code: string) {
-    return prisma.patient.findUnique({ where: { code }, include: FULL_INCLUDE });
+    // Phase 1 bridge: code is no longer globally @unique (it's per-tenant after Migration 4)
+    return prisma.patient.findFirst({ where: { code }, include: FULL_INCLUDE });
   },
 
   findByPhone(phone: string) {

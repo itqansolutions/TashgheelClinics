@@ -1,6 +1,8 @@
-// Prisma schema — Clinic Management System
+// Prisma schema — Tashgheel Clinics (SaaS)
 // Database: PostgreSQL
-// Migrated from SQL Server for Railway deployment
+// Phase 1: Multi-tenant schema — tenantId added as NULLABLE on all tenant-scoped models.
+// After data backfill (Phase 2a) succeeds, run Phase 2b to apply NOT NULL constraints via raw SQL.
+// Global lookup tables (Country, BodyArea) deliberately have NO tenantId.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,103 +13,286 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Users ─────────────────────────────────────────────────────────────────
+// ── Enums ──────────────────────────────────────────────────────────────────
 
-model User {
-  id           Int      @id @default(autoincrement())
-  fullName     String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("Reception")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
+enum TenantPlan {
+  TRIAL
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  PENDING_VERIFICATION // After registration, before email confirmation
+  ACTIVE               // Email confirmed; tenant is operational
+  SUSPENDED            // Trial expired without payment, or payment failure
+  CANCELLED            // Permanent closure; data retained for 30 days then purged
+}
+
+enum SubscriptionStatus {
+  TRIAL     // 14-day free trial
+  ACTIVE    // Paid and current
+  PAST_DUE  // Payment failed; grace period (3 days)
+  CANCELLED // Subscription ended
+}
+
+enum SystemRole {
+  SYSTEM_ADMIN // Full platform access; bypasses tenant isolation (always audited)
+  SUPPORT      // Read-only cross-tenant access
+}
+
+// ── Tenant ─────────────────────────────────────────────────────────────────
+// Central registry of all clinics on the platform.
+// isActive removed — TenantStatus is the single source of truth for access.
+
+model Tenant {
+  id           Int          @id @default(autoincrement())
+  name         String
+  slug         String       @unique  // URL-safe identifier, e.g. "cairo-clinic"
+  status       TenantStatus @default(PENDING_VERIFICATION)
+  contactEmail String
+  logoUrl      String?
+  primaryColor String?      @default("#0ea5e9")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   // Relations
-  doctor            Doctor?
-  createdPatients   Patient[]       @relation("PatientCreatedBy")
-  createdAppointments Appointment[] @relation("AppointmentCreatedBy")
-  payments          Payment[]
-  uploadedImages    PatientImage[] @relation("UploadedByUser")
-  auditLogs         AuditLog[]
-  financialTransactions FinancialTransaction[]
+  users                  User[]
+  doctors                Doctor[]
+  doctorSchedules        DoctorSchedule[]
+  specialties            Specialty[]
+  services               Service[]
+  leadSources            LeadSource[]
+  patients               Patient[]
+  patientAreas           PatientArea[]
+  patientImages          PatientImage[]
+  patientRatings         PatientRating[]
+  appointments           Appointment[]
+  payments               Payment[]
+  sessionItems           SessionItem[]
+  financialTransactions  FinancialTransaction[]
+  vendors                Vendor[]
+  products               Product[]
+  stockTransactions      StockTransaction[]
+  purchases              Purchase[]
+  purchaseItems          PurchaseItem[]
+  stockAdjustments       StockAdjustment[]
+  vendorPayments         VendorPayment[]
+  clinicSettings         ClinicSetting[]
+  invoiceSettings        InvoiceSetting[]
+  auditLogs              AuditLog[]
+  subscriptions          Subscription[]
+  emailVerificationTokens EmailVerificationToken[]
 
+  @@map("Tenants")
+}
+
+// ── Subscription ────────────────────────────────────────────────────────────
+// Tracks the billing lifecycle of each tenant independently of TenantStatus.
+// trialWarningSentAt: idempotency guard — prevents duplicate warning emails
+//   from the hourly trial-expiration worker.
+
+model Subscription {
+  id                  Int                @id @default(autoincrement())
+  tenantId            Int
+  plan                TenantPlan
+  status              SubscriptionStatus @default(TRIAL)
+  startDate           DateTime           @default(now())
+  endDate             DateTime?          // NULL = no expiry (paid plans)
+  trialWarningSentAt  DateTime?          // Set when 4-day warning email is sent; prevents duplicates
+  externalId          String?            // Stripe / PayMob subscription ID
+
+  tenant              Tenant             @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([status, endDate]) // Worker query: TRIAL + endDate <= now
+  @@map("Subscriptions")
+}
+
+// ── Plan Limits ─────────────────────────────────────────────────────────────
+// Seeded once. Controls feature access by plan tier.
+
+model PlanLimit {
+  plan         TenantPlan @id
+  maxUsers     Int
+  maxPatients  Int
+  maxDoctors   Int
+  storageGb    Int
+  hasReports   Boolean    @default(false)
+  hasStock     Boolean    @default(false)
+  hasFinance   Boolean    @default(false)
+  hasApi       Boolean    @default(false)
+
+  @@map("PlanLimits")
+}
+
+// ── Email Verification ──────────────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  tenantId  Int
+  token     String   @unique  // Cryptographically random UUID
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([token])
+  @@map("EmailVerificationTokens")
+}
+
+// ── System Admin Audit Log ──────────────────────────────────────────────────
+// Persistent, tamper-evident log for every cross-tenant action by System Admin.
+// This table is intentionally NOT tenant-scoped (no tenantId on the model itself).
+// The "tenantId" column here is the TARGET tenant being accessed, not the actor's tenant.
+
+model SystemAdminAuditLog {
+  id                Int      @id @default(autoincrement())
+  systemAdminUserId Int
+  tenantId          Int?     // NULL for platform-wide actions (e.g. list all tenants)
+  action            String   // e.g. 'SUSPEND_TENANT', 'READ_PATIENTS', 'CREATE_TENANT'
+  method            String   // HTTP method: GET, POST, PATCH, DELETE
+  endpoint          String   // Full URL path: /api/superadmin/tenants/5/patients
+  targetRecordId    Int?     // Specific record ID if applicable
+  ipAddress         String
+  userAgent         String
+  timestamp         DateTime @default(now())
+
+  systemAdmin       User     @relation("SystemAdminAuditLogs", fields: [systemAdminUserId], references: [id])
+
+  @@index([systemAdminUserId])
+  @@index([tenantId])
+  @@index([timestamp(sort: Desc)])
+  @@map("SystemAdminAuditLogs")
+}
+
+// ── Users ───────────────────────────────────────────────────────────────────
+// tenantId is NULLABLE to support System Admin users (tenantId = NULL, systemRole = SYSTEM_ADMIN).
+// Regular users always have tenantId set and systemRole = NULL.
+// DB-level XOR CHECK constraint (applied in Migration 3 raw SQL):
+//   (tenantId IS NOT NULL AND systemRole IS NULL)   -- regular tenant user
+//   OR (tenantId IS NULL AND systemRole IS NOT NULL) -- system admin/support
+// This prevents ghost users (both NULL) and conflated identities (both set).
+
+model User {
+  id           Int         @id @default(autoincrement())
+  tenantId     Int?                    // NULL = System Admin — see XOR CHECK above
+  systemRole   SystemRole?             // NULL = regular tenant user
+  fullName     String
+  email        String      @unique     // Global unique: one email = one account
+  passwordHash String
+  role         String      @default("Reception") // Tenant-level role
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  // Relations
+  tenant                  Tenant?              @relation(fields: [tenantId], references: [id])
+  doctor                  Doctor?
+  createdPatients         Patient[]            @relation("PatientCreatedBy")
+  createdAppointments     Appointment[]        @relation("AppointmentCreatedBy")
+  payments                Payment[]
+  uploadedImages          PatientImage[]       @relation("UploadedByUser")
+  auditLogs               AuditLog[]
+  financialTransactions   FinancialTransaction[]
+  systemAdminAuditLogs    SystemAdminAuditLog[] @relation("SystemAdminAuditLogs")
+
+  @@index([tenantId])
   @@map("Users")
 }
 
-// ── Doctors ───────────────────────────────────────────────────────────────
+// ── Doctors ─────────────────────────────────────────────────────────────────
 
 model Doctor {
-  id           Int     @id @default(autoincrement())
-  userId       Int?    @unique
-  fullName     String? // Use if userId is null
-  specialtyId  Int
-  commission   Decimal @default(0) @db.Decimal(5, 2)
-  discount     Decimal @default(0) @db.Decimal(5, 2)
-  isActive     Boolean @default(true)
+  id          Int     @id @default(autoincrement())
+  tenantId    Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  userId      Int?    @unique
+  fullName    String?             // Used when userId is null (external doctor)
+  specialtyId Int
+  commission  Decimal @default(0) @db.Decimal(5, 2)
+  discount    Decimal @default(0) @db.Decimal(5, 2)
+  isActive    Boolean @default(true)
 
   // Relations
-  user         User?          @relation(fields: [userId], references: [id])
-  specialty    Specialty      @relation(fields: [specialtyId], references: [id])
+  tenant       Tenant?         @relation(fields: [tenantId], references: [id])
+  user         User?           @relation(fields: [userId], references: [id])
+  specialty    Specialty       @relation(fields: [specialtyId], references: [id])
   appointments Appointment[]
   ratings      PatientRating[]
   schedules    DoctorSchedule[]
 
+  @@index([tenantId])
   @@map("Doctors")
 }
 
 model DoctorSchedule {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
+  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   doctorId  Int
-  dayOfWeek Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  startTime String   // "09:00"
-  endTime   String   // "17:00"
-  isActive  Boolean  @default(true)
+  dayOfWeek Int                 // 0 = Sunday … 6 = Saturday
+  startTime String              // "09:00"
+  endTime   String              // "17:00"
+  isActive  Boolean @default(true)
 
   // Relations
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  doctor Doctor  @relation(fields: [doctorId], references: [id])
 
+  @@index([tenantId])
   @@index([doctorId])
   @@map("DoctorSchedules")
 }
 
-// ── Specialties & Services ────────────────────────────────────────────────
+// ── Specialties & Services ──────────────────────────────────────────────────
 
 model Specialty {
   id       Int     @id @default(autoincrement())
+  tenantId Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   name     String
   isActive Boolean @default(true)
 
   // Relations
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id])
   doctors  Doctor[]
   services Service[]
 
+  @@index([tenantId])
   @@map("Specialties")
 }
 
 model Service {
   id          Int     @id @default(autoincrement())
+  tenantId    Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   specialtyId Int
   name        String
   price       Decimal @db.Decimal(10, 2)
-  durationMin Int     // appointment block in minutes
+  durationMin Int                 // appointment block in minutes
   isActive    Boolean @default(true)
 
   // Relations
+  tenant       Tenant?       @relation(fields: [tenantId], references: [id])
   specialty    Specialty     @relation(fields: [specialtyId], references: [id])
   appointments Appointment[]
 
+  @@index([tenantId])
   @@map("Services")
 }
 
-// ── Lookup tables ─────────────────────────────────────────────────────────
+// ── Lookup Tables ───────────────────────────────────────────────────────────
+// LeadSource: per-tenant (each clinic defines its own sources)
+// Country: GLOBAL — shared across all tenants, no tenantId
+// BodyArea: GLOBAL — anatomical data, shared, no tenantId
 
 model LeadSource {
-  id   Int    @id @default(autoincrement())
-  name String
+  id       Int     @id @default(autoincrement())
+  tenantId Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  name     String
 
   // Relations
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id])
   patients Patient[]
 
+  @@index([tenantId])
   @@map("LeadSources")
 }
 
@@ -116,17 +301,20 @@ model Country {
   name String
   code String
 
-  // Relations
+  // Relations — no tenantId: global lookup table
   patients Patient[]
 
   @@map("Countries")
 }
 
-// ── Patients ──────────────────────────────────────────────────────────────
+// ── Patients ─────────────────────────────────────────────────────────────────
+// Patient.code uniqueness is now per-tenant (applied as compound unique in Migration 4).
+// The existing @unique on code is dropped in Migration 4 and replaced with @@unique([tenantId, code]).
 
 model Patient {
-  id             Int         @id @default(autoincrement())
-  code           String      @unique // P-00001
+  id             Int      @id @default(autoincrement())
+  tenantId       Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  code           String              // e.g. P-00001 — unique per tenant (Migration 4)
   fullName       String
   phone          String?
   email          String?
@@ -137,25 +325,29 @@ model Patient {
   leadSourceId   Int?
   medicalHistory String?
   notes          String?
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
   createdBy      Int?
 
   // Relations
-  country      Country?      @relation(fields: [countryId], references: [id])
-  leadSource   LeadSource?   @relation(fields: [leadSourceId], references: [id])
-  createdByUser User?        @relation("PatientCreatedBy", fields: [createdBy], references: [id])
-  appointments Appointment[]
-  areas        PatientArea[]
-  images       PatientImage[]
-  ratings      PatientRating[]
+  tenant         Tenant?       @relation(fields: [tenantId], references: [id])
+  country        Country?      @relation(fields: [countryId], references: [id])
+  leadSource     LeadSource?   @relation(fields: [leadSourceId], references: [id])
+  createdByUser  User?         @relation("PatientCreatedBy", fields: [createdBy], references: [id])
+  appointments   Appointment[]
+  areas          PatientArea[]
+  images         PatientImage[]
+  ratings        PatientRating[]
 
+  @@index([tenantId])
   @@index([phone])
-  @@index([code])
+  // NOTE: @@unique([tenantId, code]) applied in Migration 4 after backfill
+  // The existing @unique([code]) is dropped in Migration 4
   @@map("Patients")
 }
 
-// ── Body Map ──────────────────────────────────────────────────────────────
+// ── Body Map ────────────────────────────────────────────────────────────────
+// GLOBAL: anatomical body areas shared across all tenants — no tenantId.
 
 model BodyArea {
   id    Int    @id @default(autoincrement())
@@ -163,7 +355,7 @@ model BodyArea {
   zone  String // 'front' | 'back'
   svgId String // maps to SVG path id
 
-  // Relations
+  // Relations — no tenantId
   patientAreas PatientArea[]
 
   @@map("BodyAreas")
@@ -171,123 +363,152 @@ model BodyArea {
 
 model PatientArea {
   id        Int      @id @default(autoincrement())
+  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   patientId Int
   areaId    Int
   notes     String?
   addedAt   DateTime @default(now())
 
   // Relations
+  tenant  Tenant?  @relation(fields: [tenantId], references: [id])
   patient Patient  @relation(fields: [patientId], references: [id])
   area    BodyArea @relation(fields: [areaId], references: [id])
 
   @@unique([patientId, areaId])
+  @@index([tenantId])
   @@index([patientId])
   @@map("PatientAreas")
 }
 
-// ── Appointments ──────────────────────────────────────────────────────────
+// ── Appointments ─────────────────────────────────────────────────────────────
 
 model Appointment {
-  id           Int               @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
+  tenantId     Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   patientId    Int
   doctorId     Int
   serviceId    Int?
   startTime    DateTime
   endTime      DateTime
   status       String   @default("Pending")
-  priceCharged Decimal?          @db.Decimal(10, 2)
-  discountPct  Decimal           @default(0) @db.Decimal(5, 2)
+  priceCharged Decimal? @db.Decimal(10, 2)
+  discountPct  Decimal  @default(0) @db.Decimal(5, 2)
   notes        String?
   prescription String?
-  createdAt    DateTime          @default(now())
+  createdAt    DateTime @default(now())
   createdBy    Int?
 
   // Relations
-  patient       Patient         @relation(fields: [patientId], references: [id])
-  doctor        Doctor          @relation(fields: [doctorId], references: [id])
-  service       Service?         @relation(fields: [serviceId], references: [id])
-  createdByUser User?           @relation("AppointmentCreatedBy", fields: [createdBy], references: [id])
+  tenant        Tenant?       @relation(fields: [tenantId], references: [id])
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  doctor        Doctor        @relation(fields: [doctorId], references: [id])
+  service       Service?      @relation(fields: [serviceId], references: [id])
+  createdByUser User?         @relation("AppointmentCreatedBy", fields: [createdBy], references: [id])
   payments      Payment[]
   images        PatientImage[]
   ratings       PatientRating[]
   sessionItems  SessionItem[]
 
+  @@index([tenantId])
+  @@index([tenantId, startTime]) // calendar queries
   @@index([doctorId, startTime])
   @@index([patientId])
-  @@index([startTime])
   @@map("Appointments")
 }
 
-// ── Payments ──────────────────────────────────────────────────────────────
+// ── Payments ─────────────────────────────────────────────────────────────────
 
 model Payment {
-  id            Int           @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   appointmentId Int
-  amount        Decimal       @db.Decimal(10, 2)
+  amount        Decimal  @db.Decimal(10, 2)
   method        String   @default("Cash")
-  paidAt        DateTime      @default(now())
+  paidAt        DateTime @default(now())
   receivedBy    Int?
 
   // Relations
-  appointment  Appointment @relation(fields: [appointmentId], references: [id])
-  receivedByUser User?    @relation(fields: [receivedBy], references: [id])
+  tenant          Tenant?     @relation(fields: [tenantId], references: [id])
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  receivedByUser  User?       @relation(fields: [receivedBy], references: [id])
 
+  @@index([tenantId])
   @@index([appointmentId])
   @@map("Payments")
 }
 
-// ── Patient Images ────────────────────────────────────────────────────────
+// ── Patient Images ────────────────────────────────────────────────────────────
+// storagePath must include tenantId prefix (e.g. "uploads/{tenantId}/{filename}")
+// to prevent cross-tenant file access.
 
 model PatientImage {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   patientId     Int
   appointmentId Int?
   imageType     String
   storagePath   String
-  uploadedAt    DateTime  @default(now())
+  uploadedAt    DateTime @default(now())
   uploadedBy    Int?
 
   // Relations
-  patient       Patient      @relation(fields: [patientId], references: [id])
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
-  uploadedByUser User?       @relation("UploadedByUser", fields: [uploadedBy], references: [id])
+  tenant          Tenant?      @relation(fields: [tenantId], references: [id])
+  patient         Patient      @relation(fields: [patientId], references: [id])
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  uploadedByUser  User?        @relation("UploadedByUser", fields: [uploadedBy], references: [id])
 
+  @@index([tenantId])
   @@index([patientId])
   @@map("PatientImages")
 }
 
-// ── Ratings ───────────────────────────────────────────────────────────────
+// ── Ratings ───────────────────────────────────────────────────────────────────
 
 model PatientRating {
   id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   patientId     Int
   doctorId      Int
   appointmentId Int?
-  rating        Int      // 1–5
+  rating        Int                 // 1–5
   notes         String?
   createdAt     DateTime @default(now())
 
   // Relations
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id])
   patient     Patient      @relation(fields: [patientId], references: [id])
   doctor      Doctor       @relation(fields: [doctorId], references: [id])
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
 
+  @@index([tenantId])
   @@map("PatientRatings")
 }
 
-// ── Settings ──────────────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
+// Per-tenant key-value stores.
+// The @id on "key" is a TEMPORARY PRIMARY KEY for Phase 1.
+// Migration 4 drops it and creates a composite PK: (tenantId, key).
 
 model ClinicSetting {
-  key   String @id
-  value String
+  id       Int    @id @default(autoincrement()) // temp PK; replaced in Migration 4
+  tenantId Int?                                 // Phase 1: nullable; Phase 2b: NOT NULL
+  key      String
+  value    String
 
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@map("ClinicSettings")
 }
 
-// ── Audit Log ─────────────────────────────────────────────────────────────
+// ── Audit Log ──────────────────────────────────────────────────────────────────
+// Tenant-scoped audit trail for regular operations.
+// See SystemAdminAuditLog for cross-tenant System Admin actions.
 
 model AuditLog {
   id        Int      @id @default(autoincrement())
+  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   userId    Int?
   action    String
   tableName String
@@ -297,16 +518,19 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   // Relations
-  user User? @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
   @@index([createdAt(sort: Desc)])
   @@map("AuditLog")
 }
 
-// ── Stock Module (Inventory) ──────────────────────────────────────────────
+// ── Stock Module ───────────────────────────────────────────────────────────────
 
 model Vendor {
   id        Int      @id @default(autoincrement())
+  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   name      String
   phone     String?
   email     String?
@@ -317,20 +541,27 @@ model Vendor {
   createdAt DateTime @default(now())
 
   // Relations
+  tenant    Tenant?         @relation(fields: [tenantId], references: [id])
   products  Product[]
   purchases Purchase[]
   payments  VendorPayment[]
 
+  @@index([tenantId])
   @@map("Vendors")
 }
 
+// Product.code uniqueness is now per-tenant (applied in Migration 4).
+// Existing @unique([code]) is dropped in Migration 4 and replaced with
+// @@unique([tenantId, code]).
+
 model Product {
   id           Int      @id @default(autoincrement())
+  tenantId     Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   name         String
-  code         String   @unique
+  code         String              // unique per tenant — Migration 4 adds @@unique([tenantId, code])
   barcode      String?
   category     String?
-  unit         String   @default("Piece") // Box, ML, Gram, Piece
+  unit         String   @default("Piece")
   minStock     Decimal  @default(0) @db.Decimal(10, 2)
   currentStock Decimal  @default(0) @db.Decimal(10, 2)
   averageCost  Decimal  @default(0) @db.Decimal(10, 2)
@@ -340,36 +571,42 @@ model Product {
   createdAt    DateTime @default(now())
 
   // Relations
-  vendor       Vendor?            @relation(fields: [vendorId], references: [id])
-  transactions StockTransaction[]
+  tenant        Tenant?            @relation(fields: [tenantId], references: [id])
+  vendor        Vendor?            @relation(fields: [vendorId], references: [id])
+  transactions  StockTransaction[]
   purchaseItems PurchaseItem[]
-  sessionItems SessionItem[]
+  sessionItems  SessionItem[]
 
+  @@index([tenantId])
   @@map("Products")
 }
 
 model StockTransaction {
-  id          Int      @id @default(autoincrement())
-  productId   Int
-  type        String   // 'Purchase', 'Usage', 'Adjustment', 'Return'
-  quantity    Decimal  @db.Decimal(10, 2) // Positive for IN, Negative for OUT
-  balanceBefore Decimal @db.Decimal(10, 2)
-  balanceAfter  Decimal @db.Decimal(10, 2)
-  cost        Decimal  @db.Decimal(10, 2)
-  referenceId Int?     // ID of Purchase, Session, or Adjustment
-  notes       String?
-  userId      Int?
-  createdAt   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  productId     Int
+  type          String              // 'Purchase' | 'Usage' | 'Adjustment' | 'Return'
+  quantity      Decimal  @db.Decimal(10, 2)
+  balanceBefore Decimal  @db.Decimal(10, 2)
+  balanceAfter  Decimal  @db.Decimal(10, 2)
+  cost          Decimal  @db.Decimal(10, 2)
+  referenceId   Int?
+  notes         String?
+  userId        Int?
+  createdAt     DateTime @default(now())
 
   // Relations
-  product     Product  @relation(fields: [productId], references: [id])
+  tenant  Tenant?  @relation(fields: [tenantId], references: [id])
+  product Product  @relation(fields: [productId], references: [id])
 
+  @@index([tenantId])
   @@index([productId])
   @@map("StockTransactions")
 }
 
 model Purchase {
   id           Int      @id @default(autoincrement())
+  tenantId     Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   vendorId     Int
   invoiceNo    String?
   totalAmount  Decimal  @db.Decimal(10, 2)
@@ -381,45 +618,56 @@ model Purchase {
   userId       Int?
 
   // Relations
-  vendor       Vendor         @relation(fields: [vendorId], references: [id])
-  items        PurchaseItem[]
+  tenant Tenant?        @relation(fields: [tenantId], references: [id])
+  vendor Vendor         @relation(fields: [vendorId], references: [id])
+  items  PurchaseItem[]
 
+  @@index([tenantId])
   @@map("Purchases")
 }
 
 model PurchaseItem {
-  id           Int      @id @default(autoincrement())
-  purchaseId   Int
-  productId    Int
-  quantity     Decimal  @db.Decimal(10, 2)
-  remainingQuantity Decimal @default(0) @db.Decimal(10, 2)
-  costPerUnit  Decimal  @db.Decimal(10, 2)
-  batchNo      String?
-  expiryDate   DateTime?
-  totalCost    Decimal  @db.Decimal(10, 2)
+  id                Int      @id @default(autoincrement())
+  tenantId          Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  purchaseId        Int
+  productId         Int
+  quantity          Decimal  @db.Decimal(10, 2)
+  remainingQuantity Decimal  @default(0) @db.Decimal(10, 2)
+  costPerUnit       Decimal  @db.Decimal(10, 2)
+  batchNo           String?
+  expiryDate        DateTime?
+  totalCost         Decimal  @db.Decimal(10, 2)
 
   // Relations
-  purchase     Purchase @relation(fields: [purchaseId], references: [id])
-  product      Product  @relation(fields: [productId], references: [id])
+  tenant   Tenant?  @relation(fields: [tenantId], references: [id])
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
 
+  @@index([tenantId])
   @@map("PurchaseItems")
 }
 
 model StockAdjustment {
-  id          Int      @id @default(autoincrement())
-  productId   Int
-  type        String   // 'Addition', 'Shortage', 'Wastage', 'Damaged'
-  quantity    Decimal  @db.Decimal(10, 2) // The net change
-  reason      String?
-  notes       String?
-  userId      Int?
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  productId Int
+  type      String              // 'Addition' | 'Shortage' | 'Wastage' | 'Damaged'
+  quantity  Decimal  @db.Decimal(10, 2)
+  reason    String?
+  notes     String?
+  userId    Int?
+  createdAt DateTime @default(now())
 
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@map("StockAdjustments")
 }
 
 model VendorPayment {
   id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   vendorId      Int
   amount        Decimal  @db.Decimal(10, 2)
   paymentMethod String   @default("Cash")
@@ -429,34 +677,42 @@ model VendorPayment {
   userId        Int?
 
   // Relations
-  vendor        Vendor   @relation(fields: [vendorId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  vendor Vendor  @relation(fields: [vendorId], references: [id])
 
+  @@index([tenantId])
   @@map("VendorPayments")
 }
 
 model SessionItem {
-  id            Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
   appointmentId Int
   productId     Int
-  quantity      Decimal  @db.Decimal(10, 2)
-  costAtTime    Decimal  @db.Decimal(10, 2)
-  priceAtTime   Decimal  @db.Decimal(10, 2)
+  quantity      Decimal @db.Decimal(10, 2)
+  costAtTime    Decimal @db.Decimal(10, 2)
+  priceAtTime   Decimal @db.Decimal(10, 2)
 
   // Relations
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
-  product       Product     @relation(fields: [productId], references: [id])
+  tenant      Tenant?     @relation(fields: [tenantId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  product     Product     @relation(fields: [productId], references: [id])
 
+  @@index([tenantId])
   @@map("SessionItems")
 }
 
+// ── Finance Module ─────────────────────────────────────────────────────────────
+
 model FinancialTransaction {
   id            Int      @id @default(autoincrement())
-  type          String   // 'Income', 'Expense'
-  category      String?  // 'Rent', 'Salary', 'Medical Supplies', etc.
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  type          String              // 'Income' | 'Expense'
+  category      String?
   amount        Decimal  @db.Decimal(10, 2)
-  method        String   @default("Cash") // Cash, Card, Vodafone Cash, Bank Transfer, Insurance
+  method        String   @default("Cash")
   description   String?
-  referenceType String?  // 'Appointment', 'Purchase', 'Other'
+  referenceType String?             // 'Appointment' | 'Purchase' | 'Other'
   referenceId   Int?
   date          DateTime @default(now())
   attachment    String?
@@ -464,15 +720,27 @@ model FinancialTransaction {
   createdAt     DateTime @default(now())
 
   // Relations
-  user          User?    @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
 
+  @@index([tenantId])
+  @@index([tenantId, date]) // finance report queries
   @@map("FinancialTransactions")
 }
 
-model InvoiceSetting {
-  key   String @id
-  value String
+// ── Invoice Settings ───────────────────────────────────────────────────────────
+// Per-tenant key-value store for invoice configuration.
+// Same as ClinicSetting: temporary @id in Phase 1; composite PK in Migration 4.
 
+model InvoiceSetting {
+  id       Int    @id @default(autoincrement()) // temp PK; replaced in Migration 4
+  tenantId Int?                                 // Phase 1: nullable; Phase 2b: NOT NULL
+  key      String
+  value    String
+
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@map("InvoiceSettings")
 }
-

@@ -32,14 +32,14 @@ const svc = {
     return s;
   },
   async create(body: z.infer<typeof createSchema>) {
-    const specialty = await prisma.specialty.findUnique({ where: { id: body.specialtyId } });
+    const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
     if (!specialty) throw new AppError('Specialty not found', 404);
     return servicesRepo.create(body);
   },
   async update(id: number, body: z.infer<typeof updateSchema>) {
     await svc.getById(id);
     if (body.specialtyId) {
-      const specialty = await prisma.specialty.findUnique({ where: { id: body.specialtyId } });
+      const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
       if (!specialty) throw new AppError('Specialty not found', 404);
     }
     return servicesRepo.update(id, body);

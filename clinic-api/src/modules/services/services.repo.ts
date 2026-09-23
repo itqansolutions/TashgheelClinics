@@ -20,7 +20,7 @@ export const servicesRepo = {
   },
 
   findById(id: number) {
-    return prisma.service.findUnique({
+    return prisma.service.findFirst({
       where: { id },
       include: { specialty: { select: { id: true, name: true } } },
     });

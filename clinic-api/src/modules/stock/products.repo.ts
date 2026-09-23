@@ -17,7 +17,7 @@ export class ProductRepository {
   }
 
   async getById(id: number) {
-    return prisma.product.findUnique({
+    return prisma.product.findFirst({
       where: { id },
       include: {
         vendor: { select: { name: true } },

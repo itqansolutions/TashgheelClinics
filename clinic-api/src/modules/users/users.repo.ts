@@ -36,7 +36,7 @@ export const usersRepo = {
   },
 
   findById(id: number) {
-    return prisma.user.findUnique({ where: { id }, select: SELECT });
+    return prisma.user.findFirst({ where: { id }, select: SELECT });
   },
 
   findByEmail(email: string) {

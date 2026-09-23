@@ -27,12 +27,23 @@ export interface PaginationMeta {
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 
+export interface AuthTenant {
+  id: number;
+  name: string;
+  slug: string;
+  status: 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED';
+  logoUrl?: string | null;
+  primaryColor?: string | null;
+}
+
 export interface AuthUser {
   id: number;
   fullName: string;
   email: string;
   role: Role;
-  clinicId?: number;
+  systemRole?: 'SYSTEM_ADMIN' | 'SUPPORT' | null;
+  tenantId?: number | null;
+  tenant?: AuthTenant | null;
 }
 
 export interface LoginRequest {

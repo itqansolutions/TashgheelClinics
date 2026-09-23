@@ -1,9 +1,9 @@
-import { PrismaClient, Product, StockTransaction } from '@prisma/client';
-const prisma = new PrismaClient();
+import { Product, StockTransaction } from '@prisma/client';
+import prisma from '../../config/db';
 
 export class StockRepository {
   async getProductBalance(productId: number) {
-    return prisma.product.findUnique({
+    return prisma.product.findFirst({
       where: { id: productId },
       select: { currentStock: true, averageCost: true }
     });
@@ -27,7 +27,7 @@ export class StockRepository {
     userId?: number;
   }) {
     return prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({
+      const product = await tx.product.findFirst({
         where: { id: data.productId }
       });
 

@@ -13,6 +13,22 @@ const COOKIE_OPTS = {
 };
 
 export const authController = {
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await authService.registerTenant(req.body);
+      sendSuccess(res, result, result.message, 201);
+    } catch (err) { next(err); }
+  },
+
+  async verifyEmail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body as { token: string };
+      const result = await authService.verifyEmail(token);
+      res.cookie(COOKIE_NAME, result.refreshToken, COOKIE_OPTS);
+      sendSuccess(res, { accessToken: result.accessToken, user: result.user }, 'Email verified successfully. Welcome to Tashgheel Clinics!');
+    } catch (err) { next(err); }
+  },
+
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body as { email: string; password: string };

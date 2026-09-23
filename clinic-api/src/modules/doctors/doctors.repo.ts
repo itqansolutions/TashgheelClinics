@@ -25,11 +25,11 @@ export const doctorsRepo = {
   },
 
   findById(id: number) {
-    return prisma.doctor.findUnique({ where: { id }, include: INCLUDE });
+    return prisma.doctor.findFirst({ where: { id }, include: INCLUDE });
   },
 
   findByUserId(userId: number) {
-    return prisma.doctor.findUnique({ where: { userId }, include: INCLUDE });
+    return prisma.doctor.findFirst({ where: { userId }, include: INCLUDE });
   },
 
   create(data: { userId?: number; fullName?: string; specialtyId: number; commission: number; discount: number }) {

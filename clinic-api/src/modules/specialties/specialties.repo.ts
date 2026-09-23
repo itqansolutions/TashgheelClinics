@@ -16,7 +16,7 @@ export const specialtiesRepo = {
   },
 
   findById(id: number) {
-    return prisma.specialty.findUnique({
+    return prisma.specialty.findFirst({
       where: { id },
       include: {
         services: { orderBy: { name: 'asc' } },

@@ -104,11 +104,11 @@ async function main() {
   ];
 
   for (const setting of settings) {
-    await prisma.clinicSetting.upsert({
-      where: { key: setting.key },
-      update: {},
-      create: setting,
-    });
+    // Phase 1 bridge: key is no longer @id
+    const existing = await prisma.clinicSetting.findFirst({ where: { key: setting.key } });
+    if (!existing) {
+      await prisma.clinicSetting.create({ data: setting });
+    }
   }
   console.log(`✅  ${settings.length} clinic settings seeded`);
 

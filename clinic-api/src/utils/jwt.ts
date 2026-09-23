@@ -2,11 +2,12 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 
 export interface JwtPayload {
-  sub: number;       // userId
-  role: string;
-  clinicId?: number; // SaaS: tenant isolation
-  iat?: number;
-  exp?: number;
+  sub:         number;        // userId
+  role:        string;        // tenant-level role: Admin | Reception | Doctor | Nurse | Manager | Accountant
+  tenantId:    number | null; // NULL for System Admin / Support users
+  systemRole?: 'SYSTEM_ADMIN' | 'SUPPORT'; // present only for platform users
+  iat?:        number;
+  exp?:        number;
 }
 
 export function signAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {

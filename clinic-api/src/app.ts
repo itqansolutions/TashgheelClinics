@@ -9,8 +9,12 @@ import path from 'path';
 
 import { env, isDev } from './config/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { authenticate } from './middleware/auth';
+import { resolveTenant } from './middleware/resolveTenant';
+import { requireFeature } from './middleware/planEnforcer';
 
 import authRoutes       from './modules/auth/auth.routes';
+import superadminRoutes from './modules/superadmin/superadmin.routes';
 import userRoutes       from './modules/users/users.routes';
 import specialtyRoutes  from './modules/specialties/specialties.routes';
 import serviceRoutes    from './modules/services/services.routes';
@@ -55,19 +59,28 @@ app.get('/health', (_req, res) => {
 });
 
 const API = '/api';
+
+// Public & Authentication routes
 app.use(`${API}/auth`,        authRoutes);
-app.use(`${API}/users`,       userRoutes);
-app.use(`${API}/specialties`, specialtyRoutes);
-app.use(`${API}/services`,    serviceRoutes);
-app.use(`${API}/doctors`,     doctorRoutes);
-app.use(`${API}/patients`,    patientRoutes);
-app.use(`${API}/settings`,    settingsRoutes);
-app.use(`${API}/dashboard`,   dashboardRoutes);
-app.use(`${API}/appointments`, appointmentRoutes);
-app.use(`${API}/reports`,      reportRoutes);
-app.use(`${API}/public`,       bookingRoutes);
-app.use(`${API}/stock`,        stockRoutes);
-app.use(`${API}/finance`,      financeRoutes);
+app.use(`${API}/public`,      bookingRoutes);
+
+// Platform System Admin routes
+app.use(`${API}/superadmin`,  superadminRoutes);
+
+// Protected Tenant Routes (enforces JWT authentication & multi-tenant isolation)
+const tenantPipeline = [authenticate, resolveTenant];
+
+app.use(`${API}/users`,        tenantPipeline, userRoutes);
+app.use(`${API}/specialties`,  tenantPipeline, specialtyRoutes);
+app.use(`${API}/services`,     tenantPipeline, serviceRoutes);
+app.use(`${API}/doctors`,      tenantPipeline, doctorRoutes);
+app.use(`${API}/patients`,     tenantPipeline, patientRoutes);
+app.use(`${API}/settings`,     tenantPipeline, settingsRoutes);
+app.use(`${API}/dashboard`,    tenantPipeline, dashboardRoutes);
+app.use(`${API}/appointments`, tenantPipeline, appointmentRoutes);
+app.use(`${API}/reports`,      tenantPipeline, requireFeature('hasReports'), reportRoutes);
+app.use(`${API}/stock`,        tenantPipeline, requireFeature('hasStock'), stockRoutes);
+app.use(`${API}/finance`,      tenantPipeline, requireFeature('hasFinance'), financeRoutes);
 
 // Serve Frontend in Production
 if (!isDev) {

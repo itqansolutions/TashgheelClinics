@@ -47,7 +47,7 @@ export class StockController {
 
         // 2. For each item, update stock and average cost
         for (const item of items) {
-          const product = await tx.product.findUnique({ where: { id: Number(item.productId) } });
+          const product = await tx.product.findFirst({ where: { id: Number(item.productId) } });
           if (!product) throw new Error(`Product ${item.productId} not found`);
 
           const balanceBefore = Number(product.currentStock);

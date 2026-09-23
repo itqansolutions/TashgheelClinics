@@ -65,7 +65,7 @@ export const appointmentsRepo = {
   },
 
   findById(id: number) {
-    return prisma.appointment.findUnique({
+    return prisma.appointment.findFirst({
       where: { id },
       include: {
         ...FULL_INCLUDE,
@@ -146,7 +146,7 @@ export const appointmentsRepo = {
         });
 
         // Deduct from total stock
-        const product = await tx.product.findUnique({ where: { id: item.productId } });
+        const product = await tx.product.findFirst({ where: { id: item.productId } });
         if (!product) throw new Error(`Product ${item.productId} not found`);
 
         const balanceBefore = Number(product.currentStock);

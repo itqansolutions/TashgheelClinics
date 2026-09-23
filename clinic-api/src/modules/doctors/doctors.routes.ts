@@ -50,7 +50,7 @@ const svc = {
   async create(body: z.infer<typeof createSchema>) {
     if (body.userId) {
       // Validate userId is a Doctor-role user
-      const user = await prisma.user.findUnique({ where: { id: body.userId } });
+      const user = await prisma.user.findFirst({ where: { id: body.userId } });
       if (!user) throw new AppError('User not found', 404);
       if (user.role !== 'Doctor') throw new AppError('User must have Doctor role', 400);
 
@@ -60,7 +60,7 @@ const svc = {
     }
 
     // Validate specialty
-    const specialty = await prisma.specialty.findUnique({ where: { id: body.specialtyId } });
+    const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
     if (!specialty) throw new AppError('Specialty not found', 404);
 
     return doctorsRepo.create(body);
@@ -69,7 +69,7 @@ const svc = {
   async update(id: number, body: z.infer<typeof updateSchema>) {
     await svc.getById(id);
     if (body.specialtyId) {
-      const specialty = await prisma.specialty.findUnique({ where: { id: body.specialtyId } });
+      const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
       if (!specialty) throw new AppError('Specialty not found', 404);
     }
     return doctorsRepo.update(id, body);
