@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Eye, EyeOff, Heart, Loader2 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
@@ -37,7 +37,12 @@ export function LoginPage() {
       const { user, accessToken } = res.data.data;
       setAuth(user, accessToken);
       
-      const target = user.role === 'Doctor' ? '/appointments' : from;
+      const target =
+        user.systemRole === 'SYSTEM_ADMIN' || user.systemRole === 'SUPPORT'
+          ? '/superadmin'
+          : user.role === 'Doctor'
+          ? '/appointments'
+          : from;
       navigate(target, { replace: true });
     } catch (err: unknown) {
       const msg =
@@ -118,6 +123,15 @@ export function LoginPage() {
               {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+
+          <div className="mt-5 pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-500">
+              Want to register a new clinic?{' '}
+              <Link to="/register" className="font-semibold text-brand-600 hover:underline">
+                Start 14-day free trial
+              </Link>
+            </p>
+          </div>
         </div>
 
         <p className="text-center text-[11px] text-gray-400 mt-6">

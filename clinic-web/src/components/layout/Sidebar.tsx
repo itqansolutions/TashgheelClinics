@@ -3,9 +3,9 @@ import { clsx } from 'clsx';
 import {
   LayoutDashboard, Users, Stethoscope, CalendarDays,
   Settings, Heart, Scissors, LogOut, Clock, X,
-  Package, Boxes, Users2, Wallet
+  Package, Boxes, Users2, Wallet, ShieldCheck
 } from 'lucide-react';
-import { useUser, useRole, useAuthStore } from '@/store/authStore';
+import { useUser, useRole, useSystemRole, useTenant, useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth';
 
 interface NavItem {
@@ -37,10 +37,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const user    = useUser();
-  const role    = useRole();
-  const logout  = useAuthStore((s) => s.logout);
-  const navigate = useNavigate();
+  const user       = useUser();
+  const role       = useRole();
+  const systemRole = useSystemRole();
+  const tenant     = useTenant();
+  const logout     = useAuthStore((s) => s.logout);
+  const navigate   = useNavigate();
 
   const visible = NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)));
 
@@ -73,8 +75,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <Heart className="w-4 h-4 text-white fill-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Tashgheel</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Clinics</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">
+                {tenant?.name || 'Tashgheel'}
+              </p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                {systemRole ? 'Platform Admin' : 'Clinics'}
+              </p>
             </div>
           </div>
           <button 
@@ -87,6 +93,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+        {systemRole && (
+          <NavLink
+            to="/superadmin"
+            className={({ isActive }) =>
+              clsx(
+                'sidebar-link mb-3 font-semibold text-xs py-2 px-3 rounded-lg border transition-colors flex items-center gap-2.5',
+                isActive
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+              )
+            }
+          >
+            <ShieldCheck className="w-4 h-4 shrink-0 text-indigo-500" />
+            <span>Super Admin Portal</span>
+          </NavLink>
+        )}
+
         {visible.map((item) => (
           <NavLink
             key={item.path}
@@ -112,7 +135,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-gray-900 truncate">{user?.fullName || 'User'}</p>
-            <p className="text-[10px] text-gray-500">{user?.role}</p>
+            <p className="text-[10px] text-gray-500 truncate">
+              {systemRole ? (
+                <span className="font-semibold text-indigo-600">Platform Admin</span>
+              ) : (
+                `${tenant?.name || 'Clinic'} (${user?.role})`
+              )}
+            </p>
           </div>
         </div>
         <button

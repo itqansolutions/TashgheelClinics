@@ -27,11 +27,15 @@ export interface PaginationMeta {
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 
+export type TenantStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED';
+export type SubscriptionPlan = 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE' | 'TRIAL';
+export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';
+
 export interface AuthTenant {
   id: number;
   name: string;
   slug: string;
-  status: 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED';
+  status: TenantStatus;
   logoUrl?: string | null;
   primaryColor?: string | null;
 }
@@ -54,6 +58,68 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;
+}
+
+export interface RegisterTenantRequest {
+  clinicName: string;
+  slug: string;
+  fullName: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterTenantResponse {
+  message: string;
+  tenant: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  verificationToken?: string;
+}
+
+export interface Subscription {
+  id: number;
+  tenantId: number;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate?: string | null;
+  trialEndsAt?: string | null;
+}
+
+export interface TenantListItem {
+  id: number;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  contactEmail?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  subscriptions?: Subscription[];
+  _count?: {
+    users: number;
+    patients: number;
+    doctors: number;
+    appointments: number;
+  };
+}
+
+export interface SystemAdminAuditLogItem {
+  id: number;
+  systemAdminId: number;
+  targetTenantId?: number | null;
+  action: string;
+  endpoint: string;
+  httpMethod: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  timestamp: string;
+  systemAdmin?: {
+    id: number;
+    fullName: string;
+    email: string;
+  };
 }
 
 // ── User ──────────────────────────────────────────────────────────────────

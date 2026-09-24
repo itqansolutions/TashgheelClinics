@@ -126,3 +126,5 @@ export const settingsApi = {
   getBodyAreas: (zone?: 'front' | 'back') =>
     api.get<ApiResponse<BodyArea[]>>('/settings/body-areas', { params: zone ? { zone } : {} }),
 };
+
+export { superadminApi } from './superadmin';

@@ -2,6 +2,9 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute }     from './ProtectedRoute';
 import { AppLayout }          from '@/components/layout/AppLayout';
 import { LoginPage }          from '@/pages/Auth/LoginPage';
+import { RegisterPage }       from '@/pages/Auth/RegisterPage';
+import { VerifyEmailPage }    from '@/pages/Auth/VerifyEmailPage';
+import { SuperAdminPage }     from '@/pages/SuperAdmin/SuperAdminPage';
 import { ForbiddenPage }      from '@/pages/Auth/ForbiddenPage';
 const NotFoundPage = () => <div className="p-8 text-center text-gray-500">404 - Not Found</div>;
 import { DashboardPage }      from '@/pages/Dashboard/DashboardPage';
@@ -27,10 +30,12 @@ import { FinancePage }      from '@/pages/Finance/FinancePage';
 
 const router = createBrowserRouter([
   // ── Public ─────────────────────────────────────────────────────────────
-  { path: '/login', element: <LoginPage /> },
-  { path: '/book',  element: <PublicBookingPage /> },
-  { path: '/403',   element: <ForbiddenPage /> },
-  { path: '/404',   element: <NotFoundPage /> },
+  { path: '/login',        element: <LoginPage /> },
+  { path: '/register',     element: <RegisterPage /> },
+  { path: '/verify-email', element: <VerifyEmailPage /> },
+  { path: '/book',         element: <PublicBookingPage /> },
+  { path: '/403',          element: <ForbiddenPage /> },
+  { path: '/404',          element: <NotFoundPage /> },
 
   // ── All authenticated roles ─────────────────────────────────────────────
   {
@@ -75,6 +80,17 @@ const router = createBrowserRouter([
       element: <AppLayout />,
       children: [
         { path: '/settings', element: <SettingsPage /> },
+      ],
+    }],
+  },
+
+  // ── Super Admin & Platform Support only ───────────────────────────────
+  {
+    element: <ProtectedRoute allowedSystemRoles={['SYSTEM_ADMIN', 'SUPPORT']} />,
+    children: [{
+      element: <AppLayout />,
+      children: [
+        { path: '/superadmin', element: <SuperAdminPage /> },
       ],
     }],
   },
