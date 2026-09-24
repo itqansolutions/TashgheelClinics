@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ProtectedRoute }     from './ProtectedRoute';
 import { AppLayout }          from '@/components/layout/AppLayout';
 import { LoginPage }          from '@/pages/Auth/LoginPage';
@@ -76,7 +76,7 @@ const router = createBrowserRouter([
   // ── Clinic Admin, Reception, Manager & Accountant (/app/*) ─────────────
   {
     path: '/app',
-    element: <ProtectedRoute allowedRoles={['Admin', 'Reception', 'Manager', 'Accountant']} />,
+    element: <ProtectedRoute allowedRoles={['Admin', 'Reception', 'Receptionist', 'Manager', 'Accountant']} />,
     children: [{
       element: <AppLayout />,
       children: [

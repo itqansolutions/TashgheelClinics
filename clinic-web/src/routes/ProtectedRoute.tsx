@@ -23,8 +23,15 @@ export function ProtectedRoute({ allowedRoles, allowedSystemRoles }: ProtectedRo
   }
 
   // If route requires specific clinic tenant roles (and user is not a system admin bypass)
-  if (allowedRoles && !systemRole && role && !allowedRoles.includes(role)) {
-    return <Navigate to={`/403?reason=role_mismatch&required=${allowedRoles.join(',')}`} replace />;
+  if (allowedRoles && !systemRole && role) {
+    const hasRole = allowedRoles.some((r) => {
+      if (r === role) return true;
+      if ((r === 'Reception' || r === 'Receptionist') && (role === 'Reception' || role === 'Receptionist')) return true;
+      return false;
+    });
+    if (!hasRole) {
+      return <Navigate to={`/403?reason=role_mismatch&required=${allowedRoles.join(',')}`} replace />;
+    }
   }
 
   return <Outlet />;

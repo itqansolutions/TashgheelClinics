@@ -25,14 +25,23 @@ export interface UsedItemInput {
   priceAtTime: number;
 }
 
+export interface AppointmentServiceInput {
+  serviceId?: number;
+  name: string;
+  description?: string;
+  price: number;
+}
+
 export interface UpdateAppointmentInput extends Partial<CreateAppointmentInput> {
   usedItems?: UsedItemInput[];
+  services?: AppointmentServiceInput[];
 }
 
 const FULL_INCLUDE = {
   patient: { select: { id: true, fullName: true, phone: true, code: true } },
   doctor:  { select: { id: true, fullName: true, specialty: { select: { name: true } }, user: { select: { fullName: true } } } },
   service: { select: { id: true, name: true, price: true } },
+  services: true,
 };
 
 export const appointmentsRepo = {
@@ -44,7 +53,7 @@ export const appointmentsRepo = {
       ...(filters.doctorId && { doctorId: filters.doctorId }),
       ...(filters.patientId && { patientId: filters.patientId }),
       ...(filters.status && { status: filters.status }),
-      ...(filters.start && {
+      ...(filters.start && { 
         startTime: { 
           gte: filters.start, 
           ...(filters.end && { lte: filters.end }) 
@@ -71,6 +80,11 @@ export const appointmentsRepo = {
         ...FULL_INCLUDE,
         payments: true,
         ratings: true,
+        sessionItems: {
+          include: {
+            product: { select: { id: true, name: true, code: true, unit: true } }
+          }
+        },
       }
     });
   },
@@ -83,97 +97,190 @@ export const appointmentsRepo = {
   },
 
   async update(id: number, input: UpdateAppointmentInput) {
-    const { usedItems, ...data } = input;
-
-    if (!usedItems) {
-      return prisma.appointment.update({
-        where: { id },
-        data,
-        include: FULL_INCLUDE
-      });
-    }
+    const { usedItems, services, ...data } = input;
 
     return prisma.$transaction(async (tx) => {
-      // 1. Update basic appointment info
+      // 1. Fetch current appointment with details
+      const existing = await tx.appointment.findUnique({
+        where: { id },
+        include: FULL_INCLUDE
+      });
+      if (!existing) {
+        throw new AppError('Appointment not found', 404);
+      }
+
+      // 2. Calculate priceCharged if services are provided or status is being finished
+      let calculatedPrice: number | undefined = undefined;
+      const baseServicePrice = Number(existing.service?.price || 0);
+
+      if (services !== undefined) {
+        const servicesSum = services.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+        calculatedPrice = baseServicePrice + servicesSum;
+      } else if (data.priceCharged !== undefined) {
+        calculatedPrice = Number(data.priceCharged);
+      } else if (data.status === 'Done' && !existing.priceCharged) {
+        calculatedPrice = baseServicePrice;
+      }
+
+      // 3. Update appointment core data
       const appointment = await tx.appointment.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          ...(calculatedPrice !== undefined && { priceCharged: calculatedPrice }),
+        },
         include: FULL_INCLUDE
       });
 
-      // 2. Handle used items
-      for (const item of usedItems) {
-        // Find suitable batches (FEFO: First Expired, First Out)
-        const batches = await tx.purchaseItem.findMany({
-          where: { 
-            productId: item.productId, 
-            remainingQuantity: { gt: 0 } 
-          },
-          orderBy: [
-            { expiryDate: 'asc' },
-            { id: 'asc' }
-          ]
+      // 4. Handle Services / Procedures
+      if (services !== undefined) {
+        await tx.appointmentService.deleteMany({
+          where: { appointmentId: id }
         });
 
-        let remainingToDeduct = item.quantity;
-        
-        for (const batch of batches) {
-          if (remainingToDeduct <= 0) break;
-          const currentBatchQty = Number(batch.remainingQuantity);
-          const deduct = Math.min(currentBatchQty, remainingToDeduct);
-          
-          await tx.purchaseItem.update({
-            where: { id: batch.id },
-            data: { remainingQuantity: currentBatchQty - deduct }
-          });
-          
-          remainingToDeduct -= deduct;
+        for (const s of services) {
+          if (s.name && s.name.trim()) {
+            await tx.appointmentService.create({
+              data: {
+                appointmentId: id,
+                serviceId: s.serviceId || null,
+                name: s.name.trim(),
+                description: s.description?.trim() || null,
+                price: Number(s.price) || 0,
+              }
+            });
+          }
         }
+      }
 
-        // Note: We allow deduction even if batches are insufficient or missing, 
-        // as requested by the user to work without strict batch tracking if needed.
-        // The total stock deduction still happens below.
+      // 5. Handle used inventory items
+      if (usedItems && usedItems.length > 0) {
+        for (const item of usedItems) {
+          // Find suitable batches (FEFO)
+          const batches = await tx.purchaseItem.findMany({
+            where: { 
+              productId: item.productId, 
+              remainingQuantity: { gt: 0 } 
+            },
+            orderBy: [
+              { expiryDate: 'asc' },
+              { id: 'asc' }
+            ]
+          });
 
-        // Record usage in SessionItem
-        await tx.sessionItem.create({
-          data: {
-            appointmentId: id,
-            productId: item.productId,
-            quantity: item.quantity,
-            costAtTime: item.costAtTime,
-            priceAtTime: item.priceAtTime,
+          let remainingToDeduct = item.quantity;
+          
+          for (const batch of batches) {
+            if (remainingToDeduct <= 0) break;
+            const currentBatchQty = Number(batch.remainingQuantity);
+            const deduct = Math.min(currentBatchQty, remainingToDeduct);
+            
+            await tx.purchaseItem.update({
+              where: { id: batch.id },
+              data: { remainingQuantity: currentBatchQty - deduct }
+            });
+            
+            remainingToDeduct -= deduct;
           }
-        });
 
-        // Deduct from total stock
-        const product = await tx.product.findFirst({ where: { id: item.productId } });
-        if (!product) throw new Error(`Product ${item.productId} not found`);
+          // Record usage in SessionItem
+          await tx.sessionItem.create({
+            data: {
+              appointmentId: id,
+              productId: item.productId,
+              quantity: item.quantity,
+              costAtTime: item.costAtTime,
+              priceAtTime: item.priceAtTime,
+            }
+          });
 
-        const balanceBefore = Number(product.currentStock);
-        const balanceAfter = balanceBefore - item.quantity;
+          // Deduct from total stock
+          const product = await tx.product.findFirst({ where: { id: item.productId } });
+          if (!product) throw new Error(`Product ${item.productId} not found`);
 
-        // Update product balance
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { currentStock: balanceAfter }
-        });
+          const balanceBefore = Number(product.currentStock);
+          const balanceAfter = balanceBefore - item.quantity;
 
-        // Create transaction record
-        await tx.stockTransaction.create({
-          data: {
-            productId: item.productId,
-            type: 'Usage',
-            quantity: -item.quantity,
-            balanceBefore,
-            balanceAfter,
-            cost: item.costAtTime,
-            referenceId: id,
-            notes: `Used in Appointment #${id}`
-          }
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { currentStock: balanceAfter }
+          });
+
+          // Create transaction record
+          await tx.stockTransaction.create({
+            data: {
+              productId: item.productId,
+              type: 'Usage',
+              quantity: -item.quantity,
+              balanceBefore,
+              balanceAfter,
+              cost: item.costAtTime,
+              referenceId: id,
+              notes: `Used in Appointment #${id}`
+            }
+          });
+        }
+      }
+
+      // 6. Financial Transaction (Sales/Revenue) Sync - Atomic & Idempotent
+      const finalStatus = appointment.status;
+      const totalAmount = Number(appointment.priceCharged || 0);
+
+      const existingFinTx = await tx.financialTransaction.findFirst({
+        where: {
+          referenceType: 'Appointment',
+          referenceId: id
+        }
+      });
+
+      const patientName = appointment.patient?.fullName || '';
+      const txDescription = `Appointment #${id} - ${patientName}`;
+
+      if (finalStatus === 'Done' && totalAmount > 0) {
+        if (existingFinTx) {
+          await tx.financialTransaction.update({
+            where: { id: existingFinTx.id },
+            data: {
+              amount: totalAmount,
+              type: 'Income',
+              category: 'Service',
+              description: txDescription,
+            }
+          });
+        } else {
+          await tx.financialTransaction.create({
+            data: {
+              type: 'Income',
+              category: 'Service',
+              amount: totalAmount,
+              method: 'Cash',
+              referenceType: 'Appointment',
+              referenceId: id,
+              description: txDescription,
+              date: new Date(),
+            }
+          });
+        }
+      } else if (finalStatus === 'Cancelled' && existingFinTx) {
+        await tx.financialTransaction.delete({
+          where: { id: existingFinTx.id }
         });
       }
 
-      return appointment;
+      // Return fully hydrated appointment
+      return tx.appointment.findUnique({
+        where: { id },
+        include: {
+          ...FULL_INCLUDE,
+          payments: true,
+          ratings: true,
+          sessionItems: {
+            include: {
+              product: { select: { id: true, name: true, code: true, unit: true } }
+            }
+          }
+        }
+      });
     });
   },
 

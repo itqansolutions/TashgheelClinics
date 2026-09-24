@@ -4,7 +4,7 @@ import { formatDateTime, getInitials, formatCurrency } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
 import { Button } from '@/components/ui/Button';
-import { Printer, X, Heart, ShieldCheck, Stethoscope, CreditCard, Map } from 'lucide-react';
+import { Printer, X, Heart, ShieldCheck, Stethoscope, CreditCard, Map, Sparkles } from 'lucide-react';
 
 interface Props {
   appointment: Appointment;
@@ -12,11 +12,12 @@ interface Props {
   notes:       string;
   prescription: string;
   bodyAreas?:  PatientArea[];
+  services?:   Array<{ name: string; description?: string; price: number }>;
   usedItems?:  any[];
   onClose?:    () => void;
 }
 
-export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, usedItems = [], onClose }: Props) {
+export function VisitReport({ appointment, patient, notes, prescription, bodyAreas, services, usedItems = [], onClose }: Props) {
   const { data: settings } = useClinicSettings();
   const { data: frontBodyAreas = [] } = useBodyAreas('front');
   const { data: backBodyAreas = [] } = useBodyAreas('back');
@@ -33,14 +34,18 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
   };
 
   // Helper to ensure numeric values for calculations
-  const servicePrice = Number(appointment.service?.price || 0);
-  const additionalFee = Number(appointment.priceCharged || 0);
-  const discountPercent = Number(appointment.discountPct || 0);
-  const itemsTotal = usedItems.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.priceAtTime)), 0);
+  const renderedServices = (services && services.length > 0) ? services : (appointment.services || []);
+  const servicesTotal = renderedServices.reduce((sum, s) => sum + Number(s.price || 0), 0);
+  const primaryServicePrice = appointment.service ? Number(appointment.service.price || 0) : 0;
   
-  const totalBeforeDiscount = servicePrice + additionalFee;
-  const discountAmount = totalBeforeDiscount * (discountPercent / 100);
-  const finalTotal = (totalBeforeDiscount - discountAmount) + itemsTotal;
+  const baseTotal = renderedServices.length > 0 
+    ? (primaryServicePrice + servicesTotal)
+    : Number(appointment.priceCharged || primaryServicePrice || 0);
+
+  const discountPercent = Number(appointment.discountPct || 0);
+  const discountAmount = baseTotal * (discountPercent / 100);
+  const itemsTotal = usedItems.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.priceAtTime)), 0);
+  const finalTotal = (baseTotal - discountAmount) + itemsTotal;
 
   return (
     <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm overflow-y-auto pt-6 pb-20 px-4 no-print-overlay">
@@ -154,22 +159,46 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 </div>
               </div>
 
-              {/* Financial Summary - Compact & Corrected */}
+              {/* Performed Services & Procedures */}
+              {renderedServices.length > 0 && (
+                <div className="bg-brand-50/20 rounded-xl p-4 border border-brand-100/60">
+                  <h3 className="text-[9px] font-black text-brand-700 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-brand-600" /> Performed Services & Procedures (الخدمات المنفذة)
+                  </h3>
+                  <div className="space-y-2">
+                    {renderedServices.map((s, idx) => (
+                      <div key={idx} className="flex justify-between items-start text-[11px] pb-1.5 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div className="pr-2">
+                          <p className="font-bold text-gray-900">{s.name}</p>
+                          {s.description && (
+                            <p className="text-[10px] text-gray-500 mt-0.5 whitespace-pre-wrap">{s.description}</p>
+                          )}
+                        </div>
+                        <span className="font-mono font-bold text-gray-800 shrink-0">{formatCurrency(Number(s.price || 0))}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Financial Summary */}
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                   <CreditCard className="w-3 h-3 text-green-600" /> Financial Summary
                 </h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-gray-500 font-medium">{appointment.service?.name || 'Primary Service'}</span>
-                    <span className="font-mono font-bold text-gray-900">{formatCurrency(servicePrice)}</span>
-                  </div>
-                  {additionalFee > 0 && (
+                  {appointment.service && (
                     <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-gray-500 font-medium">Additional Consultation Fee</span>
-                      <span className="font-mono font-bold text-gray-900">{formatCurrency(additionalFee)}</span>
+                      <span className="text-gray-500 font-medium">{appointment.service.name} (Consultation Fee)</span>
+                      <span className="font-mono font-bold text-gray-900">{formatCurrency(primaryServicePrice)}</span>
                     </div>
                   )}
+                  {renderedServices.map((s, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-[11px]">
+                      <span className="text-gray-600 font-medium">{s.name}</span>
+                      <span className="font-mono font-bold text-gray-900">{formatCurrency(Number(s.price || 0))}</span>
+                    </div>
+                  ))}
                   {discountPercent > 0 && (
                     <div className="flex justify-between items-center text-[11px] text-red-600">
                       <span className="font-medium italic">Applied Discount ({discountPercent}%)</span>

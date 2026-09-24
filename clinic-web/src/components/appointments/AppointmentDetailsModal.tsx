@@ -154,7 +154,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col gap-3 shrink-0">
-          {role === 'Doctor' && appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
+          {(role === 'Doctor' || role === 'Admin' || role === 'Receptionist' || role === 'Reception') && appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
             <Button 
               className="w-full gap-2 bg-brand-600 hover:bg-brand-700 py-6 text-base shadow-lg shadow-brand-100"
               onClick={() => navigate(`/appointments/${appointment.id}/consultation`)}

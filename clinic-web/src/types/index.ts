@@ -1,6 +1,6 @@
 // ── Enums ─────────────────────────────────────────────────────────────────
 
-export type Role = 'Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant';
+export type Role = 'Admin' | 'Reception' | 'Receptionist' | 'Doctor' | 'Manager' | 'Accountant';
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Done' | 'Cancelled';
 export type Nationality = 'Egyptian' | 'Foreigner';
 export type Gender = 'M' | 'F';
@@ -218,6 +218,16 @@ export interface PatientRating {
 
 // ── Appointment ───────────────────────────────────────────────────────────
 
+export interface AppointmentService {
+  id?: number;
+  appointmentId?: number;
+  serviceId?: number | null;
+  name: string;
+  description?: string | null;
+  price: number;
+  createdAt?: string;
+}
+
 export interface Appointment {
   id: number;
   patientId: number;
@@ -234,6 +244,7 @@ export interface Appointment {
   patient?: Pick<Patient, 'id' | 'code' | 'fullName' | 'phone'>;
   doctor?: Pick<Doctor, 'id' | 'fullName'> & { user: Pick<User, 'fullName'>; specialty: Pick<Specialty, 'name'> };
   service?: Pick<Service, 'id' | 'name' | 'price' | 'durationMin'>;
+  services?: AppointmentService[];
   payments?: Payment[];
 }
 

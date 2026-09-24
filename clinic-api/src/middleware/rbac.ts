@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/response';
 
-export type Role = 'Admin' | 'System Admin' | 'Reception' | 'Doctor' | 'Nurse' | 'Manager' | 'Accountant';
+export type Role = 'Admin' | 'System Admin' | 'Reception' | 'Receptionist' | 'Doctor' | 'Nurse' | 'Manager' | 'Accountant';
 
 /**
  * Usage: router.delete('/:id', authenticate, rbac('Admin'), handler)
@@ -14,14 +14,22 @@ export function rbac(...allowedRoles: Role[]) {
       return;
     }
 
-    const userRole = (req.user.role as string || '').trim();
-    const isSystemAdmin = userRole.toLowerCase() === 'system admin' || userRole.toLowerCase() === 'admin';
+    const userRole = (req.user.role as string || '').trim().toLowerCase();
+    const isSystemAdmin = userRole === 'system admin' || userRole === 'admin';
 
     // Check if user has explicit role OR if they are a System Admin (super user)
-    const hasAccess = isSystemAdmin || allowedRoles.some(role => role.toLowerCase() === userRole.toLowerCase());
+    // Equate 'reception' and 'receptionist' for seamless backward/forward compatibility
+    const hasAccess = isSystemAdmin || allowedRoles.some(role => {
+      const target = role.toLowerCase();
+      if (target === userRole) return true;
+      if ((target === 'reception' || target === 'receptionist') && (userRole === 'reception' || userRole === 'receptionist')) {
+        return true;
+      }
+      return false;
+    });
 
     if (!hasAccess) {
-      const errorMsg = `Access denied for role "${userRole}". Required: ${allowedRoles.join(', ')}`;
+      const errorMsg = `Access denied for role "${req.user.role}". Required: ${allowedRoles.join(', ')}`;
       console.warn(`[RBAC] ${errorMsg} (User ID: ${req.user.sub})`);
       sendError(res, errorMsg, 403);
       return;
@@ -33,5 +41,5 @@ export function rbac(...allowedRoles: Role[]) {
 
 // Convenience exports for common role combos
 export const adminOnly = rbac('Admin');
-export const adminOrReception = rbac('Admin', 'Reception');
-export const allRoles = rbac('Admin', 'Reception', 'Doctor', 'Nurse', 'Manager', 'Accountant');
+export const adminOrReception = rbac('Admin', 'Reception', 'Receptionist');
+export const allRoles = rbac('Admin', 'Reception', 'Receptionist', 'Doctor', 'Nurse', 'Manager', 'Accountant');

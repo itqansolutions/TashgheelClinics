@@ -62,3 +62,13 @@ export function useDeactivateService() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [SPECIALTIES_KEY] }),
   });
 }
+
+export function useServicesList(specialtyId?: number) {
+  return useQuery({
+    queryKey: ['services', 'list', specialtyId],
+    queryFn: async () => {
+      const res = await servicesApi.list({ specialtyId, includeInactive: false });
+      return res.data.data ?? [];
+    },
+  });
+}

@@ -8,11 +8,13 @@ import {
 import { useUser, useRole, useSystemRole, useTenant, useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth';
 
+import type { Role } from '@/types';
+
 interface NavItem {
   label: string;
   path:  string;
   icon:  React.ElementType;
-  roles?: Array<'Admin' | 'Reception' | 'Doctor' | 'Nurse' | 'Manager' | 'Accountant'>;
+  roles?: Array<Role>;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -21,8 +23,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Appointments', path: '/app/appointments',icon: CalendarDays    },
   { label: 'Calendar',     path: '/app/calendar',    icon: CalendarDays    },
   { label: 'Reports',      path: '/app/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
-  { label: 'Doctors',      path: '/app/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
-  { label: 'Schedule',     path: '/app/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
+  { label: 'Doctors',      path: '/app/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception', 'Receptionist'] },
+  { label: 'Schedule',     path: '/app/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception', 'Receptionist'] },
   { label: 'Stock Balance',path: '/app/stock/balance', icon: Boxes,        roles: ['Admin']              },
   { label: 'Finance',      path: '/app/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
   { label: 'Products',     path: '/app/stock/products', icon: Package,      roles: ['Admin']              },
@@ -44,7 +46,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const logout     = useAuthStore((s) => s.logout);
   const navigate   = useNavigate();
 
-  const visible = NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)));
+  const visible = NAV_ITEMS.filter((item) => {
+    if (!item.roles) return true;
+    if (!role) return false;
+    return item.roles.some((r) => {
+      if (r === role) return true;
+      if ((r === 'Reception' || r === 'Receptionist') && (role === 'Reception' || role === 'Receptionist')) return true;
+      return false;
+    });
+  });
 
   const handleLogout = async () => {
     try { await authApi.logout(); } finally {

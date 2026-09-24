@@ -30,7 +30,7 @@ export function PatientProfilePage() {
   const { id }    = useParams<{ id: string }>();
   const navigate  = useNavigate();
   const role      = useRole();
-  const canEdit   = role === 'Admin' || role === 'Reception';
+  const canEdit   = role === 'Admin' || role === 'Reception' || role === 'Receptionist';
 
   const [activeTab, setActiveTab] = useState<TabId>('personal');
   const { data: patient, isLoading } = usePatient(Number(id));

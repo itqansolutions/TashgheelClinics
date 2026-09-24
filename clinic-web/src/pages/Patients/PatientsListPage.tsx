@@ -16,7 +16,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 export function PatientsListPage() {
   const navigate = useNavigate();
   const role = useRole();
-  const canCreate = role === 'Admin' || role === 'Reception';
+  const canCreate = role === 'Admin' || role === 'Reception' || role === 'Receptionist';
 
   // ── Filters ───────────────────────────────────────────────────────────
   const [search, setSearch]           = useState('');

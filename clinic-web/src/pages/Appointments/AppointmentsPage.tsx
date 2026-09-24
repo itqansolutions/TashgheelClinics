@@ -16,7 +16,7 @@ export function AppointmentsPage() {
   const filters = {};
   
   const isDoctor = role === 'Doctor';
-  const isAdminOrReception = role === 'Admin' || role === 'Reception';
+  const isAdminOrReception = role === 'Admin' || role === 'Reception' || role === 'Receptionist';
 
   const allAppts = useAppointments(filters, { enabled: isAdminOrReception });
   const doctorAppts = useDoctorAppointments(filters, { enabled: isDoctor });
@@ -118,7 +118,7 @@ export function AppointmentsPage() {
                   {formatCurrency(apt.priceCharged || apt.service?.price || 0)}
                 </span>
                 <div className="flex gap-2">
-                  {role === 'Doctor' && apt.status !== 'Done' && (
+                  {(role === 'Doctor' || role === 'Admin' || role === 'Receptionist' || role === 'Reception') && apt.status !== 'Done' && (
                     <Button 
                       variant="primary" 
                       size="sm" 

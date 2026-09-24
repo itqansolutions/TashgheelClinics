@@ -22,6 +22,7 @@ export const TENANT_MODELS = new Set([
   'patientImage',
   'patientRating',
   'appointment',
+  'appointmentService',
   'payment',
   'sessionItem',
   'financialTransaction',

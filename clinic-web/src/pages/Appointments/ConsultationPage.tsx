@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, User, Calendar, Scissors, Phone, FileText, 
   Save, Printer, Info, Heart, ChevronRight, Activity,
-  AlertCircle
+  AlertCircle, Sparkles, Boxes
 } from 'lucide-react';
 import { useAppointment, useUpdateAppointment } from '@/hooks/useAppointments';
 import { usePatient, usePatientAreas } from '@/hooks/usePatients';
@@ -15,9 +15,9 @@ import { BodyMapTab } from '@/pages/Patients/tabs/BodyMapTab';
 import { clsx } from 'clsx';
 import { VisitReport } from '@/components/appointments/VisitReport';
 import { InventoryUsageTab } from './tabs/InventoryUsageTab';
-import { Boxes } from 'lucide-react';
+import { ConsultationServicesTab, ConsultationServiceItem } from './tabs/ConsultationServicesTab';
 
-type TabId = 'notes' | 'bodymap' | 'prescription' | 'usage';
+type TabId = 'notes' | 'services' | 'usage' | 'bodymap' | 'prescription';
 
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,12 +33,21 @@ export function ConsultationPage() {
   const [notes, setNotes] = useState(appointment?.notes || '');
   const [prescription, setPrescription] = useState(appointment?.prescription || '');
   const [usedItems, setUsedItems] = useState<any[]>([]);
+  const [services, setServices] = useState<ConsultationServiceItem[]>([]);
   
   // Sync state when data is loaded
   useEffect(() => {
     if (appointment) {
       if (appointment.notes) setNotes(appointment.notes);
       if (appointment.prescription) setPrescription(appointment.prescription);
+      if (appointment.services && appointment.services.length > 0) {
+        setServices(appointment.services.map(s => ({
+          serviceId: s.serviceId || undefined,
+          name: s.name,
+          description: s.description || '',
+          price: Number(s.price || 0),
+        })));
+      }
     }
   }, [appointment]);
   
@@ -55,6 +64,12 @@ export function ConsultationPage() {
           notes: notes,
           prescription: prescription,
           status: finish ? 'Done' : appointment.status,
+          services: services.map(s => ({
+            serviceId: s.serviceId,
+            name: s.name,
+            description: s.description,
+            price: Number(s.price),
+          })),
           usedItems: usedItems.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -89,6 +104,7 @@ export function ConsultationPage() {
           notes={notes} 
           prescription={prescription}
           bodyAreas={patientAreas}
+          services={services}
           usedItems={usedItems}
           onClose={() => showReview ? navigate('/appointments') : setIsPrinting(false)}
         />
@@ -205,9 +221,10 @@ export function ConsultationPage() {
           <div className="bg-white rounded-2xl border border-gray-200 p-1.5 flex gap-1 shadow-sm">
             {[
               { id: 'notes', label: 'Clinical Notes', icon: FileText },
+              { id: 'services', label: `Services (${services.length})`, icon: Sparkles },
+              { id: 'usage', label: `Stock Usage (${usedItems.length})`, icon: Boxes },
               { id: 'bodymap', label: 'Body Mapping', icon: Activity },
               { id: 'prescription', label: 'Prescription', icon: Scissors },
-              { id: 'usage', label: 'Stock Usage', icon: Boxes },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -240,6 +257,10 @@ export function ConsultationPage() {
                   className="w-full h-[400px] p-6 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 text-sm leading-relaxed text-gray-700 placeholder:text-gray-300 resize-none"
                 />
               </div>
+            )}
+
+            {activeTab === 'services' && (
+              <ConsultationServicesTab services={services} onChange={setServices} />
             )}
 
             {activeTab === 'bodymap' && (

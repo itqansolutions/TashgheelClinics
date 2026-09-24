@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt } from 'lucide-react';
+import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt, ExternalLink, Copy, CheckCheck } from 'lucide-react';
 import { useClinicSettings, useUpdateClinicSettings, useLeadSourcesAdmin, useLeadSourceMutations } from '@/hooks/useSettings';
+import { useTenant } from '@/store/authStore';
 import { useInvoiceSettings, useUpdateInvoiceSettings } from '@/hooks/useFinance';
 import { useCountries } from '@/hooks/useLookups';
 import { useUsers, useCreateUser, useDeactivateUser } from '@/hooks/useUsers';
@@ -130,7 +131,7 @@ function UsersPanel() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Badge variant={user.role === 'Admin' ? 'purple' : user.role === 'Doctor' ? 'blue' : 'gray'}>
+                  <Badge variant={user.role === 'Admin' ? 'purple' : user.role === 'Doctor' ? 'blue' : (user.role === 'Receptionist' || user.role === 'Reception') ? 'green' : 'gray'}>
                     {user.role}
                   </Badge>
                   <Button variant="ghost" size="xs" className="text-red-400 hover:text-red-600" 
@@ -193,9 +194,19 @@ function UsersPanel() {
 
 // ── Clinic Info ───────────────────────────────────────────────────────────
 function ClinicInfoPanel() {
+  const tenant = useTenant();
   const { data: settings, isLoading } = useClinicSettings();
   const updateSettings = useUpdateClinicSettings();
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const bookingUrl = `${window.location.origin}/c/${tenant?.slug || 'clinic'}/book`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(bookingUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   const { register, handleSubmit, formState: { isDirty, isSubmitting } } = useForm<Record<string, string>>({
     values: settings ?? {},
@@ -216,44 +227,89 @@ function ClinicInfoPanel() {
   );
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <div className="sm:col-span-2">
-            <Input label="Clinic Name" {...register('clinic_name')} />
+    <div className="space-y-4">
+      {/* Public Booking Link Card */}
+      <Card className="border-brand-200 bg-gradient-to-br from-brand-50/60 to-white">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-200">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Public Online Booking Link (رابط الحجز الإلكتروني)</h3>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Share this dedicated link with patients or on social media to receive direct self-service bookings.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={bookingUrl} 
+                  className="font-mono text-xs bg-white border border-gray-200 text-gray-800 rounded-lg px-3 py-1.5 w-full sm:w-96 select-all shadow-inner focus:outline-none"
+                />
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleCopyLink} 
+                  leftIcon={copied ? <CheckCheck className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  className={clsx(copied && 'border-green-300 bg-green-50 text-green-700')}
+                >
+                  {copied ? 'Copied Link!' : 'Copy Link'}
+                </Button>
+                <a 
+                  href={bookingUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-800 px-2 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Preview Booking Page
+                </a>
+              </div>
+            </div>
           </div>
-          <Input label="Phone"   type="tel"   {...register('clinic_phone')} />
-          <Input label="Email"   type="email" {...register('clinic_email')} />
-          <div className="sm:col-span-2">
-            <Input label="Address" {...register('clinic_address')} />
-          </div>
-          <Input label="Currency Symbol" {...register('currency_symbol')}
-            hint="Shown next to prices (e.g. ج.م)" />
-          <Input label="Default Appointment Duration (min)" type="number"
-            {...register('appointment_slot_minutes')} />
-          <Input label="Working Hours Start" type="time" {...register('working_hours_start')} />
-          <Input label="Working Hours End"   type="time" {...register('working_hours_end')} />
-          <Input label="Advance Booking Days" type="number"
-            hint="How many days ahead patients can book"
-            {...register('booking_advance_days')} />
         </div>
+      </Card>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          {saved && (
-            <span className="flex items-center gap-1.5 text-xs text-green-600">
-              <Check className="w-3.5 h-3.5" /> Settings saved
-            </span>
-          )}
-          <div className="ml-auto">
-            <Button type="submit" loading={isSubmitting} disabled={!isDirty}
-              leftIcon={<Save className="w-3.5 h-3.5" />}
-            >
-              Save Settings
-            </Button>
+      <Card>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div className="sm:col-span-2">
+              <Input label="Clinic Name" {...register('clinic_name')} />
+            </div>
+            <Input label="Phone"   type="tel"   {...register('clinic_phone')} />
+            <Input label="Email"   type="email" {...register('clinic_email')} />
+            <div className="sm:col-span-2">
+              <Input label="Address" {...register('clinic_address')} />
+            </div>
+            <Input label="Currency Symbol" {...register('currency_symbol')}
+              hint="Shown next to prices (e.g. ج.م)" />
+            <Input label="Default Appointment Duration (min)" type="number"
+              {...register('appointment_slot_minutes')} />
+            <Input label="Working Hours Start" type="time" {...register('working_hours_start')} />
+            <Input label="Working Hours End"   type="time" {...register('working_hours_end')} />
+            <Input label="Advance Booking Days" type="number"
+              hint="How many days ahead patients can book"
+              {...register('booking_advance_days')} />
           </div>
-        </div>
-      </form>
-    </Card>
+
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            {saved && (
+              <span className="flex items-center gap-1.5 text-xs text-green-600">
+                <Check className="w-3.5 h-3.5" /> Settings saved
+              </span>
+            )}
+            <div className="ml-auto">
+              <Button type="submit" loading={isSubmitting} disabled={!isDirty}
+                leftIcon={<Save className="w-3.5 h-3.5" />}
+              >
+                Save Settings
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Card>
+    </div>
   );
 }
 

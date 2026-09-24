@@ -68,6 +68,7 @@ model Tenant {
   patientImages          PatientImage[]
   patientRatings         PatientRating[]
   appointments           Appointment[]
+  appointmentServices    AppointmentService[]
   payments               Payment[]
   sessionItems           SessionItem[]
   financialTransactions  FinancialTransaction[]
@@ -271,8 +272,9 @@ model Service {
 
   // Relations
   tenant       Tenant?       @relation(fields: [tenantId], references: [id])
-  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
-  appointments Appointment[]
+  specialty           Specialty            @relation(fields: [specialtyId], references: [id])
+  appointments        Appointment[]
+  appointmentServices AppointmentService[]
 
   @@index([tenantId])
   @@map("Services")
@@ -408,12 +410,35 @@ model Appointment {
   images        PatientImage[]
   ratings       PatientRating[]
   sessionItems  SessionItem[]
+  services      AppointmentService[]
 
   @@index([tenantId])
   @@index([tenantId, startTime]) // calendar queries
   @@index([doctorId, startTime])
   @@index([patientId])
   @@map("Appointments")
+}
+
+// ── Appointment Services & Procedures ───────────────────────────────────────
+// Explicit procedures/services rendered during an appointment consultation.
+
+model AppointmentService {
+  id            Int      @id @default(autoincrement())
+  tenantId      Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  appointmentId Int
+  serviceId     Int?
+  name          String
+  description   String?
+  price         Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  tenant      Tenant?     @relation(fields: [tenantId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  service     Service?    @relation(fields: [serviceId], references: [id])
+
+  @@index([tenantId])
+  @@index([appointmentId])
+  @@map("AppointmentServices")
 }
 
 // ── Payments ─────────────────────────────────────────────────────────────────
