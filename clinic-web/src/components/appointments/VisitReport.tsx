@@ -44,8 +44,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
 
   const discountPercent = Number(appointment.discountPct || 0);
   const discountAmount = baseTotal * (discountPercent / 100);
-  const itemsTotal = usedItems.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.priceAtTime)), 0);
-  const finalTotal = (baseTotal - discountAmount) + itemsTotal;
+  const finalTotal = Math.max(0, baseTotal - discountAmount);
 
   return (
     <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm overflow-y-auto pt-6 pb-20 px-4 no-print-overlay">
@@ -181,6 +180,22 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 </div>
               )}
 
+              {/* Clinical Consumables & Supplies Used (Medical Record Tracking) */}
+              {usedItems.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <h3 className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    Medical Supplies Used (المستهلكات الطبية بالجلسة)
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {usedItems.map((item, idx) => (
+                      <span key={idx} className="inline-flex items-center text-[10px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-gray-700 font-medium">
+                        {item.name} <span className="text-gray-400 font-mono ml-1">×{item.quantity}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Financial Summary */}
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -205,18 +220,8 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                       <span className="font-mono font-bold">-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
-                  {usedItems.length > 0 && (
-                    <div className="pt-1 border-t border-dashed border-gray-100 mt-1">
-                      {usedItems.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-[10px] text-gray-500">
-                          <span>{item.name} (x{item.quantity})</span>
-                          <span className="font-mono font-bold">{formatCurrency(Number(item.quantity) * Number(item.priceAtTime))}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                   <div className="pt-2 border-t border-gray-200 mt-1 flex justify-between items-center">
-                    <span className="text-xs font-black text-gray-900 uppercase">Total Amount</span>
+                    <span className="text-xs font-black text-gray-900 uppercase">Total Amount Due</span>
                     <span className="text-base font-mono font-black text-brand-600">
                       {formatCurrency(finalTotal)}
                     </span>
