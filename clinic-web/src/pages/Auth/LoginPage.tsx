@@ -22,7 +22,7 @@ export function LoginPage() {
   const location = useLocation();
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/app/dashboard';
 
   const {
     register,
@@ -41,8 +41,10 @@ export function LoginPage() {
         user.systemRole === 'SYSTEM_ADMIN' || user.systemRole === 'SUPPORT'
           ? '/superadmin'
           : user.role === 'Doctor'
-          ? '/appointments'
-          : from;
+          ? '/app/appointments'
+          : from.startsWith('/app')
+          ? from
+          : '/app/dashboard';
       navigate(target, { replace: true });
     } catch (err: unknown) {
       const msg =

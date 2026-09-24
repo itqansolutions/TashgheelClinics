@@ -16,19 +16,19 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',    path: '/dashboard',   icon: LayoutDashboard },
-  { label: 'Patients',     path: '/patients',    icon: Users           },
-  { label: 'Appointments', path: '/appointments',icon: CalendarDays    },
-  { label: 'Calendar',     path: '/calendar',    icon: CalendarDays    },
-  { label: 'Reports',      path: '/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
-  { label: 'Doctors',      path: '/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
-  { label: 'Schedule',     path: '/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
-  { label: 'Stock Balance',path: '/stock/balance', icon: Boxes,        roles: ['Admin']              },
-  { label: 'Finance',      path: '/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
-  { label: 'Products',     path: '/stock/products', icon: Package,      roles: ['Admin']              },
-  { label: 'Vendors',      path: '/stock/vendors', icon: Users2,       roles: ['Admin']              },
-  { label: 'Specialties',  path: '/specialties', icon: Scissors,       roles: ['Admin']              },
-  { label: 'Settings',     path: '/settings',    icon: Settings,       roles: ['Admin', 'Manager']   },
+  { label: 'Dashboard',    path: '/app/dashboard',   icon: LayoutDashboard },
+  { label: 'Patients',     path: '/app/patients',    icon: Users           },
+  { label: 'Appointments', path: '/app/appointments',icon: CalendarDays    },
+  { label: 'Calendar',     path: '/app/calendar',    icon: CalendarDays    },
+  { label: 'Reports',      path: '/app/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
+  { label: 'Doctors',      path: '/app/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception'] },
+  { label: 'Schedule',     path: '/app/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception'] },
+  { label: 'Stock Balance',path: '/app/stock/balance', icon: Boxes,        roles: ['Admin']              },
+  { label: 'Finance',      path: '/app/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
+  { label: 'Products',     path: '/app/stock/products', icon: Package,      roles: ['Admin']              },
+  { label: 'Vendors',      path: '/app/stock/vendors', icon: Users2,       roles: ['Admin']              },
+  { label: 'Specialties',  path: '/app/specialties', icon: Scissors,       roles: ['Admin']              },
+  { label: 'Settings',     path: '/app/settings',    icon: Settings,       roles: ['Admin', 'Manager']   },
 ];
 
 interface SidebarProps {

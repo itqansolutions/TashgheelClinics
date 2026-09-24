@@ -19,12 +19,12 @@ export function ProtectedRoute({ allowedRoles, allowedSystemRoles }: ProtectedRo
 
   // If route strictly requires system admin/support
   if (allowedSystemRoles && (!systemRole || !allowedSystemRoles.includes(systemRole))) {
-    return <Navigate to="/403" replace />;
+    return <Navigate to="/403?reason=platform_boundary" replace />;
   }
 
   // If route requires specific clinic tenant roles (and user is not a system admin bypass)
   if (allowedRoles && !systemRole && role && !allowedRoles.includes(role)) {
-    return <Navigate to="/403" replace />;
+    return <Navigate to={`/403?reason=role_mismatch&required=${allowedRoles.join(',')}`} replace />;
   }
 
   return <Outlet />;

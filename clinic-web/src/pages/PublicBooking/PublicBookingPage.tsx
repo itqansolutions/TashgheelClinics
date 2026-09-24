@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -9,6 +10,7 @@ import {
 import { format, getDay } from 'date-fns';
 
 export function PublicBookingPage() {
+  const { slug } = useParams<{ slug: string }>();
   const [step, setStep] = useState(1);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
@@ -38,26 +40,43 @@ export function PublicBookingPage() {
   });
 
   useEffect(() => {
-    axios.get('/api/public/doctors').then(res => setDoctors(res.data.data));
-    axios.get('/api/public/services').then(res => setServices(res.data.data));
-    axios.get('/api/public/specialties').then(res => setSpecialties(res.data.data));
-    axios.get('/api/public/lead-sources').then(res => setLeadSources(res.data.data));
-    axios.get('/api/public/settings').then(res => setSettings(res.data.data));
-  }, []);
+    const config = slug ? { params: { slug }, headers: { 'x-tenant-slug': slug } } : {};
+    axios.get('/api/public/doctors', config).then(res => setDoctors(res.data.data)).catch(console.error);
+    axios.get('/api/public/services', config).then(res => setServices(res.data.data)).catch(console.error);
+    axios.get('/api/public/specialties', config).then(res => setSpecialties(res.data.data)).catch(console.error);
+    axios.get('/api/public/lead-sources', config).then(res => setLeadSources(res.data.data)).catch(console.error);
+    axios.get('/api/public/settings', config).then(res => setSettings(res.data.data)).catch(console.error);
+  }, [slug]);
 
   // Fetch busy times when doctor or date changes
   useEffect(() => {
     if (formData.doctorId && formData.date) {
-      axios.get(`/api/public/doctor-busy-times?doctorId=${formData.doctorId}&date=${formData.date}`)
-        .then(res => setBusyTimes(res.data.data));
+      const config = {
+        params: {
+          doctorId: formData.doctorId,
+          date: formData.date,
+          ...(slug ? { slug } : {}),
+        },
+        headers: slug ? { 'x-tenant-slug': slug } : undefined,
+      };
+      axios.get('/api/public/doctor-busy-times', config)
+        .then(res => setBusyTimes(res.data.data))
+        .catch(console.error);
     }
-  }, [formData.doctorId, formData.date]);
+  }, [formData.doctorId, formData.date, slug]);
 
   const checkPatient = async () => {
     if (!formData.phone || formData.phone.length < 8) return;
     setSearching(true);
     try {
-      const res = await axios.get(`/api/public/check-patient?phone=${formData.phone}`);
+      const config = {
+        params: {
+          phone: formData.phone,
+          ...(slug ? { slug } : {}),
+        },
+        headers: slug ? { 'x-tenant-slug': slug } : undefined,
+      };
+      const res = await axios.get('/api/public/check-patient', config);
       const data = res.data.data;
       if (data && !data.isNew) {
         setPatientData(data);
@@ -123,12 +142,20 @@ export function PublicBookingPage() {
     setLoading(true);
     try {
       const startTime = new Date(`${formData.date}T${formData.time}`);
-      await axios.post('/api/public/book', {
-        ...formData,
-        doctorId: Number(formData.doctorId),
-        serviceId: Number(formData.serviceId),
-        startTime: startTime.toISOString(),
-      });
+      const config = {
+        params: slug ? { slug } : undefined,
+        headers: slug ? { 'x-tenant-slug': slug } : undefined,
+      };
+      await axios.post(
+        '/api/public/book',
+        {
+          ...formData,
+          doctorId: Number(formData.doctorId),
+          serviceId: Number(formData.serviceId),
+          startTime: startTime.toISOString(),
+        },
+        config
+      );
       setSuccess(true);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Error booking appointment. Please try again.');

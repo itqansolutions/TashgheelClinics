@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
-import { useUser } from '@/store/authStore';
+import { Bell, Search, Menu, Sparkles, ShieldCheck } from 'lucide-react';
+import { useUser, useTenant, useSystemRole } from '@/store/authStore';
 import { format } from 'date-fns';
 import { QuickSearchModal } from './QuickSearchModal';
 import { NotificationsDropdown } from './NotificationsDropdown';
@@ -13,6 +13,8 @@ interface TopbarProps {
 
 export function Topbar({ title, onMenuClick }: TopbarProps) {
   const user = useUser();
+  const tenant = useTenant();
+  const systemRole = useSystemRole();
   const today = format(new Date(), 'EEEE, MMMM d yyyy');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -23,7 +25,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
 
   return (
     <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white border-b border-gray-200 z-30 flex items-center justify-between px-4 lg:px-6">
-      {/* Left: Menu Toggle + Page title */}
+      {/* Left: Menu Toggle + Page title + Clinic Badge */}
       <div className="flex items-center gap-3">
         <button 
           onClick={onMenuClick}
@@ -32,7 +34,21 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
           <Menu className="w-6 h-6" />
         </button>
         <div>
-          <h1 className="text-sm lg:text-base font-semibold text-gray-900 truncate max-w-[150px] sm:max-w-none">{title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm lg:text-base font-semibold text-gray-900 truncate max-w-[150px] sm:max-w-none">{title}</h1>
+            {tenant && !systemRole && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-medium">
+                <Sparkles className="w-3 h-3 text-amber-600" />
+                <span>14-Day Free Trial (Pro Features)</span>
+              </div>
+            )}
+            {systemRole && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold">
+                <ShieldCheck className="w-3 h-3 text-indigo-500" />
+                <span>Platform Admin</span>
+              </div>
+            )}
+          </div>
           <p className="hidden sm:block text-[10px] lg:text-[11px] text-gray-400">{today}</p>
         </div>
       </div>
