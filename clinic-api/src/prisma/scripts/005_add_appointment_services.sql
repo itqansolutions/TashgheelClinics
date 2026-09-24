@@ -1,9 +1,10 @@
--- Migration 005: Add AppointmentServices table
--- For recording services and clinical procedures rendered during an appointment consultation
+-- Migration 005: Add AppointmentServices table (Hardened Multi-Tenant)
+-- Strictly tenant-scoped: tenantId is NOT NULL with ON DELETE CASCADE
+-- Prevents any orphaned records and strictly enforces tenant boundaries
 
 CREATE TABLE IF NOT EXISTS "AppointmentServices" (
     "id" SERIAL PRIMARY KEY,
-    "tenantId" INTEGER REFERENCES "Tenants"("id") ON DELETE SET NULL,
+    "tenantId" INTEGER NOT NULL REFERENCES "Tenants"("id") ON DELETE CASCADE,
     "appointmentId" INTEGER NOT NULL REFERENCES "Appointments"("id") ON DELETE CASCADE,
     "serviceId" INTEGER REFERENCES "Services"("id") ON DELETE SET NULL,
     "name" VARCHAR(255) NOT NULL,

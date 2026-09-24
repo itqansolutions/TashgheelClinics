@@ -84,6 +84,7 @@ describe('Clinical Workflow & Services Isolation Tests', () => {
 
       const created = await dbA.appointmentService.create({
         data: {
+          tenantId: getTenantAId(),
           appointmentId: appointmentAId,
           name: 'Botox Procedure',
           description: 'Forehead 20 units',
