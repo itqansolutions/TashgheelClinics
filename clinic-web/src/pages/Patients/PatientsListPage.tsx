@@ -64,7 +64,7 @@ export function PatientsListPage() {
         {canCreate && (
           <Button
             leftIcon={<UserPlus className="w-4 h-4" />}
-            onClick={() => navigate('/patients/new')}
+            onClick={() => navigate('/app/patients/new')}
           >
             New Patient
           </Button>
@@ -161,7 +161,7 @@ export function PatientsListPage() {
                 <Button
                   size="sm"
                   leftIcon={<UserPlus className="w-3.5 h-3.5" />}
-                  onClick={() => navigate('/patients/new')}
+                  onClick={() => navigate('/app/patients/new')}
                 >
                   Add Patient
                 </Button>
@@ -186,7 +186,7 @@ export function PatientsListPage() {
                   key={patient.id}
                   patient={patient}
                   canCreate={canCreate}
-                  onView={() => navigate(`/patients/${patient.id}`)}
+                  onView={() => navigate(`/app/patients/${patient.id}`)}
                   onDeactivate={() => handleDeactivate(patient.id, patient.fullName)}
                 />
               ))}

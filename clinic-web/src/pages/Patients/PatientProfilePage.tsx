@@ -47,14 +47,14 @@ export function PatientProfilePage() {
   const handleDeactivate = async () => {
     if (!confirm(`Deactivate "${patient.fullName}"?`)) return;
     await deactivate.mutateAsync(patient.id);
-    navigate('/patients');
+    navigate('/app/patients');
   };
 
   return (
     <div className="space-y-4">
       {/* Back */}
       <button
-        onClick={() => navigate('/patients')}
+        onClick={() => navigate('/app/patients')}
         className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />

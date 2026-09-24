@@ -82,7 +82,7 @@ export function DashboardPage() {
                 {new Date().toLocaleDateString('en-EG', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
             </div>
-            <button onClick={() => navigate('/appointments')}
+            <button onClick={() => navigate('/app/appointments')}
               className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium">
               View all <ArrowRight className="w-3 h-3" />
             </button>
@@ -107,12 +107,12 @@ export function DashboardPage() {
             <div className="divide-y divide-gray-50">
               {(appts as Appointment[]).map((appt) => (
                 <div key={appt.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors">
-                  <button onClick={() => navigate(`/patients/${appt.patientId}`)}
+                  <button onClick={() => navigate(`/app/patients/${appt.patientId}`)}
                     className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold shrink-0 hover:bg-brand-100 transition-colors">
                     {getInitials(appt.patient?.fullName ?? '?')}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <button onClick={() => navigate(`/patients/${appt.patientId}`)}
+                    <button onClick={() => navigate(`/app/patients/${appt.patientId}`)}
                       className="text-sm font-medium text-gray-900 hover:text-brand-600 truncate block text-left">
                       {appt.patient?.fullName}
                     </button>

@@ -87,7 +87,7 @@ export function PatientFormPage() {
         : data.notes || undefined,
     };
     const res = await create.mutateAsync(payload);
-    navigate(`/patients/${(res.data.data as { id: number }).id}`);
+    navigate(`/app/patients/${(res.data.data as { id: number }).id}`);
   };
 
   return (
@@ -294,7 +294,7 @@ export function PatientFormPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => navigate('/patients')} type="button">
+              <Button variant="ghost" onClick={() => navigate('/app/patients')} type="button">
                 Cancel
               </Button>
 

@@ -135,10 +135,10 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
   };
 
   const shortcuts = [
-    { label: 'Register New Patient', path: '/patients/new', color: 'bg-indigo-50 border-indigo-100 text-indigo-700 hover:bg-indigo-100/70', icon: User },
-    { label: 'View Calendar', path: '/calendar', color: 'bg-teal-50 border-teal-100 text-teal-700 hover:bg-teal-100/70', icon: Calendar },
-    { label: 'View Financial Ledger', path: '/finance', color: 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/70', icon: Sparkles },
-    { label: 'Manage Stock Balance', path: '/stock/balance', color: 'bg-purple-50 border-purple-100 text-purple-700 hover:bg-purple-100/70', icon: Package }
+    { label: 'Register New Patient', path: '/app/patients/new', color: 'bg-indigo-50 border-indigo-100 text-indigo-700 hover:bg-indigo-100/70', icon: User },
+    { label: 'View Calendar', path: '/app/calendar', color: 'bg-teal-50 border-teal-100 text-teal-700 hover:bg-teal-100/70', icon: Calendar },
+    { label: 'View Financial Ledger', path: '/app/finance', color: 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/70', icon: Sparkles },
+    { label: 'Manage Stock Balance', path: '/app/stock/balance', color: 'bg-purple-50 border-purple-100 text-purple-700 hover:bg-purple-100/70', icon: Package }
   ];
 
   return (
@@ -238,7 +238,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                     {patients.map((p) => (
                       <div
                         key={p.id}
-                        onClick={() => handleNavigate(`/patients/${p.id}`)}
+                        onClick={() => handleNavigate(`/app/patients/${p.id}`)}
                         className="group flex items-center justify-between p-3 hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100/50 rounded-2xl cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                     {doctors.map((d) => (
                       <div
                         key={d.id}
-                        onClick={() => handleNavigate('/doctors')}
+                        onClick={() => handleNavigate('/app/doctors')}
                         className="group flex items-center justify-between p-3 hover:bg-emerald-50/50 border border-transparent hover:border-emerald-100/50 rounded-2xl cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-3">
@@ -299,7 +299,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                     {appointments.map((a) => (
                       <div
                         key={a.id}
-                        onClick={() => handleNavigate('/appointments')}
+                        onClick={() => handleNavigate('/app/appointments')}
                         className="group flex items-center justify-between p-3 hover:bg-cyan-50/50 border border-transparent hover:border-cyan-100/50 rounded-2xl cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -339,7 +339,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                     {products.map((p) => (
                       <div
                         key={p.id}
-                        onClick={() => handleNavigate('/stock/products')}
+                        onClick={() => handleNavigate('/app/stock/products')}
                         className="group flex items-center justify-between p-3 hover:bg-purple-50/50 border border-transparent hover:border-purple-100/50 rounded-2xl cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-3">
@@ -374,7 +374,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                     {vendors.map((v) => (
                       <div
                         key={v.id}
-                        onClick={() => handleNavigate('/stock/vendors')}
+                        onClick={() => handleNavigate('/app/stock/vendors')}
                         className="group flex items-center justify-between p-3 hover:bg-orange-50/50 border border-transparent hover:border-orange-100/50 rounded-2xl cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-3">

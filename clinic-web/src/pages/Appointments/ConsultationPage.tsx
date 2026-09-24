@@ -106,7 +106,7 @@ export function ConsultationPage() {
           bodyAreas={patientAreas}
           services={services}
           usedItems={usedItems}
-          onClose={() => showReview ? navigate('/appointments') : setIsPrinting(false)}
+          onClose={() => showReview ? navigate('/app/appointments') : setIsPrinting(false)}
         />
       )}
 

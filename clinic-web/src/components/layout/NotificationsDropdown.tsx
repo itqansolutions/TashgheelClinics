@@ -169,7 +169,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                 recentPatients.map((patient: any) => (
                   <div 
                     key={patient.id}
-                    onClick={() => handleNavigate(`/patients/${patient.id}`)}
+                    onClick={() => handleNavigate(`/app/patients/${patient.id}`)}
                     className="flex items-center justify-between p-2.5 border border-transparent hover:border-gray-100 hover:bg-gray-50/30 rounded-2xl cursor-pointer transition-all"
                   >
                     <div className="flex items-center gap-2.5">

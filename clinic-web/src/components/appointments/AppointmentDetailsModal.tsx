@@ -157,7 +157,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
           {(role === 'Doctor' || role === 'Admin' || role === 'Receptionist' || role === 'Reception') && appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
             <Button 
               className="w-full gap-2 bg-brand-600 hover:bg-brand-700 py-6 text-base shadow-lg shadow-brand-100"
-              onClick={() => navigate(`/appointments/${appointment.id}/consultation`)}
+              onClick={() => navigate(`/app/appointments/${appointment.id}/consultation`)}
             >
               <Stethoscope className="w-5 h-5" />
               Start Consultation

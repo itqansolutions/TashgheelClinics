@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute }     from './ProtectedRoute';
 import { AppLayout }          from '@/components/layout/AppLayout';
 import { LoginPage }          from '@/pages/Auth/LoginPage';
@@ -41,6 +41,17 @@ function RootRedirect() {
   }
 
   return <Navigate to="/app/dashboard" replace />;
+}
+
+// ── Helper components for legacy parameterized redirects ───────────────────
+function LegacyPatientRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/app/patients/${id}`} replace />;
+}
+
+function LegacyConsultationRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/app/appointments/${id}/consultation`} replace />;
 }
 
 const router = createBrowserRouter([
@@ -116,19 +127,22 @@ const router = createBrowserRouter([
   },
 
   // ── Backward-Compatibility Redirects (from legacy paths to /app/*) ──────
-  { path: '/dashboard',         element: <Navigate to="/app/dashboard" replace /> },
-  { path: '/patients',          element: <Navigate to="/app/patients" replace /> },
-  { path: '/patients/*',        element: <Navigate to="/app/patients" replace /> },
-  { path: '/appointments',      element: <Navigate to="/app/appointments" replace /> },
-  { path: '/appointments/*',    element: <Navigate to="/app/appointments" replace /> },
-  { path: '/calendar',          element: <Navigate to="/app/calendar" replace /> },
-  { path: '/doctors',           element: <Navigate to="/app/doctors" replace /> },
-  { path: '/doctors/*',         element: <Navigate to="/app/doctors" replace /> },
-  { path: '/specialties',       element: <Navigate to="/app/specialties" replace /> },
-  { path: '/reports',           element: <Navigate to="/app/reports" replace /> },
-  { path: '/finance',           element: <Navigate to="/app/finance" replace /> },
-  { path: '/stock/*',           element: <Navigate to="/app/stock/balance" replace /> },
-  { path: '/settings',          element: <Navigate to="/app/settings" replace /> },
+  { path: '/dashboard',                     element: <Navigate to="/app/dashboard" replace /> },
+  { path: '/patients',                      element: <Navigate to="/app/patients" replace /> },
+  { path: '/patients/new',                  element: <Navigate to="/app/patients/new" replace /> },
+  { path: '/patients/:id',                  element: <LegacyPatientRedirect /> },
+  { path: '/patients/*',                    element: <Navigate to="/app/patients" replace /> },
+  { path: '/appointments',                  element: <Navigate to="/app/appointments" replace /> },
+  { path: '/appointments/:id/consultation', element: <LegacyConsultationRedirect /> },
+  { path: '/appointments/*',                element: <Navigate to="/app/appointments" replace /> },
+  { path: '/calendar',                      element: <Navigate to="/app/calendar" replace /> },
+  { path: '/doctors',                       element: <Navigate to="/app/doctors" replace /> },
+  { path: '/doctors/*',                     element: <Navigate to="/app/doctors" replace /> },
+  { path: '/specialties',                   element: <Navigate to="/app/specialties" replace /> },
+  { path: '/reports',                       element: <Navigate to="/app/reports" replace /> },
+  { path: '/finance',                       element: <Navigate to="/app/finance" replace /> },
+  { path: '/stock/*',                       element: <Navigate to="/app/stock/balance" replace /> },
+  { path: '/settings',                      element: <Navigate to="/app/settings" replace /> },
 
   { path: '*', element: <Navigate to="/404" replace /> },
 ]);
