@@ -142,7 +142,7 @@ export const appointmentsRepo = {
           if (s.name && s.name.trim()) {
             await tx.appointmentService.create({
               data: {
-                tenantId: existing.tenantId!,
+                tenantId: existing.tenantId || 1,
                 appointmentId: id,
                 serviceId: s.serviceId || null,
                 name: s.name.trim(),
@@ -251,7 +251,7 @@ export const appointmentsRepo = {
         } else {
           await tx.financialTransaction.create({
             data: {
-              tenantId: existing.tenantId!,
+              tenantId: existing.tenantId || 1,
               type: 'Income',
               category: 'Service',
               amount: totalAmount,

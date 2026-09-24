@@ -15,7 +15,8 @@ router.use(resolvePublicTenant);
  */
 router.get('/settings', async (req, res, next) => {
   try {
-    const settings = await prisma.clinicSetting.findMany({
+    const db = req.db || prisma;
+    const settings = await db.clinicSetting.findMany({
       where: { key: { in: ['clinic_name', 'clinic_slogan'] } }
     });
     const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
@@ -31,7 +32,8 @@ router.get('/settings', async (req, res, next) => {
  */
 router.get('/specialties', async (req, res, next) => {
   try {
-    const specialties = await prisma.specialty.findMany({
+    const db = req.db || prisma;
+    const specialties = await db.specialty.findMany({
       where: { isActive: true },
       select: { id: true, name: true }
     });
@@ -47,7 +49,8 @@ router.get('/specialties', async (req, res, next) => {
  */
 router.get('/lead-sources', async (req, res, next) => {
   try {
-    const sources = await prisma.leadSource.findMany({
+    const db = req.db || prisma;
+    const sources = await db.leadSource.findMany({
       select: { id: true, name: true }
     });
     sendSuccess(res, sources);
@@ -62,10 +65,11 @@ router.get('/lead-sources', async (req, res, next) => {
  */
 router.get('/check-patient', async (req, res, next) => {
   try {
+    const db = req.db || prisma;
     const { phone } = req.query;
     if (!phone) throw new AppError('Phone is required', 400);
 
-    const patient = await prisma.patient.findFirst({
+    const patient = await db.patient.findFirst({
       where: { phone: String(phone) },
       select: {
         id: true,
@@ -97,7 +101,8 @@ router.get('/check-patient', async (req, res, next) => {
  */
 router.get('/doctors', async (req, res, next) => {
   try {
-    const doctors = await prisma.doctor.findMany({
+    const db = req.db || prisma;
+    const doctors = await db.doctor.findMany({
       where: { isActive: true },
       include: {
         user: { select: { fullName: true } },
@@ -120,7 +125,8 @@ router.get('/doctors', async (req, res, next) => {
  */
 router.get('/services', async (req, res, next) => {
   try {
-    const services = await prisma.service.findMany({
+    const db = req.db || prisma;
+    const services = await db.service.findMany({
       where: { isActive: true },
       select: { id: true, name: true, price: true, durationMin: true, specialtyId: true }
     });
@@ -136,13 +142,14 @@ router.get('/services', async (req, res, next) => {
  */
 router.get('/doctor-busy-times', async (req, res, next) => {
   try {
+    const db = req.db || prisma;
     const { doctorId, date } = req.query;
     if (!doctorId || !date) throw new AppError('Doctor ID and Date are required', 400);
 
     const startOfDay = new Date(`${date}T00:00:00`);
     const endOfDay = new Date(`${date}T23:59:59`);
 
-    const appointments = await prisma.appointment.findMany({
+    const appointments = await db.appointment.findMany({
       where: {
         doctorId: Number(doctorId),
         startTime: { gte: startOfDay, lte: endOfDay },
@@ -163,19 +170,22 @@ router.get('/doctor-busy-times', async (req, res, next) => {
  */
 router.post('/book', async (req, res, next) => {
   try {
+    const db = req.db || prisma;
+    const tenantId = req.publicTenant!.id;
     const { 
       fullName, phone, email, 
       doctorId, serviceId, startTime, notes,
       dateOfBirth, gender, nationality, leadSourceId
     } = req.body;
 
-    let patient = await prisma.patient.findFirst({ where: { phone } });
+    let patient = await db.patient.findFirst({ where: { phone } });
 
     if (!patient) {
-      const count = await prisma.patient.count();
+      const count = await db.patient.count();
       const code = `G-${(count + 1).toString().padStart(4, '0')}`;
-      patient = await prisma.patient.create({
+      patient = await db.patient.create({
         data: { 
+          tenantId,
           fullName, 
           phone, 
           email, 
@@ -189,14 +199,14 @@ router.post('/book', async (req, res, next) => {
       });
     }
 
-    const service = serviceId ? await prisma.service.findFirst({ where: { id: Number(serviceId) } }) : null;
+    const service = serviceId ? await db.service.findFirst({ where: { id: Number(serviceId) } }) : null;
     
     const start = new Date(startTime);
     const duration = service?.durationMin || 30;
     const end = new Date(start.getTime() + duration * 60000);
 
     const dayOfWeek = start.getDay();
-    const schedule = await prisma.doctorSchedule.findFirst({
+    const schedule = await db.doctorSchedule.findFirst({
       where: { doctorId: Number(doctorId), dayOfWeek, isActive: true }
     });
 
@@ -207,7 +217,7 @@ router.post('/book', async (req, res, next) => {
       throw new AppError(`Doctor available from ${schedule.startTime} to ${schedule.endTime}`, 400);
     }
 
-    const conflict = await prisma.appointment.findFirst({
+    const conflict = await db.appointment.findFirst({
       where: {
         doctorId: Number(doctorId),
         status: { in: ['Pending', 'Confirmed'] },
@@ -220,8 +230,9 @@ router.post('/book', async (req, res, next) => {
 
     if (conflict) throw new AppError('This time slot is already taken.', 409);
 
-    const appointment = await prisma.appointment.create({
+    const appointment = await db.appointment.create({
       data: {
+        tenantId,
         patientId: patient.id,
         doctorId: Number(doctorId),
         serviceId: serviceId ? Number(serviceId) : null,

@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "start": "cd clinic-api && npx prisma db push --schema=src/prisma/schema.prisma --accept-data-loss && npx ts-node src/prisma/seed.ts && npm start",
-    "build": "cd clinic-web && npm install && npm run build && cd ../clinic-api && npm install && npx prisma generate --schema=src/prisma/schema.prisma && npm run build"
+    "build": "cd clinic-web && npm install && npm run build && cd ../clinic-api && npm install && npx prisma generate --schema=src/prisma/schema.prisma && npm run build",
+    "verify:frontend": "cd clinic-web && npm run verify",
+    "verify:backend": "cd clinic-api && npm run verify",
+    "verify": "cd clinic-web && npm run verify && cd ../clinic-api && npm run verify"
   }
 }
