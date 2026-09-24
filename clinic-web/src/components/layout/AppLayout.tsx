@@ -4,14 +4,29 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':    'Dashboard',
-  '/patients':     'Patients',
-  '/appointments': 'Appointments',
-  '/calendar':     'Calendar',
-  '/doctors':      'Doctors',
-  '/specialties':  'Specialties & Services',
-  '/reports':      'Reports',
-  '/settings':     'Settings',
+  '/app/dashboard':        'Dashboard',
+  '/app/patients':         'Patients',
+  '/app/patients/new':     'New Patient',
+  '/app/appointments':     'Appointments',
+  '/app/calendar':         'Calendar',
+  '/app/doctors':          'Doctors',
+  '/app/doctors/schedule': 'Doctor Schedule',
+  '/app/specialties':      'Specialties & Services',
+  '/app/reports':          'Reports',
+  '/app/finance':          'Finance & Accounting',
+  '/app/stock/balance':    'Stock Balance',
+  '/app/stock/products':   'Products',
+  '/app/stock/vendors':    'Vendors',
+  '/app/settings':         'Clinic Settings',
+  // Legacy backward-compatibility fallbacks
+  '/dashboard':            'Dashboard',
+  '/patients':             'Patients',
+  '/appointments':         'Appointments',
+  '/calendar':             'Calendar',
+  '/doctors':              'Doctors',
+  '/specialties':          'Specialties & Services',
+  '/reports':              'Reports',
+  '/settings':             'Clinic Settings',
 };
 
 export function AppLayout() {

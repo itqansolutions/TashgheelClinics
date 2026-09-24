@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppointments, useDoctorAppointments } from '@/hooks/useAppointments';
 import { useRole } from '@/store/authStore';
 import { PageLoader } from '@/components/ui/Loader';
@@ -10,6 +11,7 @@ import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDe
 import type { Appointment } from '@/types';
 
 export function AppointmentsPage() {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
   const role = useRole();
@@ -122,7 +124,7 @@ export function AppointmentsPage() {
                     <Button 
                       variant="primary" 
                       size="sm" 
-                      onClick={() => window.location.href = `/appointments/${apt.id}/consultation`}
+                      onClick={() => navigate(`/app/appointments/${apt.id}/consultation`)}
                     >
                       Start Consultation
                     </Button>

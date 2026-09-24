@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, Building2 } from 'lucide-react';
 import { authApi } from '@/api/auth';
@@ -29,7 +29,7 @@ export function VerifyEmailPage() {
         setAuth(user, accessToken);
         setStatus('success');
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate('/app/dashboard', { replace: true });
         }, 2000);
       })
       .catch((err: unknown) => {
