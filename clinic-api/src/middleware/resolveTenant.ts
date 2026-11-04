@@ -184,9 +184,11 @@ export async function resolvePublicTenant(
 
   let tenant = null;
 
-  if (rawSlug) {
+  if (rawSlug && rawSlug.trim()) {
+    // If a specific clinic slug is requested, strictly look up THAT clinic (case-insensitive)
+    const slug = rawSlug.trim().toLowerCase();
     tenant = await prisma.tenant.findUnique({
-      where:  { slug: rawSlug },
+      where:  { slug },
       select: {
         id:           true,
         name:         true,
@@ -196,10 +198,13 @@ export async function resolvePublicTenant(
         primaryColor: true,
       },
     });
-  }
 
-  // Graceful fallback: If slug was not provided or not matched, fall back to the active clinic
-  if (!tenant) {
+    if (!tenant) {
+      sendError(res, `Clinic "${rawSlug}" not found. Please verify the booking URL.`, 404);
+      return;
+    }
+  } else {
+    // ONLY fall back to the active clinic if NO slug was specified at all (direct /book route)
     tenant = await prisma.tenant.findFirst({
       where:  { status: 'ACTIVE' },
       orderBy: { id: 'asc' },
@@ -215,7 +220,7 @@ export async function resolvePublicTenant(
   }
 
   if (!tenant) {
-    sendError(res, 'Clinic not found.', 404);
+    sendError(res, 'No active clinic found on this platform.', 404);
     return;
   }
 

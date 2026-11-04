@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export class FinanceRepository {
-  async getQueue() {
-    return prisma.appointment.findMany({
+  async getQueue(db: TenantPrismaClient) {
+    return db.appointment.findMany({
       where: {
         status: 'Done',
         payments: {
@@ -23,16 +22,16 @@ export class FinanceRepository {
     });
   }
 
-  async getTransactionLedger(filters: any = {}) {
-    return prisma.financialTransaction.findMany({
+  async getTransactionLedger(db: TenantPrismaClient, filters: any = {}) {
+    return db.financialTransaction.findMany({
       where: filters,
       include: { user: { select: { fullName: true } } },
       orderBy: { createdAt: 'desc' }
     });
   }
 
-  async createTransaction(data: any) {
-    return prisma.financialTransaction.create({
+  async createTransaction(db: TenantPrismaClient, data: any) {
+    return db.financialTransaction.create({
       data: {
         ...data,
         amount: Number(data.amount)
@@ -40,64 +39,56 @@ export class FinanceRepository {
     });
   }
 
-  async collectPayment(data: {
+  async collectPayment(db: TenantPrismaClient, data: {
     appointmentId: number;
     amount: number;
     method: string;
     receivedBy: number;
     notes?: string;
   }) {
-    return prisma.$transaction(async (tx) => {
-      // 1. Create Payment record
-      const payment = await tx.payment.create({
-        data: {
-          appointmentId: data.appointmentId,
-          amount: data.amount,
-          method: data.method,
-          receivedBy: data.receivedBy,
-        }
-      });
-
-      // 2. Create Financial Transaction (Ledger)
-      await tx.financialTransaction.create({
-        data: {
-          type: 'Income',
-          category: 'Medical Services',
-          amount: data.amount,
-          method: data.method,
-          description: `Payment for Appointment #${data.appointmentId}. ${data.notes || ''}`,
-          referenceType: 'Appointment',
-          referenceId: data.appointmentId,
-          userId: data.receivedBy
-        }
-      });
-
-      // 3. Optional: Update Appointment status if fully paid? 
-      // The user said "Done" marks medical end, payment marks financial end.
-      // We can add a 'paymentStatus' field to Appointment or just rely on payments sum.
-      
-      return payment;
+    // Create Payment record via tenant-scoped client
+    const payment = await db.payment.create({
+      data: {
+        appointmentId: data.appointmentId,
+        amount: data.amount,
+        method: data.method,
+        receivedBy: data.receivedBy,
+      }
     });
+
+    // Create Financial Transaction (Ledger) via tenant-scoped client
+    await db.financialTransaction.create({
+      data: {
+        type: 'Income',
+        category: 'Medical Services',
+        amount: data.amount,
+        method: data.method,
+        description: `Payment for Appointment #${data.appointmentId}. ${data.notes || ''}`,
+        referenceType: 'Appointment',
+        referenceId: data.appointmentId,
+        userId: data.receivedBy
+      }
+    });
+
+    return payment;
   }
 
-  async getInvoiceSettings() {
-    const settings = await prisma.invoiceSetting.findMany();
+  async getInvoiceSettings(db: TenantPrismaClient) {
+    const settings = await db.invoiceSetting.findMany();
     return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
   }
 
-  async updateInvoiceSettings(settings: Record<string, string>) {
-    // Phase 1 bridge: key is no longer @id — use findFirst + update/create
-    // Note: $transaction doesn't accept async callbacks returning Promise<T>[]
-    // Use Promise.all for sequential-safe parallel execution instead
+  async updateInvoiceSettings(db: TenantPrismaClient, settings: Record<string, string>) {
     await Promise.all(
       Object.entries(settings).map(async ([key, value]) => {
-        const existing = await prisma.invoiceSetting.findFirst({ where: { key } });
+        const existing = await db.invoiceSetting.findFirst({ where: { key } });
         return existing
-          ? prisma.invoiceSetting.update({ where: { id: existing.id }, data: { value } })
-          : prisma.invoiceSetting.create({ data: { key, value } });
+          ? db.invoiceSetting.update({ where: { id: existing.id }, data: { value } })
+          : db.invoiceSetting.create({ data: { key, value } });
       })
     );
   }
 }
 
 export const financeRepo = new FinanceRepository();
+

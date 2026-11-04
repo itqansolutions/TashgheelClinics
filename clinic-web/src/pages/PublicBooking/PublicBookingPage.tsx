@@ -22,6 +22,7 @@ export function PublicBookingPage() {
   const [patientData, setPatientData] = useState<any>(null);
   const [busyTimes, setBusyTimes] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
+  const [clinicError, setClinicError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -41,11 +42,16 @@ export function PublicBookingPage() {
 
   useEffect(() => {
     const config = slug ? { params: { slug }, headers: { 'x-tenant-slug': slug } } : {};
+    setClinicError(null);
     axios.get('/api/public/doctors', config).then(res => setDoctors(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/services', config).then(res => setServices(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/specialties', config).then(res => setSpecialties(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/lead-sources', config).then(res => setLeadSources(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
-    axios.get('/api/public/settings', config).then(res => setSettings(res.data?.data || {})).catch(console.error);
+    axios.get('/api/public/settings', config)
+      .then(res => setSettings(res.data?.data || {}))
+      .catch(err => {
+        setClinicError(err.response?.data?.message || 'Clinic not found or currently unavailable.');
+      });
   }, [slug]);
 
   // Fetch busy times when doctor or date changes
@@ -163,6 +169,27 @@ export function PublicBookingPage() {
       setLoading(false);
     }
   };
+
+  if (clinicError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-gray-100 animate-in zoom-in duration-300">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Clinic Unavailable</h2>
+          <p className="text-gray-600 mb-6 leading-relaxed">{clinicError}</p>
+          <Button 
+            variant="outline" 
+            className="w-full py-3 rounded-xl"
+            onClick={() => window.location.href = '/book'}
+          >
+            Go to Default Booking
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (

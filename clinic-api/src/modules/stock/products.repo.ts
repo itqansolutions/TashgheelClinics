@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export class ProductRepository {
-  async getAll(filters: any = {}) {
-    return prisma.product.findMany({
+  async getAll(db: TenantPrismaClient, filters: any = {}) {
+    return db.product.findMany({
       where: {
         isActive: true,
         ...(filters.vendorId && { vendorId: Number(filters.vendorId) }),
@@ -16,8 +15,8 @@ export class ProductRepository {
     });
   }
 
-  async getById(id: number) {
-    return prisma.product.findFirst({
+  async getById(db: TenantPrismaClient, id: number) {
+    return db.product.findFirst({
       where: { id },
       include: {
         vendor: { select: { name: true } },
@@ -29,8 +28,8 @@ export class ProductRepository {
     });
   }
 
-  async create(data: any) {
-    return prisma.product.create({
+  async create(db: TenantPrismaClient, data: any) {
+    return db.product.create({
       data: {
         ...data,
         averageCost: data.averageCost || 0,
@@ -40,8 +39,8 @@ export class ProductRepository {
     });
   }
 
-  async update(id: number, data: any) {
-    return prisma.product.update({
+  async update(db: TenantPrismaClient, id: number, data: any) {
+    return db.product.update({
       where: { id },
       data
     });
@@ -49,3 +48,4 @@ export class ProductRepository {
 }
 
 export const productRepo = new ProductRepository();
+

@@ -19,7 +19,14 @@ router.get('/settings', async (req, res, next) => {
     const settings = await db.clinicSetting.findMany({
       where: { key: { in: ['clinic_name', 'clinic_slogan'] } }
     });
-    const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    const map: Record<string, string | null> = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    if (req.publicTenant) {
+      if (!map.clinic_name) map.clinic_name = req.publicTenant.name;
+      map.tenant_name = req.publicTenant.name;
+      map.tenant_slug = req.publicTenant.slug;
+      map.logo_url = req.publicTenant.logoUrl ?? '';
+      map.primary_color = req.publicTenant.primaryColor ?? '#0ea5e9';
+    }
     sendSuccess(res, map);
   } catch (error) {
     next(error);

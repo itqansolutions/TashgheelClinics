@@ -1,15 +1,15 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export class VendorRepository {
-  async getAll() {
-    return prisma.vendor.findMany({
+  async getAll(db: TenantPrismaClient) {
+    return db.vendor.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' }
     });
   }
 
-  async getById(id: number) {
-    return prisma.vendor.findFirst({
+  async getById(db: TenantPrismaClient, id: number) {
+    return db.vendor.findFirst({
       where: { id },
       include: {
         purchases: {
@@ -22,25 +22,25 @@ export class VendorRepository {
     });
   }
 
-  async create(data: any) {
-    return prisma.vendor.create({ data });
+  async create(db: TenantPrismaClient, data: any) {
+    return db.vendor.create({ data });
   }
 
-  async update(id: number, data: any) {
-    return prisma.vendor.update({
+  async update(db: TenantPrismaClient, id: number, data: any) {
+    return db.vendor.update({
       where: { id },
       data
     });
   }
 
-  async createPayment(data: any) {
-    return prisma.vendorPayment.create({ data });
+  async createPayment(db: TenantPrismaClient, data: any) {
+    return db.vendorPayment.create({ data });
   }
 
-  async getStatement(vendorId: number) {
+  async getStatement(db: TenantPrismaClient, vendorId: number) {
     const [purchases, payments] = await Promise.all([
-      prisma.purchase.findMany({ where: { vendorId }, orderBy: { purchaseDate: 'asc' } }),
-      prisma.vendorPayment.findMany({ where: { vendorId }, orderBy: { paymentDate: 'asc' } })
+      db.purchase.findMany({ where: { vendorId }, orderBy: { purchaseDate: 'asc' } }),
+      db.vendorPayment.findMany({ where: { vendorId }, orderBy: { paymentDate: 'asc' } })
     ]);
 
     const totalPurchases = purchases.reduce((sum, p) => sum + p.totalAmount.toNumber(), 0);
@@ -53,7 +53,6 @@ export class VendorRepository {
     ].sort((a, b) => {
       const diff = a.date.getTime() - b.date.getTime();
       if (diff !== 0) return diff;
-      // If same time, purchases first
       return a.type === 'Purchase' ? -1 : 1;
     });
 
@@ -69,3 +68,4 @@ export class VendorRepository {
 }
 
 export const vendorRepo = new VendorRepository();
+
