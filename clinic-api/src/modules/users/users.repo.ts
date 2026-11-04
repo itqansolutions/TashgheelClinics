@@ -1,4 +1,4 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 export type Role = 'Admin' | 'System Admin' | 'Reception' | 'Doctor' | 'Manager' | 'Accountant' | string;
 import { PaginationResult } from '../../utils/pagination';
 
@@ -22,7 +22,7 @@ const SELECT = {
 };
 
 export const usersRepo = {
-  findAll(search: string, { skip, take }: PaginationResult) {
+  findAll(db: TenantPrismaClient, search: string, { skip, take }: PaginationResult) {
     const where = search
       ? { OR: [
           { fullName: { contains: search } },
@@ -30,32 +30,33 @@ export const usersRepo = {
         ]}
       : {};
     return Promise.all([
-      prisma.user.findMany({ where, select: SELECT, orderBy: { createdAt: 'desc' }, skip, take }),
-      prisma.user.count({ where }),
+      db.user.findMany({ where, select: SELECT, orderBy: { createdAt: 'desc' }, skip, take }),
+      db.user.count({ where }),
     ]);
   },
 
-  findById(id: number) {
-    return prisma.user.findFirst({ where: { id }, select: SELECT });
+  findById(db: TenantPrismaClient, id: number) {
+    return db.user.findFirst({ where: { id }, select: SELECT });
   },
 
-  findByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } });
+  findByEmail(db: TenantPrismaClient, email: string) {
+    return db.user.findFirst({ where: { email } });
   },
 
-  create(data: CreateUserInput) {
-    return prisma.user.create({ data, select: SELECT });
+  create(db: TenantPrismaClient, data: CreateUserInput) {
+    return db.user.create({ data, select: SELECT });
   },
 
-  update(id: number, data: UpdateUserInput) {
-    return prisma.user.update({ where: { id }, data, select: SELECT });
+  update(db: TenantPrismaClient, id: number, data: UpdateUserInput) {
+    return db.user.update({ where: { id }, data, select: SELECT });
   },
 
-  updatePassword(id: number, passwordHash: string) {
-    return prisma.user.update({ where: { id }, data: { passwordHash }, select: SELECT });
+  updatePassword(db: TenantPrismaClient, id: number, passwordHash: string) {
+    return db.user.update({ where: { id }, data: { passwordHash }, select: SELECT });
   },
 
-  softDelete(id: number) {
-    return prisma.user.update({ where: { id }, data: { isActive: false }, select: SELECT });
+  softDelete(db: TenantPrismaClient, id: number) {
+    return db.user.update({ where: { id }, data: { isActive: false }, select: SELECT });
   },
 };
+
