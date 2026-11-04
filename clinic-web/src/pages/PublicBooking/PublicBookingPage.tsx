@@ -41,11 +41,11 @@ export function PublicBookingPage() {
 
   useEffect(() => {
     const config = slug ? { params: { slug }, headers: { 'x-tenant-slug': slug } } : {};
-    axios.get('/api/public/doctors', config).then(res => setDoctors(res.data.data)).catch(console.error);
-    axios.get('/api/public/services', config).then(res => setServices(res.data.data)).catch(console.error);
-    axios.get('/api/public/specialties', config).then(res => setSpecialties(res.data.data)).catch(console.error);
-    axios.get('/api/public/lead-sources', config).then(res => setLeadSources(res.data.data)).catch(console.error);
-    axios.get('/api/public/settings', config).then(res => setSettings(res.data.data)).catch(console.error);
+    axios.get('/api/public/doctors', config).then(res => setDoctors(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
+    axios.get('/api/public/services', config).then(res => setServices(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
+    axios.get('/api/public/specialties', config).then(res => setSpecialties(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
+    axios.get('/api/public/lead-sources', config).then(res => setLeadSources(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
+    axios.get('/api/public/settings', config).then(res => setSettings(res.data?.data || {})).catch(console.error);
   }, [slug]);
 
   // Fetch busy times when doctor or date changes
@@ -377,8 +377,8 @@ export function PublicBookingPage() {
                             <span className="text-sm leading-none">{format(new Date(apt.startTime), 'dd')}</span>
                           </div>
                           <div>
-                            <p className="font-bold text-gray-900">{apt.service.name}</p>
-                            <p className="text-xs text-gray-500">Dr. {apt.doctor?.user?.fullName || apt.doctor?.fullName}</p>
+                            <p className="font-bold text-gray-900">{apt.service?.name || 'General Consultation'}</p>
+                            <p className="text-xs text-gray-500">Dr. {apt.doctor?.user?.fullName || apt.doctor?.fullName || 'Specialist'}</p>
                           </div>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${

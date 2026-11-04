@@ -3,26 +3,29 @@ import { patientsRepo, CreatePatientInput, Nationality, Gender } from './patient
 import { AppError } from '../../middleware/errorHandler';
 import { paginate, buildMeta } from '../../utils/pagination';
 import { generatePatientCode } from '../../utils/patientCode';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export const patientsService = {
   async list(
+    db: TenantPrismaClient,
     search: string,
     page: number,
     limit: number,
     filters: { nationality?: Nationality; leadSourceId?: number; isActive?: boolean }
   ) {
     const pg = paginate({ page, limit });
-    const [data, total] = await patientsRepo.findAll(search, filters, pg);
+    const [data, total] = await patientsRepo.findAll(db, search, filters, pg);
     return { data, meta: buildMeta(total, pg.page, pg.limit) };
   },
 
-  async getById(id: number) {
-    const p = await patientsRepo.findById(id);
+  async getById(db: TenantPrismaClient, id: number) {
+    const p = await patientsRepo.findById(db, id);
     if (!p) throw new AppError('Patient not found', 404);
     return p;
   },
 
   async create(
+    db: TenantPrismaClient,
     body: {
       fullName: string; phone?: string; email?: string; dateOfBirth?: string;
       gender?: string; nationality?: string; countryId?: number; leadSourceId?: number;
@@ -30,10 +33,10 @@ export const patientsService = {
     },
     createdBy: number
   ) {
-    // Warn if phone already exists (non-blocking)
+    // Warn if phone already exists within this tenant (non-blocking)
     let phoneDuplicate = false;
     if (body.phone) {
-      const existing = await patientsRepo.findByPhone(body.phone);
+      const existing = await patientsRepo.findByPhone(db, body.phone);
       if (existing) phoneDuplicate = true;
     }
 
@@ -54,56 +57,56 @@ export const patientsService = {
       createdBy,
     };
 
-    const patient = await patientsRepo.create(data);
+    const patient = await patientsRepo.create(db, data);
     return { patient, phoneDuplicate };
   },
 
-  async update(id: number, body: Record<string, unknown>) {
-    await this.getById(id);
+  async update(db: TenantPrismaClient, id: number, body: Record<string, unknown>) {
+    await this.getById(db, id);
     const data = {
       ...body,
       email:       (body.email as string) || undefined,
       dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth as string) : undefined,
     };
-    return patientsRepo.update(id, data);
+    return patientsRepo.update(db, id, data);
   },
 
-  async deactivate(id: number) {
-    await this.getById(id);
-    return patientsRepo.softDelete(id);
+  async deactivate(db: TenantPrismaClient, id: number) {
+    await this.getById(db, id);
+    return patientsRepo.softDelete(db, id);
   },
 
-  async getAppointments(id: number) {
-    await this.getById(id);
-    return patientsRepo.findAppointments(id);
+  async getAppointments(db: TenantPrismaClient, id: number) {
+    await this.getById(db, id);
+    return patientsRepo.findAppointments(db, id);
   },
 
-  async getAreas(id: number) {
-    await this.getById(id);
-    return patientsRepo.findAreas(id);
+  async getAreas(db: TenantPrismaClient, id: number) {
+    await this.getById(db, id);
+    return patientsRepo.findAreas(db, id);
   },
 
-  async updateAreas(id: number, areas: { areaId: number; notes?: string }[]) {
-    await this.getById(id);
+  async updateAreas(db: TenantPrismaClient, id: number, areas: { areaId: number; notes?: string }[]) {
+    await this.getById(db, id);
     // Upsert all submitted areas
     const results = await Promise.all(
-      areas.map(({ areaId, notes }) => patientsRepo.upsertArea(id, areaId, notes))
+      areas.map(({ areaId, notes }) => patientsRepo.upsertArea(db, id, areaId, notes))
     );
     return results;
   },
 
-  async removeArea(patientId: number, areaId: number) {
-    await this.getById(patientId);
-    return patientsRepo.deleteArea(patientId, areaId);
+  async removeArea(db: TenantPrismaClient, patientId: number, areaId: number) {
+    await this.getById(db, patientId);
+    return patientsRepo.deleteArea(db, patientId, areaId);
   },
 
-  async getRatings(id: number) {
-    await this.getById(id);
-    return patientsRepo.findRatings(id);
+  async getRatings(db: TenantPrismaClient, id: number) {
+    await this.getById(db, id);
+    return patientsRepo.findRatings(db, id);
   },
 
-  async getImages(id: number) {
-    await this.getById(id);
-    return patientsRepo.findImages(id);
+  async getImages(db: TenantPrismaClient, id: number) {
+    await this.getById(db, id);
+    return patientsRepo.findImages(db, id);
   },
 };

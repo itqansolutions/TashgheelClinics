@@ -60,6 +60,7 @@ const router = createBrowserRouter([
   { path: '/login',        element: <LoginPage /> },
   { path: '/register',     element: <RegisterPage /> },
   { path: '/verify-email', element: <VerifyEmailPage /> },
+  { path: '/book',         element: <PublicBookingPage /> },
   { path: '/c/:slug',      element: <PublicBookingPage /> },
   { path: '/c/:slug/book', element: <PublicBookingPage /> },
   { path: '/403',          element: <ForbiddenPage /> },

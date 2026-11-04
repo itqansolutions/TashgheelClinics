@@ -126,7 +126,7 @@ export function DoctorsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900">Dr. {doc.user?.fullName ?? doc.fullName}</p>
-                        <p className="text-xs text-gray-500">{doc.specialty.name}</p>
+                        <p className="text-xs text-gray-500">{doc.specialty?.name ?? 'General'}</p>
                       </div>
                     </div>
                     {!doc.isActive && <Badge variant="red">Inactive</Badge>}

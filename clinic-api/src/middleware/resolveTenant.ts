@@ -178,26 +178,41 @@ export async function resolvePublicTenant(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const slug =
+  const rawSlug =
     (req.query.slug as string | undefined) ??
     (req.headers['x-tenant-slug'] as string | undefined);
 
-  if (!slug) {
-    sendError(res, 'Clinic identifier (slug) is required.', 400);
-    return;
+  let tenant = null;
+
+  if (rawSlug) {
+    tenant = await prisma.tenant.findUnique({
+      where:  { slug: rawSlug },
+      select: {
+        id:           true,
+        name:         true,
+        slug:         true,
+        status:       true,
+        logoUrl:      true,
+        primaryColor: true,
+      },
+    });
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where:  { slug },
-    select: {
-      id:           true,
-      name:         true,
-      slug:         true,
-      status:       true,
-      logoUrl:      true,
-      primaryColor: true,
-    },
-  });
+  // Graceful fallback: If slug was not provided or not matched, fall back to the active clinic
+  if (!tenant) {
+    tenant = await prisma.tenant.findFirst({
+      where:  { status: 'ACTIVE' },
+      orderBy: { id: 'asc' },
+      select: {
+        id:           true,
+        name:         true,
+        slug:         true,
+        status:       true,
+        logoUrl:      true,
+        primaryColor: true,
+      },
+    });
+  }
 
   if (!tenant) {
     sendError(res, 'Clinic not found.', 404);

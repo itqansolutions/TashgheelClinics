@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments, useDoctorAppointments } from '@/hooks/useAppointments';
-import { useRole } from '@/store/authStore';
+import { useRole, useTenant } from '@/store/authStore';
 import { PageLoader } from '@/components/ui/Loader';
 import { formatCurrency, formatDateTime } from '@/utils/format';
-import { Calendar, Filter, Plus, Search, Clock, User, Scissors } from 'lucide-react';
+import { Calendar, Filter, Plus, Search, Clock, User, Scissors, Link as LinkIcon, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CreateAppointmentModal } from '@/components/appointments/CreateAppointmentModal';
 import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDetailsModal';
@@ -14,7 +14,9 @@ export function AppointmentsPage() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
   const role = useRole();
+  const tenant = useTenant();
   const filters = {};
   
   const isDoctor = role === 'Doctor';
@@ -27,6 +29,14 @@ export function AppointmentsPage() {
   const data = (queryResult.data || []) as Appointment[];
   const isLoading = queryResult.isLoading;
 
+  const copyBookingLink = () => {
+    const slug = tenant?.slug || 'default';
+    const url = `${window.location.origin}/c/${slug}/book`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -34,13 +44,23 @@ export function AppointmentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-500">Manage and schedule patient visits</p>
         </div>
-        <Button 
-          className="flex items-center gap-2"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="w-4 h-4" />
-          New Appointment
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            className="flex items-center gap-2 border-brand-200 text-brand-700 hover:bg-brand-50"
+            onClick={copyBookingLink}
+          >
+            {copied ? <Check className="w-4 h-4 text-green-600" /> : <LinkIcon className="w-4 h-4 text-brand-600" />}
+            {copied ? 'Link Copied!' : 'Copy Online Booking Link'}
+          </Button>
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus className="w-4 h-4" />
+            New Appointment
+          </Button>
+        </div>
       </div>
 
       <CreateAppointmentModal 
@@ -84,7 +104,7 @@ export function AppointmentsPage() {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold">
-                    {apt.patient?.fullName.charAt(0)}
+                    {apt.patient?.fullName?.charAt(0) || 'P'}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{apt.patient?.fullName}</h3>

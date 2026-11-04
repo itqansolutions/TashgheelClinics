@@ -1,4 +1,4 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 export type Nationality = 'Egyptian' | 'Foreigner' | string;
 export type Gender = 'M' | 'F' | string;
 import { PaginationResult } from '../../utils/pagination';
@@ -36,6 +36,7 @@ const FULL_INCLUDE = {
 
 export const patientsRepo = {
   findAll(
+    db: TenantPrismaClient,
     search: string,
     filters: { nationality?: Nationality; leadSourceId?: number; isActive?: boolean },
     { skip, take }: PaginationResult
@@ -54,45 +55,45 @@ export const patientsRepo = {
       }),
     };
     return Promise.all([
-      prisma.patient.findMany({
+      db.patient.findMany({
         where,
         select: LIST_SELECT,
         orderBy: { createdAt: 'desc' },
         skip,
         take,
       }),
-      prisma.patient.count({ where }),
+      db.patient.count({ where }),
     ]);
   },
 
-  findById(id: number) {
-    return prisma.patient.findFirst({ where: { id }, include: FULL_INCLUDE });
+  findById(db: TenantPrismaClient, id: number) {
+    return db.patient.findFirst({ where: { id }, include: FULL_INCLUDE });
   },
 
-  findByCode(code: string) {
-    // Phase 1 bridge: code is no longer globally @unique (it's per-tenant after Migration 4)
-    return prisma.patient.findFirst({ where: { code }, include: FULL_INCLUDE });
+  findByCode(db: TenantPrismaClient, code: string) {
+    // code is per-tenant (not globally unique)
+    return db.patient.findFirst({ where: { code }, include: FULL_INCLUDE });
   },
 
-  findByPhone(phone: string) {
-    return prisma.patient.findFirst({ where: { phone } });
+  findByPhone(db: TenantPrismaClient, phone: string) {
+    return db.patient.findFirst({ where: { phone } });
   },
 
-  create(data: CreatePatientInput) {
-    return prisma.patient.create({ data, include: FULL_INCLUDE });
+  create(db: TenantPrismaClient, data: CreatePatientInput) {
+    return db.patient.create({ data, include: FULL_INCLUDE });
   },
 
-  update(id: number, data: UpdatePatientInput) {
-    return prisma.patient.update({ where: { id }, data, include: FULL_INCLUDE });
+  update(db: TenantPrismaClient, id: number, data: UpdatePatientInput) {
+    return db.patient.update({ where: { id }, data, include: FULL_INCLUDE });
   },
 
-  softDelete(id: number) {
-    return prisma.patient.update({ where: { id }, data: { isActive: false }, include: FULL_INCLUDE });
+  softDelete(db: TenantPrismaClient, id: number) {
+    return db.patient.update({ where: { id }, data: { isActive: false }, include: FULL_INCLUDE });
   },
 
   // Appointments history
-  findAppointments(patientId: number, limit = 20) {
-    return prisma.appointment.findMany({
+  findAppointments(db: TenantPrismaClient, patientId: number, limit = 20) {
+    return db.appointment.findMany({
       where:   { patientId },
       include: {
         doctor:  { include: { user: { select: { fullName: true } } } },
@@ -105,16 +106,16 @@ export const patientsRepo = {
   },
 
   // Body areas
-  findAreas(patientId: number) {
-    return prisma.patientArea.findMany({
+  findAreas(db: TenantPrismaClient, patientId: number) {
+    return db.patientArea.findMany({
       where:   { patientId },
       include: { area: true },
       orderBy: { addedAt: 'asc' },
     });
   },
 
-  upsertArea(patientId: number, areaId: number, notes?: string) {
-    return prisma.patientArea.upsert({
+  upsertArea(db: TenantPrismaClient, patientId: number, areaId: number, notes?: string) {
+    return db.patientArea.upsert({
       where:  { patientId_areaId: { patientId, areaId } },
       create: { patientId, areaId, notes },
       update: { notes },
@@ -122,15 +123,15 @@ export const patientsRepo = {
     });
   },
 
-  deleteArea(patientId: number, areaId: number) {
-    return prisma.patientArea.deleteMany({
+  deleteArea(db: TenantPrismaClient, patientId: number, areaId: number) {
+    return db.patientArea.deleteMany({
       where: { patientId, areaId },
     });
   },
 
   // Ratings
-  findRatings(patientId: number) {
-    return prisma.patientRating.findMany({
+  findRatings(db: TenantPrismaClient, patientId: number) {
+    return db.patientRating.findMany({
       where:   { patientId },
       include: {
         doctor: { include: { user: { select: { fullName: true } } } },
@@ -140,8 +141,8 @@ export const patientsRepo = {
   },
 
   // Images
-  findImages(patientId: number) {
-    return prisma.patientImage.findMany({
+  findImages(db: TenantPrismaClient, patientId: number) {
+    return db.patientImage.findMany({
       where:   { patientId },
       orderBy: { uploadedAt: 'desc' },
     });
