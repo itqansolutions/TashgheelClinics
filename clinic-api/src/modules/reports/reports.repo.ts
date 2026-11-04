@@ -1,25 +1,25 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export class ReportsRepository {
-  async getFinancialSummary() {
+  async getFinancialSummary(db: TenantPrismaClient) {
     const [servicesIncome, productsIncome, otherIncome, generalExpenses, purchaseTotal] = await Promise.all([
-      prisma.financialTransaction.aggregate({
+      db.financialTransaction.aggregate({
         where: { type: 'Income', category: 'Medical Services' },
         _sum: { amount: true }
       }),
-      prisma.financialTransaction.aggregate({
+      db.financialTransaction.aggregate({
         where: { type: 'Income', category: 'Product Sales' },
         _sum: { amount: true }
       }),
-      prisma.financialTransaction.aggregate({
+      db.financialTransaction.aggregate({
         where: { type: 'Income', category: { notIn: ['Medical Services', 'Product Sales'] } },
         _sum: { amount: true }
       }),
-      prisma.financialTransaction.aggregate({
+      db.financialTransaction.aggregate({
         where: { type: 'Expense', category: { not: 'Procurement' } },
         _sum: { amount: true }
       }),
-      prisma.purchase.aggregate({
+      db.purchase.aggregate({
         _sum: { totalAmount: true }
       })
     ]);
@@ -45,13 +45,13 @@ export class ReportsRepository {
     };
   }
 
-  async getIncomeBreakdown() {
-    const services = await prisma.financialTransaction.aggregate({
+  async getIncomeBreakdown(db: TenantPrismaClient) {
+    const services = await db.financialTransaction.aggregate({
       where: { type: 'Income', category: 'Medical Services' },
       _sum: { amount: true }
     });
     
-    const products = await prisma.financialTransaction.aggregate({
+    const products = await db.financialTransaction.aggregate({
       where: { type: 'Income', category: 'Product Sales' },
       _sum: { amount: true }
     });
@@ -62,8 +62,8 @@ export class ReportsRepository {
     };
   }
 
-  async getDoctorCommissions() {
-    const appointments = await prisma.appointment.findMany({
+  async getDoctorCommissions(db: TenantPrismaClient) {
+    const appointments = await db.appointment.findMany({
       where: { status: 'Done' },
       include: {
         doctor: {
@@ -104,9 +104,8 @@ export class ReportsRepository {
     return Array.from(docMap.values());
   }
 
-  async getCashFlow() {
-    // Group by date
-    const transactions = await prisma.financialTransaction.findMany({
+  async getCashFlow(db: TenantPrismaClient) {
+    const transactions = await db.financialTransaction.findMany({
       orderBy: { date: 'asc' }
     });
 
@@ -125,3 +124,4 @@ export class ReportsRepository {
 }
 
 export const reportsRepo = new ReportsRepository();
+

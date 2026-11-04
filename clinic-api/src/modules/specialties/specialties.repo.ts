@@ -1,8 +1,8 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export const specialtiesRepo = {
-  findAll(includeInactive = false) {
-    return prisma.specialty.findMany({
+  findAll(db: TenantPrismaClient, includeInactive = false) {
+    return db.specialty.findMany({
       where: includeInactive ? {} : { isActive: true },
       include: {
         services: {
@@ -15,8 +15,8 @@ export const specialtiesRepo = {
     });
   },
 
-  findById(id: number) {
-    return prisma.specialty.findFirst({
+  findById(db: TenantPrismaClient, id: number) {
+    return db.specialty.findFirst({
       where: { id },
       include: {
         services: { orderBy: { name: 'asc' } },
@@ -25,11 +25,12 @@ export const specialtiesRepo = {
     });
   },
 
-  create(name: string) {
-    return prisma.specialty.create({ data: { name } });
+  create(db: TenantPrismaClient, name: string) {
+    return db.specialty.create({ data: { name } });
   },
 
-  update(id: number, data: { name?: string; isActive?: boolean }) {
-    return prisma.specialty.update({ where: { id }, data });
+  update(db: TenantPrismaClient, id: number, data: { name?: string; isActive?: boolean }) {
+    return db.specialty.update({ where: { id }, data });
   },
 };
+

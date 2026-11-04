@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { rbac } from '../../middleware/rbac';
@@ -16,11 +15,12 @@ router.use(rbac('Admin', 'Manager', 'Accountant'));
  */
 router.get('/summary', async (req, res, next) => {
   try {
+    const db = req.db!;
     const [patientsCount, appointmentsCount, doctorsCount, revenue] = await Promise.all([
-      prisma.patient.count(),
-      prisma.appointment.count(),
-      prisma.doctor.count(),
-      prisma.appointment.aggregate({
+      db.patient.count(),
+      db.appointment.count(),
+      db.doctor.count(),
+      db.appointment.aggregate({
         _sum: { priceCharged: true },
         where: { status: 'Done' }
       })
@@ -39,28 +39,28 @@ router.get('/summary', async (req, res, next) => {
 
 router.get('/financial-summary', async (req, res, next) => {
   try {
-    const stats = await reportsRepo.getFinancialSummary();
+    const stats = await reportsRepo.getFinancialSummary(req.db!);
     sendSuccess(res, stats);
   } catch (error) { next(error); }
 });
 
 router.get('/income-breakdown', async (req, res, next) => {
   try {
-    const stats = await reportsRepo.getIncomeBreakdown();
+    const stats = await reportsRepo.getIncomeBreakdown(req.db!);
     sendSuccess(res, stats);
   } catch (error) { next(error); }
 });
 
 router.get('/doctor-commissions', async (req, res, next) => {
   try {
-    const stats = await reportsRepo.getDoctorCommissions();
+    const stats = await reportsRepo.getDoctorCommissions(req.db!);
     sendSuccess(res, stats);
   } catch (error) { next(error); }
 });
 
 router.get('/cash-flow', async (req, res, next) => {
   try {
-    const stats = await reportsRepo.getCashFlow();
+    const stats = await reportsRepo.getCashFlow(req.db!);
     sendSuccess(res, stats);
   } catch (error) { next(error); }
 });
@@ -70,7 +70,8 @@ router.get('/cash-flow', async (req, res, next) => {
  */
 router.get('/appointments-status', async (req, res, next) => {
   try {
-    const stats = await prisma.appointment.groupBy({
+    const db = req.db!;
+    const stats = await db.appointment.groupBy({
       by: ['status'],
       _count: { id: true }
     });
@@ -85,7 +86,7 @@ router.get('/appointments-status', async (req, res, next) => {
  */
 router.get('/revenue-doctor', async (req, res, next) => {
   try {
-    const stats = await reportsRepo.getDoctorCommissions();
+    const stats = await reportsRepo.getDoctorCommissions(req.db!);
     sendSuccess(res, stats.map(s => ({
       doctorName: s.doctorName,
       revenue: s.totalRevenue,
@@ -95,3 +96,4 @@ router.get('/revenue-doctor', async (req, res, next) => {
 });
 
 export default router;
+

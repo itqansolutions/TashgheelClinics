@@ -1,4 +1,4 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 
 export interface CreateServiceInput {
   specialtyId: number;
@@ -8,8 +8,8 @@ export interface CreateServiceInput {
 }
 
 export const servicesRepo = {
-  findAll(specialtyId?: number, includeInactive = false) {
-    return prisma.service.findMany({
+  findAll(db: TenantPrismaClient, specialtyId?: number, includeInactive = false) {
+    return db.service.findMany({
       where: {
         ...(specialtyId && { specialtyId }),
         ...(!includeInactive && { isActive: true }),
@@ -19,25 +19,26 @@ export const servicesRepo = {
     });
   },
 
-  findById(id: number) {
-    return prisma.service.findFirst({
+  findById(db: TenantPrismaClient, id: number) {
+    return db.service.findFirst({
       where: { id },
       include: { specialty: { select: { id: true, name: true } } },
     });
   },
 
-  create(data: CreateServiceInput) {
-    return prisma.service.create({
+  create(db: TenantPrismaClient, data: CreateServiceInput) {
+    return db.service.create({
       data,
       include: { specialty: { select: { id: true, name: true } } },
     });
   },
 
-  update(id: number, data: Partial<CreateServiceInput> & { isActive?: boolean }) {
-    return prisma.service.update({
+  update(db: TenantPrismaClient, id: number, data: Partial<CreateServiceInput> & { isActive?: boolean }) {
+    return db.service.update({
       where: { id },
       data,
       include: { specialty: { select: { id: true, name: true } } },
     });
   },
 };
+

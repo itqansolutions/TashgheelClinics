@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { appointmentsService } from './appointments.service';
 import { sendSuccess } from '../../utils/response';
+import { appointmentsRepo } from './appointments.repo';
 
 export const appointmentsController = {
   async getAll(req: Request, res: Response, next: NextFunction) {
@@ -15,6 +16,7 @@ export const appointmentsController = {
       };
       
       const result = await appointmentsService.list(
+        req.db!,
         filters,
         Number(page || 1),
         Number(limit || 50)
@@ -27,7 +29,7 @@ export const appointmentsController = {
 
   async getOne(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.getById(Number(req.params.id));
+      const data = await appointmentsService.getById(req.db!, Number(req.params.id));
       sendSuccess(res, data);
     } catch (error) {
       next(error);
@@ -36,7 +38,7 @@ export const appointmentsController = {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.create({
+      const data = await appointmentsService.create(req.db!, {
         ...req.body,
         createdBy: (req as any).user?.sub,
       });
@@ -48,7 +50,7 @@ export const appointmentsController = {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.update(Number(req.params.id), req.body);
+      const data = await appointmentsService.update(req.db!, Number(req.params.id), req.body);
       sendSuccess(res, data, 'Appointment updated');
     } catch (error) {
       next(error);
@@ -57,7 +59,7 @@ export const appointmentsController = {
 
   async cancel(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.cancel(Number(req.params.id));
+      const data = await appointmentsService.cancel(req.db!, Number(req.params.id));
       sendSuccess(res, data, 'Appointment cancelled');
     } catch (error) {
       next(error);
@@ -67,7 +69,7 @@ export const appointmentsController = {
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { status } = req.body;
-      const data = await appointmentsService.updateStatus(Number(req.params.id), status);
+      const data = await appointmentsService.updateStatus(req.db!, Number(req.params.id), status);
       sendSuccess(res, data, `Appointment ${status}`);
     } catch (error) {
       next(error);
@@ -83,6 +85,7 @@ export const appointmentsController = {
         ...(end    && { end: new Date(String(end)) }),
       };
       const result = await appointmentsService.getDoctorAppointments(
+        req.db!,
         req.user!.sub,
         filters,
         Number(page || 1),
@@ -95,8 +98,7 @@ export const appointmentsController = {
   async getAvailableSlots(req: Request, res: Response, next: NextFunction) {
     try {
       const { doctorId, date } = req.query;
-      const { appointmentsRepo } = await import('./appointments.repo');
-      const slots = await appointmentsRepo.getAvailableSlots(Number(doctorId), String(date));
+      const slots = await appointmentsRepo.getAvailableSlots(req.db!, Number(doctorId), String(date));
       sendSuccess(res, slots);
     } catch (e) { next(e); }
   },
@@ -104,9 +106,9 @@ export const appointmentsController = {
   async getAvailableDoctors(req: Request, res: Response, next: NextFunction) {
     try {
       const { date } = req.query;
-      const { appointmentsRepo } = await import('./appointments.repo');
-      const doctors = await appointmentsRepo.getAvailableDoctors(String(date));
+      const doctors = await appointmentsRepo.getAvailableDoctors(req.db!, String(date));
       sendSuccess(res, doctors);
     } catch (e) { next(e); }
   }
 };
+

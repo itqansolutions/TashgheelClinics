@@ -1,4 +1,4 @@
-import prisma from '../../config/db';
+import { TenantPrismaClient } from '../../utils/tenantPrisma';
 import { PaginationResult } from '../../utils/pagination';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -46,6 +46,7 @@ const FULL_INCLUDE = {
 
 export const appointmentsRepo = {
   findAll(
+    db: TenantPrismaClient,
     filters: { doctorId?: number; patientId?: number; status?: string; start?: Date; end?: Date },
     { skip, take }: PaginationResult
   ) {
@@ -62,19 +63,19 @@ export const appointmentsRepo = {
     };
 
     return Promise.all([
-      prisma.appointment.findMany({
+      db.appointment.findMany({
         where,
         include: FULL_INCLUDE,
         orderBy: { startTime: 'asc' },
         skip,
         take,
       }),
-      prisma.appointment.count({ where }),
+      db.appointment.count({ where }),
     ]);
   },
 
-  findById(id: number) {
-    return prisma.appointment.findFirst({
+  findById(db: TenantPrismaClient, id: number) {
+    return db.appointment.findFirst({
       where: { id },
       include: {
         ...FULL_INCLUDE,
@@ -89,60 +90,59 @@ export const appointmentsRepo = {
     });
   },
 
-  create(data: CreateAppointmentInput) {
-    return prisma.appointment.create({
+  create(db: TenantPrismaClient, data: CreateAppointmentInput) {
+    return db.appointment.create({
       data,
       include: FULL_INCLUDE
     });
   },
 
-  async update(id: number, input: UpdateAppointmentInput) {
+  async update(db: TenantPrismaClient, id: number, input: UpdateAppointmentInput) {
     const { usedItems, services, ...data } = input;
 
-    return prisma.$transaction(async (tx) => {
-      // 1. Fetch current appointment with details
-      const existing = await tx.appointment.findUnique({
-        where: { id },
-        include: FULL_INCLUDE
-      });
-      if (!existing) {
-        throw new AppError('Appointment not found', 404);
-      }
+    // 1. Fetch current appointment with details
+    const existing = await db.appointment.findFirst({
+      where: { id },
+      include: FULL_INCLUDE
+    });
+    if (!existing) {
+      throw new AppError('Appointment not found', 404);
+    }
 
-      // 2. Calculate priceCharged if services are provided or status is being finished
-      let calculatedPrice: number | undefined = undefined;
-      const baseServicePrice = Number(existing.service?.price || 0);
+    // 2. Calculate priceCharged if services are provided or status is being finished
+    let calculatedPrice: number | undefined = undefined;
+    const baseServicePrice = Number(existing.service?.price || 0);
 
-      if (services !== undefined) {
-        const servicesSum = services.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
-        calculatedPrice = baseServicePrice + servicesSum;
-      } else if (data.priceCharged !== undefined) {
-        calculatedPrice = Number(data.priceCharged);
-      } else if (data.status === 'Done' && !existing.priceCharged) {
-        calculatedPrice = baseServicePrice;
-      }
+    if (services !== undefined) {
+      const servicesSum = services.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+      calculatedPrice = baseServicePrice + servicesSum;
+    } else if (data.priceCharged !== undefined) {
+      calculatedPrice = Number(data.priceCharged);
+    } else if (data.status === 'Done' && !existing.priceCharged) {
+      calculatedPrice = baseServicePrice;
+    }
 
-      // 3. Update appointment core data
-      const appointment = await tx.appointment.update({
-        where: { id },
-        data: {
-          ...data,
-          ...(calculatedPrice !== undefined && { priceCharged: calculatedPrice }),
-        },
-        include: FULL_INCLUDE
-      });
+    // 3. Update appointment core data
+    const appointment = await db.appointment.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(calculatedPrice !== undefined && { priceCharged: calculatedPrice }),
+      },
+      include: FULL_INCLUDE
+    });
+
 
       // 4. Handle Services / Procedures
       if (services !== undefined) {
-        await tx.appointmentService.deleteMany({
+        await db.appointmentService.deleteMany({
           where: { appointmentId: id }
         });
 
         for (const s of services) {
           if (s.name && s.name.trim()) {
-            await tx.appointmentService.create({
+            await db.appointmentService.create({
               data: {
-                tenantId: existing.tenantId || 1,
                 appointmentId: id,
                 serviceId: s.serviceId || null,
                 name: s.name.trim(),
@@ -158,7 +158,7 @@ export const appointmentsRepo = {
       if (usedItems && usedItems.length > 0) {
         for (const item of usedItems) {
           // Find suitable batches (FEFO)
-          const batches = await tx.purchaseItem.findMany({
+          const batches = await db.purchaseItem.findMany({
             where: { 
               productId: item.productId, 
               remainingQuantity: { gt: 0 } 
@@ -176,7 +176,7 @@ export const appointmentsRepo = {
             const currentBatchQty = Number(batch.remainingQuantity);
             const deduct = Math.min(currentBatchQty, remainingToDeduct);
             
-            await tx.purchaseItem.update({
+            await db.purchaseItem.update({
               where: { id: batch.id },
               data: { remainingQuantity: currentBatchQty - deduct }
             });
@@ -185,7 +185,7 @@ export const appointmentsRepo = {
           }
 
           // Record usage in SessionItem
-          await tx.sessionItem.create({
+          await db.sessionItem.create({
             data: {
               appointmentId: id,
               productId: item.productId,
@@ -196,19 +196,19 @@ export const appointmentsRepo = {
           });
 
           // Deduct from total stock
-          const product = await tx.product.findFirst({ where: { id: item.productId } });
+          const product = await db.product.findFirst({ where: { id: item.productId } });
           if (!product) throw new Error(`Product ${item.productId} not found`);
 
           const balanceBefore = Number(product.currentStock);
           const balanceAfter = balanceBefore - item.quantity;
 
-          await tx.product.update({
+          await db.product.update({
             where: { id: item.productId },
             data: { currentStock: balanceAfter }
           });
 
           // Create transaction record
-          await tx.stockTransaction.create({
+          await db.stockTransaction.create({
             data: {
               productId: item.productId,
               type: 'Usage',
@@ -227,7 +227,7 @@ export const appointmentsRepo = {
       const finalStatus = appointment.status;
       const totalAmount = Number(appointment.priceCharged || 0);
 
-      const existingFinTx = await tx.financialTransaction.findFirst({
+      const existingFinTx = await db.financialTransaction.findFirst({
         where: {
           referenceType: 'Appointment',
           referenceId: id
@@ -239,7 +239,7 @@ export const appointmentsRepo = {
 
       if (finalStatus === 'Done' && totalAmount > 0) {
         if (existingFinTx) {
-          await tx.financialTransaction.update({
+          await db.financialTransaction.update({
             where: { id: existingFinTx.id },
             data: {
               amount: totalAmount,
@@ -249,9 +249,8 @@ export const appointmentsRepo = {
             }
           });
         } else {
-          await tx.financialTransaction.create({
+          await db.financialTransaction.create({
             data: {
-              tenantId: existing.tenantId || 1,
               type: 'Income',
               category: 'Service',
               amount: totalAmount,
@@ -264,13 +263,13 @@ export const appointmentsRepo = {
           });
         }
       } else if (finalStatus === 'Cancelled' && existingFinTx) {
-        await tx.financialTransaction.delete({
+        await db.financialTransaction.delete({
           where: { id: existingFinTx.id }
         });
       }
 
       // Return fully hydrated appointment
-      return tx.appointment.findUnique({
+      return db.appointment.findFirst({
         where: { id },
         include: {
           ...FULL_INCLUDE,
@@ -283,19 +282,18 @@ export const appointmentsRepo = {
           }
         }
       });
-    });
   },
 
-  delete(id: number) {
-    return prisma.appointment.delete({ where: { id } });
+  delete(db: TenantPrismaClient, id: number) {
+    return db.appointment.delete({ where: { id } });
   },
 
-  async getAvailableSlots(doctorId: number, date: string) {
+  async getAvailableSlots(db: TenantPrismaClient, doctorId: number, date: string) {
     const targetDate = new Date(date);
     const dayOfWeek = targetDate.getUTCDay();
 
     // 1. Get Doctor Schedule for this day
-    const schedules = await prisma.doctorSchedule.findMany({
+    const schedules = await db.doctorSchedule.findMany({
       where: { doctorId, dayOfWeek, isActive: true }
     });
 
@@ -307,7 +305,7 @@ export const appointmentsRepo = {
     const endOfDay = new Date(date);
     endOfDay.setUTCHours(23,59,59,999);
 
-    const appointments = await prisma.appointment.findMany({
+    const appointments = await db.appointment.findMany({
       where: {
         doctorId,
         startTime: { gte: startOfDay, lte: endOfDay },
@@ -353,11 +351,11 @@ export const appointmentsRepo = {
     return slots;
   },
 
-  async getAvailableDoctors(date: string) {
+  async getAvailableDoctors(db: TenantPrismaClient, date: string) {
     const targetDate = new Date(date);
     const dayOfWeek = targetDate.getUTCDay();
 
-    return prisma.doctor.findMany({
+    return db.doctor.findMany({
       where: {
         isActive: true,
         schedules: {
@@ -371,3 +369,4 @@ export const appointmentsRepo = {
     });
   }
 };
+

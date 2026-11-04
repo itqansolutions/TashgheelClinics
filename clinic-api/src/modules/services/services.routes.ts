@@ -23,30 +23,30 @@ const querySchema  = z.object({
 
 // ── Service ───────────────────────────────────────────────────────────────
 const svc = {
-  async list(specialtyId?: number, includeInactive = false) {
-    return servicesRepo.findAll(specialtyId, includeInactive);
+  async list(db: any, specialtyId?: number, includeInactive = false) {
+    return servicesRepo.findAll(db, specialtyId, includeInactive);
   },
-  async getById(id: number) {
-    const s = await servicesRepo.findById(id);
+  async getById(db: any, id: number) {
+    const s = await servicesRepo.findById(db, id);
     if (!s) throw new AppError('Service not found', 404);
     return s;
   },
-  async create(body: z.infer<typeof createSchema>) {
-    const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
+  async create(db: any, body: z.infer<typeof createSchema>) {
+    const specialty = await db.specialty.findFirst({ where: { id: body.specialtyId } });
     if (!specialty) throw new AppError('Specialty not found', 404);
-    return servicesRepo.create(body);
+    return servicesRepo.create(db, body);
   },
-  async update(id: number, body: z.infer<typeof updateSchema>) {
-    await svc.getById(id);
+  async update(db: any, id: number, body: z.infer<typeof updateSchema>) {
+    await svc.getById(db, id);
     if (body.specialtyId) {
-      const specialty = await prisma.specialty.findFirst({ where: { id: body.specialtyId } });
+      const specialty = await db.specialty.findFirst({ where: { id: body.specialtyId } });
       if (!specialty) throw new AppError('Specialty not found', 404);
     }
-    return servicesRepo.update(id, body);
+    return servicesRepo.update(db, id, body);
   },
-  async deactivate(id: number) {
-    await svc.getById(id);
-    return servicesRepo.update(id, { isActive: false });
+  async deactivate(db: any, id: number) {
+    await svc.getById(db, id);
+    return servicesRepo.update(db, id, { isActive: false });
   },
 };
 
@@ -56,6 +56,7 @@ const ctrl = {
     try {
       const { specialtyId, includeInactive } = req.query as Record<string, string>;
       const data = await svc.list(
+        req.db!,
         specialtyId ? Number(specialtyId) : undefined,
         includeInactive === 'true'
       );
@@ -63,22 +64,23 @@ const ctrl = {
     } catch (e) { next(e); }
   },
   async getById(req: Request, res: Response, next: NextFunction) {
-    try { sendSuccess(res, await svc.getById(Number(req.params.id))); }
+    try { sendSuccess(res, await svc.getById(req.db!, Number(req.params.id))); }
     catch (e) { next(e); }
   },
   async create(req: Request, res: Response, next: NextFunction) {
-    try { sendSuccess(res, await svc.create(req.body), 'Service created', 201); }
+    try { sendSuccess(res, await svc.create(req.db!, req.body), 'Service created', 201); }
     catch (e) { next(e); }
   },
   async update(req: Request, res: Response, next: NextFunction) {
-    try { sendSuccess(res, await svc.update(Number(req.params.id), req.body), 'Service updated'); }
+    try { sendSuccess(res, await svc.update(req.db!, Number(req.params.id), req.body), 'Service updated'); }
     catch (e) { next(e); }
   },
   async deactivate(req: Request, res: Response, next: NextFunction) {
-    try { sendSuccess(res, await svc.deactivate(Number(req.params.id)), 'Service deactivated'); }
+    try { sendSuccess(res, await svc.deactivate(req.db!, Number(req.params.id)), 'Service deactivated'); }
     catch (e) { next(e); }
   },
 };
+
 
 // ── Router ────────────────────────────────────────────────────────────────
 const router = Router();

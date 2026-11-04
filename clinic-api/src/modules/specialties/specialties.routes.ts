@@ -18,31 +18,32 @@ const querySchema  = z.object({ includeInactive: z.string().optional() });
 const ctrl = {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await specialtiesService.list(req.query.includeInactive === 'true');
+      const data = await specialtiesService.list(req.db!, req.query.includeInactive === 'true');
       sendSuccess(res, data);
     } catch (e) { next(e); }
   },
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      sendSuccess(res, await specialtiesService.getById(Number(req.params.id)));
+      sendSuccess(res, await specialtiesService.getById(req.db!, Number(req.params.id)));
     } catch (e) { next(e); }
   },
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      sendSuccess(res, await specialtiesService.create(req.body.name), 'Specialty created', 201);
+      sendSuccess(res, await specialtiesService.create(req.db!, req.body.name), 'Specialty created', 201);
     } catch (e) { next(e); }
   },
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      sendSuccess(res, await specialtiesService.update(Number(req.params.id), req.body), 'Specialty updated');
+      sendSuccess(res, await specialtiesService.update(req.db!, Number(req.params.id), req.body), 'Specialty updated');
     } catch (e) { next(e); }
   },
   async deactivate(req: Request, res: Response, next: NextFunction) {
     try {
-      sendSuccess(res, await specialtiesService.deactivate(Number(req.params.id)), 'Specialty deactivated');
+      sendSuccess(res, await specialtiesService.deactivate(req.db!, Number(req.params.id)), 'Specialty deactivated');
     } catch (e) { next(e); }
   },
 };
+
 
 // ── Router ────────────────────────────────────────────────────────────────
 const router = Router();

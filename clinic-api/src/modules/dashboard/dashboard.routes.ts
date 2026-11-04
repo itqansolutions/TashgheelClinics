@@ -1,6 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { startOfDay, endOfDay } from 'date-fns';
-import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { allRoles } from '../../middleware/rbac';
@@ -8,8 +7,9 @@ import { allRoles } from '../../middleware/rbac';
 const router = Router();
 router.use(authenticate, allRoles);
 
-router.get('/kpis', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/kpis', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const db = req.db!;
     const today = new Date();
     const start = startOfDay(today);
     const end   = endOfDay(today);
@@ -22,24 +22,24 @@ router.get('/kpis', async (_req: Request, res: Response, next: NextFunction) => 
       pendingToday,
       confirmedToday,
     ] = await Promise.all([
-      prisma.patient.count({ where: { isActive: true } }),
+      db.patient.count({ where: { isActive: true } }),
 
-      prisma.appointment.count({
+      db.appointment.count({
         where: { startTime: { gte: start, lte: end } },
       }),
 
-      prisma.payment.aggregate({
+      db.payment.aggregate({
         where:   { paidAt: { gte: start, lte: end } },
         _sum:    { amount: true },
       }),
 
-      prisma.doctor.count({ where: { isActive: true } }),
+      db.doctor.count({ where: { isActive: true } }),
 
-      prisma.appointment.count({
+      db.appointment.count({
         where: { startTime: { gte: start, lte: end }, status: 'Pending' },
       }),
 
-      prisma.appointment.count({
+      db.appointment.count({
         where: { startTime: { gte: start, lte: end }, status: 'Confirmed' },
       }),
     ]);
@@ -55,10 +55,11 @@ router.get('/kpis', async (_req: Request, res: Response, next: NextFunction) => 
   } catch (e) { next(e); }
 });
 
-router.get('/appointments-today', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/appointments-today', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const db = req.db!;
     const today = new Date();
-    const appointments = await prisma.appointment.findMany({
+    const appointments = await db.appointment.findMany({
       where: {
         startTime: { gte: startOfDay(today), lte: endOfDay(today) },
       },
@@ -74,3 +75,4 @@ router.get('/appointments-today', async (_req: Request, res: Response, next: Nex
 });
 
 export default router;
+

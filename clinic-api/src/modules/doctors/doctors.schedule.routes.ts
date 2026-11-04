@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { adminOrReception } from '../../middleware/rbac';
@@ -14,7 +13,8 @@ router.use(authenticate);
  */
 router.get('/:id/schedule', async (req, res, next) => {
   try {
-    const schedules = await prisma.doctorSchedule.findMany({
+    const db = req.db!;
+    const schedules = await db.doctorSchedule.findMany({
       where: { doctorId: Number(req.params.id), isActive: true },
       orderBy: { dayOfWeek: 'asc' }
     });
@@ -30,23 +30,24 @@ router.get('/:id/schedule', async (req, res, next) => {
  */
 router.put('/:id/schedule', adminOrReception, async (req, res, next) => {
   try {
+    const db = req.db!;
     const doctorId = Number(req.params.id);
     const { schedules } = req.body; // Array of { dayOfWeek, startTime, endTime }
 
-    // Use transaction to ensure consistency
-    await prisma.$transaction([
-      // 1. Deactivate old schedules
-      prisma.doctorSchedule.deleteMany({ where: { doctorId } }),
-      // 2. Insert new ones
-      prisma.doctorSchedule.createMany({
+    // 1. Deactivate old schedules
+    await db.doctorSchedule.deleteMany({ where: { doctorId } });
+
+    // 2. Insert new ones
+    if (schedules && schedules.length > 0) {
+      await db.doctorSchedule.createMany({
         data: schedules.map((s: any) => ({
           doctorId,
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
           endTime: s.endTime
         }))
-      })
-    ]);
+      });
+    }
 
     sendSuccess(res, null, 'Schedule updated successfully');
   } catch (error) {
@@ -55,3 +56,4 @@ router.put('/:id/schedule', adminOrReception, async (req, res, next) => {
 });
 
 export default router;
+
