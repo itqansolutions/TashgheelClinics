@@ -412,6 +412,7 @@ model Appointment {
   sessionItems  SessionItem[]
   services      AppointmentService[]
 
+  @@unique([id, tenantId])
   @@index([tenantId])
   @@index([tenantId, startTime]) // calendar queries
   @@index([doctorId, startTime])
@@ -438,6 +439,7 @@ model AppointmentService {
 
   @@index([tenantId])
   @@index([appointmentId])
+  @@index([tenantId, appointmentId])
   @@map("AppointmentServices")
 }
 
