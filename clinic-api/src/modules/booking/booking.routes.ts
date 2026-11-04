@@ -76,6 +76,8 @@ router.get('/check-patient', async (req, res, next) => {
     const { phone } = req.query;
     if (!phone) throw new AppError('Phone is required', 400);
 
+    const tenantId = req.publicTenant?.id;
+
     const patient = await db.patient.findFirst({
       where: { phone: String(phone) },
       select: {
@@ -83,6 +85,7 @@ router.get('/check-patient', async (req, res, next) => {
         fullName: true,
         email: true,
         appointments: {
+          where: tenantId ? { tenantId } : undefined,
           take: 5,
           orderBy: { startTime: 'desc' },
           select: {
