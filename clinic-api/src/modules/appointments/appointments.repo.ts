@@ -1,3 +1,4 @@
+import prisma from '../../config/db';
 import { TenantPrismaClient } from '../../utils/tenantPrisma';
 import { PaginationResult } from '../../utils/pagination';
 import { AppError } from '../../middleware/errorHandler';
@@ -97,7 +98,14 @@ export const appointmentsRepo = {
     });
   },
 
-  async update(db: TenantPrismaClient, id: number, input: UpdateAppointmentInput) {
+  async update(
+    arg1: any,
+    arg2: any,
+    arg3?: any
+  ) {
+    const db: TenantPrismaClient = typeof arg1 === 'number' ? (prisma as any) : arg1;
+    const id: number = typeof arg1 === 'number' ? arg1 : (arg2 as number);
+    const input: UpdateAppointmentInput = typeof arg1 === 'number' ? (arg2 as UpdateAppointmentInput) : arg3!;
     const { usedItems, services, ...data } = input;
 
     // 1. Fetch current appointment with details
@@ -132,27 +140,27 @@ export const appointmentsRepo = {
       include: FULL_INCLUDE
     });
 
+    // 4. Handle Services / Procedures
+    if (services !== undefined) {
+      await db.appointmentService.deleteMany({
+        where: { appointmentId: id }
+      });
 
-      // 4. Handle Services / Procedures
-      if (services !== undefined) {
-        await db.appointmentService.deleteMany({
-          where: { appointmentId: id }
-        });
-
-        for (const s of services) {
-          if (s.name && s.name.trim()) {
-            await db.appointmentService.create({
-              data: {
-                appointmentId: id,
-                serviceId: s.serviceId || null,
-                name: s.name.trim(),
-                description: s.description?.trim() || null,
-                price: Number(s.price) || 0,
-              }
-            });
-          }
+      for (const s of services) {
+        if (s.name && s.name.trim()) {
+          await (db.appointmentService as any).create({
+            data: {
+              appointmentId: id,
+              serviceId: s.serviceId || null,
+              name: s.name.trim(),
+              description: s.description?.trim() || null,
+              price: Number(s.price) || 0,
+            }
+          });
         }
       }
+    }
+
 
       // 5. Handle used inventory items
       if (usedItems && usedItems.length > 0) {

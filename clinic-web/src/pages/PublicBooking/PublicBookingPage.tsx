@@ -48,7 +48,13 @@ export function PublicBookingPage() {
     axios.get('/api/public/specialties', config).then(res => setSpecialties(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/lead-sources', config).then(res => setLeadSources(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/settings', config)
-      .then(res => setSettings(res.data?.data || {}))
+      .then(res => {
+        const data = res.data?.data || {};
+        setSettings(data);
+        if (data.tenant_name || data.clinic_name) {
+          document.title = `${data.tenant_name || data.clinic_name} - Online Booking`;
+        }
+      })
       .catch(err => {
         setClinicError(err.response?.data?.message || 'Clinic not found or currently unavailable.');
       });
@@ -221,7 +227,7 @@ export function PublicBookingPage() {
         {/* Header - Now dynamic based on settings */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-            {settings.clinic_name || 'Clinic Portal'}
+            {settings.tenant_name || settings.clinic_name || 'Clinic Portal'}
           </h1>
           <p className="text-gray-500 text-lg">
             {settings.clinic_slogan || 'Smart & Seamless Medical Booking'}
