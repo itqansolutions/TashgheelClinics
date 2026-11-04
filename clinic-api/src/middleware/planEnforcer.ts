@@ -17,6 +17,11 @@ export function requireFeature(feature: PlanFeature) {
 
     const plan = (req.tenantCtx?.plan || 'TRIAL') as TenantPlan;
 
+    // TRIAL plan allows full evaluation of core clinic features (Reports, Stock, Finance)
+    if (plan === 'TRIAL') {
+      return next();
+    }
+
     // Load limits for plan (PlanLimit table seeded in Migration 001)
     const limit = await rawPrisma.planLimit.findUnique({
       where: { plan },

@@ -20,8 +20,11 @@ export function ReportsPage() {
   const [incomeBreakdown, setIncomeBreakdown] = useState<any>(null);
   const [doctorCommissions, setDoctorCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchReports = () => {
+    setLoading(true);
+    setError(null);
     Promise.all([
       reportsApi.getSummary(),
       reportsApi.getFinancialSummary(),
@@ -41,12 +44,31 @@ export function ReportsPage() {
       setLoading(false);
     }).catch(err => {
       console.error('Failed to fetch reports', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to load analytics data.';
+      setError(msg);
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    fetchReports();
   }, []);
 
   if (loading) return <PageLoader />;
-  if (!summary) return <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest opacity-30">Failed to load analytics data.</div>;
+  if (error || !summary) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mb-4">
+          <Activity className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Clinic Analytics</h2>
+        <p className="text-gray-500 max-w-md text-sm mb-6">{error || 'Failed to load analytics data. Please verify your permissions.'}</p>
+        <Button onClick={fetchReports} className="px-6 py-2.5 rounded-xl">
+          Retry Loading
+        </Button>
+      </div>
+    );
+  }
 
   const stats = [
     { label: 'Gross Revenue', value: formatCurrency(financeSum?.totalIncome || 0), icon: Wallet, color: 'bg-brand-600', trend: '+12.5%', isUp: true },

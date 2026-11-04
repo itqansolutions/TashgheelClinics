@@ -30,7 +30,7 @@ router.get('/summary', async (req, res, next) => {
       patientsCount,
       appointmentsCount,
       doctorsCount,
-      totalRevenue: Number(revenue._sum.priceCharged || 0)
+      totalRevenue: Number(revenue._sum?.priceCharged || 0)
     });
   } catch (error) {
     next(error);

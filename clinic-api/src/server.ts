@@ -1,6 +1,6 @@
 import app from './app';
 import { env } from './config/env';
-import { connectDB, disconnectDB } from './config/db';
+import { connectDB, disconnectDB, rawPrisma } from './config/db';
 import { startTrialExpirationWorker } from './workers/trialExpirationWorker';
 import fs from 'fs';
 import path from 'path';
@@ -14,6 +14,16 @@ async function bootstrap() {
 
   // Connect to database
   await connectDB();
+
+  // Ensure TRIAL plan limits have reports, stock, and finance enabled for evaluation
+  try {
+    await rawPrisma.planLimit.updateMany({
+      where: { plan: 'TRIAL' },
+      data: { hasReports: true, hasStock: true, hasFinance: true },
+    });
+  } catch (err: any) {
+    console.warn('[Bootstrap] PlanLimits sync skipped:', err?.message);
+  }
 
   // Start background workers (after DB is ready)
   startTrialExpirationWorker();

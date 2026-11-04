@@ -24,23 +24,23 @@ export class ReportsRepository {
       })
     ]);
 
-    const totalIncome = Number(servicesIncome._sum.amount || 0) + 
-                      Number(productsIncome._sum.amount || 0) + 
-                      Number(otherIncome._sum.amount || 0);
+    const totalIncome = Number(servicesIncome._sum?.amount || 0) + 
+                      Number(productsIncome._sum?.amount || 0) + 
+                      Number(otherIncome._sum?.amount || 0);
     
-    const totalExpenses = Number(generalExpenses._sum.amount || 0) + 
-                         Number(purchaseTotal._sum.totalAmount || 0);
+    const totalExpenses = Number(generalExpenses._sum?.amount || 0) + 
+                         Number(purchaseTotal._sum?.totalAmount || 0);
 
     return {
       totalIncome,
       totalExpenses,
       netProfit: totalIncome - totalExpenses,
       breakdown: {
-        services: Number(servicesIncome._sum.amount || 0),
-        products: Number(productsIncome._sum.amount || 0),
-        other: Number(otherIncome._sum.amount || 0),
-        general: Number(generalExpenses._sum.amount || 0),
-        purchases: Number(purchaseTotal._sum.totalAmount || 0)
+        services: Number(servicesIncome._sum?.amount || 0),
+        products: Number(productsIncome._sum?.amount || 0),
+        other: Number(otherIncome._sum?.amount || 0),
+        general: Number(generalExpenses._sum?.amount || 0),
+        purchases: Number(purchaseTotal._sum?.totalAmount || 0)
       }
     };
   }
@@ -57,8 +57,8 @@ export class ReportsRepository {
     });
 
     return {
-      services: Number(services._sum.amount || 0),
-      products: Number(products._sum.amount || 0)
+      services: Number(services._sum?.amount || 0),
+      products: Number(products._sum?.amount || 0)
     };
   }
 
@@ -82,13 +82,13 @@ export class ReportsRepository {
     for (const apt of appointments) {
       const docId = apt.doctorId;
       const totalCharged = Number(apt.priceCharged || 0);
-      const commissionPct = Number(apt.doctor.commission || 0);
+      const commissionPct = Number(apt.doctor?.commission || 0);
       const docCommission = (totalCharged * commissionPct) / 100;
 
       if (!docMap.has(docId)) {
         docMap.set(docId, {
           doctorId: docId,
-          doctorName: apt.doctor.user?.fullName || apt.doctor.fullName || 'Unknown',
+          doctorName: apt.doctor?.user?.fullName || apt.doctor?.fullName || 'Unknown Doctor',
           totalRevenue: 0,
           totalCommission: 0,
           appointmentCount: 0
@@ -112,11 +112,11 @@ export class ReportsRepository {
     const flow: Record<string, any> = {};
 
     transactions.forEach(tx => {
-      const date = tx.date.toISOString().split('T')[0];
+      const date = tx.date ? new Date(tx.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       if (!flow[date]) flow[date] = { date, income: 0, expense: 0 };
       
-      if (tx.type === 'Income') flow[date].income += Number(tx.amount);
-      else flow[date].expense += Number(tx.amount);
+      if (tx.type === 'Income') flow[date].income += Number(tx.amount || 0);
+      else flow[date].expense += Number(tx.amount || 0);
     });
 
     return Object.values(flow);
