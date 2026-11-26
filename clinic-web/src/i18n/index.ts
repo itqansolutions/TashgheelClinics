@@ -71,6 +71,18 @@ const dict: Record<Lang, Record<string, string>> = {
   },
 };
 
+// Public booking pages default to Arabic for first-time visitors (patients).
+// Only applies when no language was ever chosen; a saved choice always wins,
+// so the language switch keeps working everywhere.
+if (
+  typeof localStorage !== 'undefined' &&
+  typeof location !== 'undefined' &&
+  !localStorage.getItem('lang') &&
+  (location.pathname === '/book' || /^\/c\/[^/]+\/book\/?$/.test(location.pathname))
+) {
+  localStorage.setItem('lang', 'ar');
+}
+
 const stored = (typeof localStorage !== 'undefined' && localStorage.getItem('lang')) as Lang | null;
 
 function apply(lang: Lang) {

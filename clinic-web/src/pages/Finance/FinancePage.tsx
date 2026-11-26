@@ -62,6 +62,8 @@ export function FinancePage() {
   const { data: summaryData } = useFinancialSummary();
 
   const finSum = summaryData || null;
+  const netProfit = Number(finSum?.netProfit || 0);
+  const isLoss = netProfit < 0;
 
   const queue = queueData?.data || [];
   const ledger = ledgerData?.data || [];
@@ -133,12 +135,12 @@ export function FinancePage() {
         <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-green-200 transition-all">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Net Profit (MTD)</p>
-            <h3 className="text-2xl font-mono font-black text-brand-600">{formatCurrency(finSum?.netProfit || 0)}</h3>
+            <h3 className={`text-2xl font-mono font-black ${isLoss ? 'text-red-600' : 'text-brand-600'}`}>{formatCurrency(netProfit)}</h3>
             <p className="text-[9px] font-medium text-gray-400 mt-0.5">
               <span>Revenue:</span> {formatCurrency(finSum?.totalIncome || 0)} - <span>Expenses:</span> {formatCurrency(finSum?.totalExpenses || 0)}
             </p>
-            <div className="flex items-center gap-1 mt-2 text-[10px] font-bold text-brand-500 uppercase tracking-widest">
-              Healthy Margin
+            <div className={`flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest ${isLoss ? 'text-red-500' : 'text-brand-500'}`}>
+              {isLoss ? 'Net Loss' : 'Healthy Margin'}
             </div>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-transform">
