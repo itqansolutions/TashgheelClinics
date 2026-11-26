@@ -15,6 +15,17 @@ export class StockController {
     const db = req.db!;
 
     try {
+      if (!Array.isArray(items) || items.length === 0) throw new Error('At least one purchase item is required');
+      for (const it of items) {
+        if (!(Number(it.quantity) > 0)) throw new Error('Item quantity must be greater than zero');
+        if (!(Number(it.costPerUnit) >= 0)) throw new Error('Item cost must be zero or more');
+      }
+      const vendor = await db.vendor.findFirst({ where: { id: Number(vendorId) } });
+      if (!vendor) throw new Error('Vendor not found');
+      for (const it of items) {
+        const p = await db.product.findFirst({ where: { id: Number(it.productId) } });
+        if (!p) throw new Error(`Product ${it.productId} not found`);
+      }
       // 1. Create Purchase Record using tenant-scoped client
       const totalAmount = items.reduce((sum: number, item: any) => sum + (item.quantity * item.costPerUnit), 0);
       
@@ -103,6 +114,10 @@ export class StockController {
   }
 
   async createProduct(req: Request, res: Response) {
+    if (req.body.code) {
+      const dup = await req.db!.product.findFirst({ where: { code: String(req.body.code) } });
+      if (dup) return res.status(409).json({ success: false, message: 'A product with this code already exists' });
+    }
     const product = await productRepo.create(req.db!, req.body);
     res.json({ success: true, data: product });
   }
@@ -121,6 +136,12 @@ export class StockController {
 
   async recordVendorPayment(req: Request, res: Response) {
     const userId = (req as any).user?.id || (req as any).user?.sub;
+    const payAmount = Number(req.body.amount);
+    if (!Number.isFinite(payAmount) || payAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Payment amount must be greater than zero' });
+    }
+    const payVendor = await req.db!.vendor.findFirst({ where: { id: Number(req.body.vendorId) } });
+    if (!payVendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
     const payment = await vendorRepo.createPayment(req.db!, {
       ...req.body,
       userId,

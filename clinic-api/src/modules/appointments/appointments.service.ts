@@ -22,6 +22,17 @@ export const appointmentsService = {
       throw new AppError('End time must be after start time', 400);
     }
     
+    // Prevent double-booking the same doctor in an overlapping slot
+    const overlap = await db.appointment.findFirst({
+      where: {
+        doctorId: Number(data.doctorId),
+        status: { notIn: ['Cancelled'] },
+        startTime: { lt: new Date(data.endTime) },
+        endTime: { gt: new Date(data.startTime) },
+      },
+    });
+    if (overlap) throw new AppError('This doctor already has an appointment in that time slot', 409);
+
     return appointmentsRepo.create(db, data);
   },
 

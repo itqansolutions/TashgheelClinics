@@ -47,8 +47,8 @@ async function bootstrap() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 
   process.on('unhandledRejection', (reason) => {
+    // Log only: one failing request must not take every tenant offline.
     console.error('Unhandled rejection:', reason);
-    process.exit(1);
   });
 }
 

@@ -23,8 +23,28 @@ export class FinanceController {
 
   async collectPayment(req: Request, res: Response) {
     const userId = (req as any).user?.id || (req as any).user?.sub;
+    const appointmentId = Number(req.body.appointmentId);
+    const amount = Number(req.body.amount);
+    if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+      return res.status(400).json({ success: false, message: 'A valid appointmentId is required' });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Payment amount must be greater than zero' });
+    }
+    const appt = await req.db!.appointment.findFirst({ where: { id: appointmentId } });
+    if (!appt) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+    const due = Number(appt.priceCharged ?? 0);
+    const paidAgg = await req.db!.payment.findMany({ where: { appointmentId } });
+    const paid = paidAgg.reduce((s: number, p: any) => s + Number(p.amount), 0);
+    if (due > 0 && paid + amount > due + 0.001) {
+      return res.status(400).json({ success: false, message: `Payment exceeds the remaining balance (${(due - paid).toFixed(2)})` });
+    }
     const payment = await financeRepo.collectPayment(req.db!, {
       ...req.body,
+      appointmentId,
+      amount,
       receivedBy: userId
     });
     res.json({ success: true, data: payment });

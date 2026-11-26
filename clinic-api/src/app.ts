@@ -1,3 +1,4 @@
+import 'express-async-errors'; // route async handler errors to errorHandler instead of crashing the process
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

@@ -50,7 +50,11 @@ export const appointmentsController = {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.update(req.db!, Number(req.params.id), req.body);
+      const role = String((req as any).user?.role || '').toLowerCase();
+      const canEditMoney = ['admin', 'system admin', 'reception', 'receptionist', 'manager', 'accountant'].includes(role);
+      const body = { ...req.body };
+      if (!canEditMoney) { delete body.priceCharged; delete body.discountPct; }
+      const data = await appointmentsService.update(req.db!, Number(req.params.id), body);
       sendSuccess(res, data, 'Appointment updated');
     } catch (error) {
       next(error);
