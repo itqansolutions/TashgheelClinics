@@ -12,6 +12,13 @@ const COUNTRIES: Record<string, string> = {
   'Canada':'كندا','Somalia':'الصومال','Mauritania':'موريتانيا','Djibouti':'جيبوتي','Comoros':'جزر القمر',
 };
 const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+  [/^(\d{1,2}):(\d{2}) (AM|PM)$/i, (m) => `${m[1]}:${m[2]} ${m[3].toUpperCase() === 'AM' ? 'ص' : 'م'}`],
+  [/^([\d,.]+) EGP$/, (m) => `${m[1]} ج.م`],
+  [/^(.+) - ([\d,.]+) EGP$/, (m) => `${lookup(m[1]) ?? m[1]} - ${m[2]} ج.م`],
+  [/^(.+?) \((\d+)\)$/, (m) => { const r = phrases[m[1].trim()] ?? lookup(m[1]); return r ? `${r} (${m[2]})` : m[0]; }],
+  [/^([\d,.]+) sources?$/, (m) => `${m[1]} مصدر`],
+  [/^Joined (.+)$/, (m) => `انضم في ${m[1]}`],
+  [/^(\d+) Years?$/, (m) => `${m[1]} سنة`],
   [/^via (.+)$/, (m) => `عن طريق ${m[1]}`],
   [/^Patient since ([A-Z][a-z]{2}) (\d{4})$/, (m) => `مريض من ${MONTHS[['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m[1])] ?? m[1]} ${m[2]}`],
   [/^([\d,.]+) total patients$/, (m) => `${m[1]} مريض`],

@@ -9,7 +9,7 @@ import { useRole } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/Loader';
-import { formatDate, getInitials } from '@/utils/format';
+import { formatDate, getInitials, isArabic } from '@/utils/format';
 import { PersonalInfoTab }   from './tabs/PersonalInfoTab';
 import { MedicalHistoryTab } from './tabs/MedicalHistoryTab';
 import { AppointmentsTab }   from './tabs/AppointmentsTab';
@@ -117,7 +117,7 @@ export function PatientProfilePage() {
             </div>
 
             <p className="text-[10px] text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-              {`Patient since ${formatDate(patient.createdAt, 'MMM yyyy')}`}
+              {`${isArabic() ? 'مريض من' : 'Patient since'} ${formatDate(patient.createdAt, 'MMM yyyy')}`}
             </p>
           </div>
 

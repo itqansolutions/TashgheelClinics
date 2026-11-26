@@ -80,7 +80,7 @@ export function SimpleDonutChart({ data }: { data: { label: string, value: numbe
             <div className="w-4 h-4 rounded-lg shadow-sm group-hover:scale-110 transition-transform" style={{ backgroundColor: d.color }}></div>
             <div className="flex flex-col">
               <span className="text-xs font-black text-gray-700 uppercase tracking-tight">{d.label}</span>
-              <span className="text-[10px] text-gray-400 font-bold">{d.value.toLocaleString()} ({Math.round((d.value / total) * 100)}%)</span>
+              <span className="text-[10px] text-gray-400 font-bold">{d.value.toLocaleString()} ({(total > 0 ? Math.round((d.value / total) * 100) : 0)}%)</span>
             </div>
           </div>
         ))}

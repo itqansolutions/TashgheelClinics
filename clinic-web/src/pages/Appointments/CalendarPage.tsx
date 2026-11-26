@@ -5,7 +5,7 @@ import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors, LayoutGrid, List, Calendar as CalendarIcon, Phone } from 'lucide-react';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
-import { formatDateTime } from '@/utils/format';
+import { formatDateTime, fmt } from '@/utils/format';
 import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDetailsModal';
 
 export function CalendarPage() {
@@ -27,7 +27,7 @@ export function CalendarPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 leading-tight">
-              {format(currentDate, 'MMMM yyyy')}
+              {fmt(currentDate, 'MMMM yyyy')}
             </h2>
             <div className="flex items-center gap-1 mt-1">
               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
@@ -181,7 +181,7 @@ export function CalendarPage() {
                   className="text-[9px] p-2 rounded-xl bg-white border border-gray-100 shadow-sm truncate hover:border-brand-300 hover:shadow-md cursor-pointer transition-all border-l-4 border-l-brand-500"
                 >
                   <p className="font-bold text-gray-800 leading-tight">{apt.patient?.fullName}</p>
-                  <p className="text-brand-600 mt-0.5 font-semibold">{format(new Date(apt.startTime), 'hh:mm a')}</p>
+                  <p className="text-brand-600 mt-0.5 font-semibold">{fmt(new Date(apt.startTime), 'hh:mm a')}</p>
                 </div>
               ))}
             </div>

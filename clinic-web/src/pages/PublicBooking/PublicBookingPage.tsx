@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isArabic, fmt } from '@/utils/format';
 import { useParams } from 'react-router-dom';
 import { drName } from '@/i18n';
 import axios from 'axios';
@@ -407,7 +408,7 @@ export function PublicBookingPage() {
                       <div key={apt.id} className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-between group hover:border-brand-200 transition-all">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 bg-gray-50 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold text-gray-400 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
-                            <span>{format(new Date(apt.startTime), 'MMM')}</span>
+                            <span>{fmt(new Date(apt.startTime), 'MMM')}</span>
                             <span className="text-sm leading-none">{format(new Date(apt.startTime), 'dd')}</span>
                           </div>
                           <div>
@@ -475,7 +476,7 @@ export function PublicBookingPage() {
                         disabled={!formData.specialtyId}
                       >
                         <option value="">Choose Service (Optional)</option>
-                        {filteredServices.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} EGP)</option>)}
+                        {filteredServices.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.price} {isArabic() ? 'ج.م' : 'EGP'})</option>)}
                       </select>
                     </div>
 

@@ -135,7 +135,7 @@ export function FinancePage() {
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Net Profit (MTD)</p>
             <h3 className="text-2xl font-mono font-black text-brand-600">{formatCurrency(finSum?.netProfit || 0)}</h3>
             <p className="text-[9px] font-medium text-gray-400 mt-0.5">
-              Revenue: {formatCurrency(finSum?.totalIncome || 0)} - Expenses: {formatCurrency(finSum?.totalExpenses || 0)}
+              <span>Revenue:</span> {formatCurrency(finSum?.totalIncome || 0)} - <span>Expenses:</span> {formatCurrency(finSum?.totalExpenses || 0)}
             </p>
             <div className="flex items-center gap-1 mt-2 text-[10px] font-bold text-brand-500 uppercase tracking-widest">
               Healthy Margin

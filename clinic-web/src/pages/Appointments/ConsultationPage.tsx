@@ -6,7 +6,7 @@ import {
   AlertCircle, Sparkles, Boxes
 } from 'lucide-react';
 import { useAppointment, useUpdateAppointment } from '@/hooks/useAppointments';
-import { usePatient, usePatientAreas } from '@/hooks/usePatients';
+import { usePatient, usePatientAreas, usePatientAppointments } from '@/hooks/usePatients';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/Loader';
@@ -30,6 +30,12 @@ export function ConsultationPage() {
   const { data: patient, isLoading: patientLoading } = usePatient(appointment?.patientId as number);
   const { data: patientAreas } = usePatientAreas(appointment?.patientId as number);
   
+  const { data: patientAppts } = usePatientAppointments(appointment?.patientId as number);
+  // Real previous visit only (latest finished visit that is not this one). Never mock data.
+  const lastVisit: any = ((Array.isArray(patientAppts) ? patientAppts : []) as any[])
+    .filter((a: any) => a.id !== appointment?.id && a.status === 'Done')
+    .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())[0];
+
   const [notes, setNotes] = useState(appointment?.notes || '');
   const [prescription, setPrescription] = useState(appointment?.prescription || '');
   const [usedItems, setUsedItems] = useState<any[]>([]);
@@ -195,24 +201,30 @@ export function ConsultationPage() {
                   <Activity className="w-3 h-3 text-blue-400" /> Last Visit
                 </h3>
                 <div className="text-xs text-gray-600 p-3 rounded-xl border border-gray-100">
-                  <p className="font-semibold text-gray-900">Botox Session</p>
-                  <p className="text-[10px] text-gray-400">
-                    {formatDate('2024-04-12')} · {formatCurrency(2500)}
-                  </p>
+                  {lastVisit ? (
+                    <>
+                      <p className="font-semibold text-gray-900">{lastVisit.service?.name || 'Visit'}</p>
+                      <p className="text-[10px] text-gray-400">
+                        {formatDate(lastVisit.startTime)}{lastVisit.priceCharged != null ? ` · ${formatCurrency(Number(lastVisit.priceCharged))}` : ''}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-400">No previous visits recorded.</p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-amber-50 rounded-2xl border border-amber-100 p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-amber-800">Doctor Note</p>
-              <p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
-                Patient reported sensitivity in the forehead area during last session.
-              </p>
+          {lastVisit?.notes && (
+            <div className="bg-amber-50 rounded-2xl border border-amber-100 p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-amber-800">Doctor Note</p>
+                <p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">{lastVisit.notes}</p>
+              </div>
             </div>
-          </div>
+          )}
         </aside>
 
         {/* Right: Work Area */}

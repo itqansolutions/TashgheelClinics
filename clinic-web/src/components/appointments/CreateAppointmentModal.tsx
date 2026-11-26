@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isArabic } from '@/utils/format';
 import { useForm } from 'react-hook-form';
 import { drName } from '@/i18n';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -476,7 +477,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
                     <option value="">Select procedure</option>
                     {allServices.map((s: any) => (
                       <option key={s.id} value={s.id}>
-                        {s.name} - {s.price} EGP
+                        {s.name} - {s.price} {isArabic() ? 'ج.م' : 'EGP'}
                       </option>
                     ))}
                   </select>
