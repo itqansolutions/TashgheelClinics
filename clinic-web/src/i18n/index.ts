@@ -82,7 +82,7 @@ function apply(lang: Lang) {
 interface LangState { lang: Lang; setLang: (l: Lang) => void; }
 export const useLang = create<LangState>((set) => ({
   lang: stored === 'ar' ? 'ar' : 'en',
-  setLang: (lang) => { localStorage.setItem('lang', lang); apply(lang); set({ lang }); },
+  setLang: (lang) => { localStorage.setItem('lang', lang); apply(lang); set({ lang }); window.location.reload(); },
 }));
 apply(useLang.getState().lang);
 
