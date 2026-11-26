@@ -2,6 +2,21 @@
 // To translate more text: add a line here. Matching is on the exact trimmed text
 // (a trailing " *", ":" or "…" is handled automatically). Unknown text stays English.
 export const phrases: Record<string, string> = {
+  'Sat':'السبت',
+  'Sun':'الأحد',
+  'Mon':'الاثنين',
+  'Tue':'الثلاثاء',
+  'Wed':'الأربعاء',
+  'Thu':'الخميس',
+  'Fri':'الجمعة',
+  'Saturday':'السبت',
+  'Sunday':'الأحد',
+  'Monday':'الاثنين',
+  'Tuesday':'الثلاثاء',
+  'Wednesday':'الأربعاء',
+  'Thursday':'الخميس',
+  'Friday':'الجمعة',
+
   'Want to register a new clinic?':'عايز تسجل عيادة جديدة؟',
   'Patient created':'تم إضافة المريض',
   'Appointment booked':'تم حجز الموعد',

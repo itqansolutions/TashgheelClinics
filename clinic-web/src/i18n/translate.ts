@@ -2,9 +2,13 @@ import { phrases } from './phrases';
 
 // Arabic mode: translate known static text on screen (text nodes, placeholder, title).
 // Keeps unknown text as is. Works for every page without touching each component.
+const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const EN_M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const lookup = (raw: string): string | null => {
   const core = raw.trim();
   if (!core) return null;
+  const mm = core.match(/^([A-Z][a-z]+) (\d{4})$/);
+  if (mm && EN_M.includes(mm[1])) return `${MONTHS[EN_M.indexOf(mm[1])]} ${mm[2]}`;
   if (phrases[core]) return phrases[core];
   const m = core.match(/^(.*?)(\s*[*:…]+|\.\.\.)$/);
   if (m && phrases[m[1].trim()]) return phrases[m[1].trim()] + m[2];
