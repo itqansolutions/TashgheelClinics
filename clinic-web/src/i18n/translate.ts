@@ -13,7 +13,7 @@ const COUNTRIES: Record<string, string> = {
 };
 const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^Payment for Appointment #(\d+)\.?\s*(.*)$/, (m) => `دفعة عن الموعد رقم ${m[1]}${m[2] ? ' - ' + (phrases[m[2].trim()] ?? m[2].trim()) : ''}`],
-  [/^Appointment #(\d+)$/, (m) => `موعد رقم ${m[1]}`],
+  [/^Appointment #(\d+)(?: - (.+))?$/, (m) => `موعد رقم ${m[1]}${m[2] ? ' - ' + m[2] : ''}`],
   [/^Added by\s*(.*)$/, (m) => `أضافه ${m[1]}`.trim()],
   [/^Tel: (.+)$/, (m) => `تليفون: ${phrases[m[1].trim()] ?? m[1]}`],
   [/^(.+) \(Consultation Fee\)$/, (m) => `${lookup(m[1]) ?? m[1]} (رسوم الكشف)`],
