@@ -205,7 +205,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
                 <div className="space-y-2">
                   {appointment.service && (
                     <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-gray-500 font-medium">{appointment.service.name} (Consultation Fee)</span>
+                      <span className="text-gray-500 font-medium">{`${appointment.service.name} (Consultation Fee)`}</span>
                       <span className="font-mono font-bold text-gray-900">{formatCurrency(primaryServicePrice)}</span>
                     </div>
                   )}
