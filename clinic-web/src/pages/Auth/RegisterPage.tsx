@@ -46,9 +46,11 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    mode: 'onChange',
   });
 
   const slugValue = watch('slug');
+  const [slugEdited, setSlugEdited] = useState(false);
 
   const handleClinicNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -59,7 +61,10 @@ export function RegisterPage() {
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-    setValue('slug', generatedSlug, { shouldValidate: true });
+    // Only auto-fill when we produced a usable slug and the user has not typed their own
+    if (!slugEdited && generatedSlug.length >= 2) {
+      setValue('slug', generatedSlug, { shouldValidate: true });
+    }
   };
 
   const onSubmit = async (data: RegisterForm) => {
@@ -194,7 +199,7 @@ export function RegisterPage() {
                   label="Clinic Slug (Subdomain identifier)"
                   placeholder="e.g. al-amal"
                   error={errors.slug?.message}
-                  {...register('slug')}
+                  {...register('slug', { onChange: () => setSlugEdited(true) })}
                 />
                 {slugValue && !errors.slug && (
                   <p className="text-[11px] text-brand-600 mt-1 font-mono">
