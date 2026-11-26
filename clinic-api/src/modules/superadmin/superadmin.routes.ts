@@ -137,7 +137,8 @@ router.post('/backups/run', async (req, res, next) => {
   try {
     if (req.user?.systemRole !== 'SYSTEM_ADMIN') return sendError(res, 'System Admin required', 403);
     const { runBackup } = await import('../../workers/backupWorker');
-    return sendSuccess(res, await runBackup());
+    try { return sendSuccess(res, await runBackup()); }
+    catch (e: any) { return sendError(res, 'Backup failed: ' + String(e?.message || e).slice(0, 400), 500); }
   } catch (e) { next(e); }
 });
 router.post('/users/reset-password', async (req, res, next) => {

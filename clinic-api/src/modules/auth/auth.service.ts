@@ -54,6 +54,23 @@ export const authService = {
         },
       });
 
+      // 2b. Default clinic settings so the Settings page is not empty
+      await tx.clinicSetting.createMany({
+        data: [
+          { key: 'clinic_name', value: input.clinicName.trim() },
+          { key: 'clinic_phone', value: '' },
+          { key: 'clinic_email', value: email },
+          { key: 'clinic_address', value: '' },
+          { key: 'currency', value: 'EGP' },
+          { key: 'currency_symbol', value: 'ج.م' },
+          { key: 'appointment_slot_minutes', value: '30' },
+          { key: 'working_hours_start', value: '09:00' },
+          { key: 'working_hours_end', value: '21:00' },
+          { key: 'booking_advance_days', value: '30' },
+          { key: 'timezone', value: 'Africa/Cairo' },
+        ].map((x) => ({ ...x, tenantId: tenant.id })),
+      });
+
       // 3. Create Verification Token
       await tx.emailVerificationToken.create({
         data: {
