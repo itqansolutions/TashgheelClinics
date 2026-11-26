@@ -22,7 +22,7 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `${req.ip}|${String(req.body?.email || '').toLowerCase()}`,
+  keyGenerator: (req) => String(req.body?.email || req.ip).toLowerCase(),
   message: { success: false, message: 'Too many failed login attempts. Try again in 15 minutes.' },
 });
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
