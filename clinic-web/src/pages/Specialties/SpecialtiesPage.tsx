@@ -33,6 +33,8 @@ type ServiceForm   = z.infer<typeof serviceSchema>;
 export function SpecialtiesPage() {
   const [openIds, setOpenIds]         = useState<Set<number>>(new Set());
   const [showInactive, setShowInactive] = useState(false);
+  // In-app confirm (native confirm() blocks the tab and hangs automated browsers)
+  const [confirmTarget, setConfirmTarget] = useState<{ kind: 'specialty' | 'service'; id: number; name: string } | null>(null);
 
   // Specialty modal state
   const [specialtyModal, setSpecialtyModal] = useState<{ open: boolean; editing?: Specialty }>({ open: false });
@@ -192,10 +194,7 @@ export function SpecialtiesPage() {
                   {specialty.isActive && (
                     <Button variant="ghost" size="xs"
                       className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => {
-                        if (confirm(`Deactivate "${specialty.name}"?`))
-                          deactivateSpecialty.mutate(specialty.id);
-                      }}
+                      onClick={() => setConfirmTarget({ kind: 'specialty', id: specialty.id, name: specialty.name })}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -229,10 +228,7 @@ export function SpecialtiesPage() {
                           key={service.id}
                           service={service}
                           onEdit={() => openServiceModal(specialty.id, service)}
-                          onDeactivate={() => {
-                            if (confirm(`Deactivate "${service.name}"?`))
-                              deactivateService.mutate(service.id);
-                          }}
+                          onDeactivate={() => setConfirmTarget({ kind: 'service', id: service.id, name: service.name })}
                         />
                       ))}
                     </div>
@@ -243,6 +239,26 @@ export function SpecialtiesPage() {
           ))
         )}
       </div>
+
+      <Modal open={!!confirmTarget} onClose={() => setConfirmTarget(null)} title="Confirm" size="sm">
+        <p className="text-sm text-gray-700 mb-4">Deactivate "{confirmTarget?.name}"?</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setConfirmTarget(null)}>Cancel</Button>
+          <Button
+            size="sm"
+            data-testid="confirm-deactivate"
+            onClick={() => {
+              if (confirmTarget) {
+                if (confirmTarget.kind === 'specialty') deactivateSpecialty.mutate(confirmTarget.id);
+                else deactivateService.mutate(confirmTarget.id);
+              }
+              setConfirmTarget(null);
+            }}
+          >
+            Deactivate
+          </Button>
+        </div>
+      </Modal>
 
       {/* Specialty modal */}
       <Modal
