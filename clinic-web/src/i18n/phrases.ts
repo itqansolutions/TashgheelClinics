@@ -289,4 +289,5 @@ export const phrases: Record<string, string> = {
   "Feature Locked":"الميزة مقفولة",
   "The page you're looking for doesn't exist or has moved.":"الصفحة اللي بتدور عليها مش موجودة أو اتنقلت.",
   "404 - Not Found":"404 - الصفحة مش موجودة",
+  'of':'من',
 };

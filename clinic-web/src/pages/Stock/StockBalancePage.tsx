@@ -103,7 +103,7 @@ export function StockBalancePage() {
             />
           </div>
           <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Showing {filtered.length} of {balances.length} Products
+            {`Showing ${filtered.length} of ${balances.length} Products`}
           </div>
         </div>
 

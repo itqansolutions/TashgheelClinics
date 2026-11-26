@@ -17,6 +17,7 @@ const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^(.+) - ([\d,.]+) EGP$/, (m) => `${lookup(m[1]) ?? m[1]} - ${m[2]} ج.م`],
   [/^(.+?) \((\d+)\)$/, (m) => { const r = phrases[m[1].trim()] ?? lookup(m[1]); return r ? `${r} (${m[2]})` : m[0]; }],
   [/^([\d,.]+) sources?$/, (m) => `${m[1]} مصدر`],
+  [/^Showing ([\d,.]+) of ([\d,.]+) Products$/, (m) => `عرض ${m[1]} من ${m[2]} منتج`],
   [/^Joined (.+)$/, (m) => `انضم في ${m[1]}`],
   [/^(\d+) Years?$/, (m) => `${m[1]} سنة`],
   [/^via (.+)$/, (m) => `عن طريق ${m[1]}`],
