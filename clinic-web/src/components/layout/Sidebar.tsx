@@ -77,7 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       />
 
       <aside className={clsx(
-        "flex flex-col w-64 h-screen bg-white border-r border-gray-200 rtl:border-r-0 rtl:border-l fixed left-0 rtl:left-auto rtl:right-0 top-0 z-50 transition-transform lg:translate-x-0 lg:z-40",
+        "flex flex-col w-64 h-screen bg-white border-r border-gray-200 rtl:border-r-0 rtl:border-l fixed left-0 rtl:left-auto rtl:right-0 top-0 z-50 transition-transform lg:translate-x-0 lg:rtl:translate-x-0 lg:z-40",
         isOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
       )}>
         {/* Logo */}

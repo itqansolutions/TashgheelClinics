@@ -2,6 +2,7 @@
 // To translate more text: add a line here. Matching is on the exact trimmed text
 // (a trailing " *", ":" or "…" is handled automatically). Unknown text stays English.
 export const phrases: Record<string, string> = {
+  'Source':'المصدر','SOURCE':'المصدر','Healthy Margin':'هامش ربح جيد','total patients':'إجمالي المرضى','Platform':'المنصة','Appointment':'الموعد','Reception':'الاستقبال','Admin':'مدير','Accountant':'محاسب','Manager':'مدير','Date:':'التاريخ:','Edit Doctor':'تعديل الدكتور','Free':'مجاني',
   'Cancel':'إلغاء','Gender':'النوع','Email':'البريد الإلكتروني','Date of Birth':'تاريخ الميلاد','Nationality':'الجنسية','Internal Notes':'ملاحظات داخلية',
   'Full Name':'الاسم بالكامل','Phone':'التليفون','Deactivate':'إيقاف','Back to Dashboard':'الرجوع للوحة التحكم','New Patient':'مريض جديد','Edit':'تعديل',
   'Medical History':'التاريخ المرضي','Reject':'رفض','Accept':'قبول','Select a Date':'اختار التاريخ','Start Consultation':'ابدأ الكشف','Print Report':'طباعة التقرير',
