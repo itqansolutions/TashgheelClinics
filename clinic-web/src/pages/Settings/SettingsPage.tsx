@@ -354,7 +354,7 @@ function LeadSourcesPanel() {
           <h3 className="text-sm font-semibold text-gray-900">Lead Sources</h3>
           <p className="text-xs text-gray-500 mt-0.5">How patients find the clinic</p>
         </div>
-        <span className="text-xs text-gray-400">{sources.length} sources</span>
+        <span className="text-xs text-gray-400">{`${sources.length} sources`}</span>
       </div>
 
       <div className="divide-y divide-gray-50">

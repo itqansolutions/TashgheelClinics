@@ -68,7 +68,7 @@ export function MakeTransactionModal({ isOpen, onClose }: Props) {
               {type === 'Expense' ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">Record {type}</h2>
+              <h2 className="text-xl font-black tracking-tight">{`Record ${type}`}</h2>
               <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest">Manual Financial Entry</p>
             </div>
           </div>
