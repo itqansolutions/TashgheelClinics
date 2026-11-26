@@ -81,7 +81,7 @@ export function DashboardPage() {
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Today's Appointments</h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                {new Date().toLocaleDateString('en-EG', { weekday: 'long', day: 'numeric', month: 'long' })}
+                {new Date().toLocaleDateString(localStorage.getItem('lang') === 'ar' ? 'ar-EG' : 'en-EG', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
             </div>
             <button onClick={() => navigate('/app/appointments')}

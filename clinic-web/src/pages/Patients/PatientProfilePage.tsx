@@ -111,13 +111,13 @@ export function PatientProfilePage() {
               {patient.leadSource && (
                 <div className="flex items-center gap-2 text-gray-500">
                   <div className="w-3.5 h-3.5 shrink-0" />
-                  via {patient.leadSource.name}
+                  {`via ${patient.leadSource.name}`}
                 </div>
               )}
             </div>
 
             <p className="text-[10px] text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-              Patient since {formatDate(patient.createdAt, 'MMM yyyy')}
+              {`Patient since ${formatDate(patient.createdAt, 'MMM yyyy')}`}
             </p>
           </div>
 

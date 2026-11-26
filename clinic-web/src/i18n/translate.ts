@@ -12,6 +12,8 @@ const COUNTRIES: Record<string, string> = {
   'Canada':'كندا','Somalia':'الصومال','Mauritania':'موريتانيا','Djibouti':'جيبوتي','Comoros':'جزر القمر',
 };
 const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+  [/^via (.+)$/, (m) => `عن طريق ${m[1]}`],
+  [/^Patient since ([A-Z][a-z]{2}) (\d{4})$/, (m) => `مريض من ${MONTHS[['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m[1])] ?? m[1]} ${m[2]}`],
   [/^([\d,.]+) total patients$/, (m) => `${m[1]} مريض`],
   [/^([\d,.]+) registered doctors$/, (m) => `${m[1]} دكتور مسجل`],
   [/^([\d,.]+)% commission$/, (m) => `عمولة ${m[1]}%`],

@@ -189,4 +189,8 @@ export const phrases: Record<string, string> = {
   "e.g. al-amal":"مثال: al-amal",
   "e.g. Dr. Ahmed Mansour":"مثال: د. أحمد منصور",
   "doctor@clinic.com":"doctor@clinic.com",
+  "Images":"الصور",
+  "Ratings":"التقييمات",
+  "e.g. Dermatology":"مثال: جلدية",
+  "e.g. Botox Injection":"مثال: حقن بوتوكس",
 };
