@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { drName } from '@/i18n';
 import { 
   Bell, Check, X, Calendar, User, Clock, 
   ArrowRight, Sparkles 
@@ -214,7 +215,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-gray-800 truncate">{appt.patient?.fullName}</p>
                         <p className="text-[9px] text-gray-400 truncate mt-0.5">
-                          Dr. {appt.doctor?.user?.fullName || appt.doctor?.fullName} · {appt.service?.name}
+                          {drName(appt.doctor?.user?.fullName || appt.doctor?.fullName)} · {appt.service?.name}
                         </p>
                         <p className="text-[9px] text-brand-600 font-semibold mt-1">
                           {formatDateTime(appt.startTime)}

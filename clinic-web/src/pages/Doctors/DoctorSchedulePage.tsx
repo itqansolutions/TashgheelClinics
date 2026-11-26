@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/api/client';
+import { drName, useLang } from '@/i18n';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -7,6 +8,7 @@ import {
   Plus, Trash2, Save
 } from 'lucide-react';
 
+const AR_LETTER = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
 const DAYS = [
   { id: 0, name: 'Sunday' },
   { id: 1, name: 'Monday' },
@@ -91,7 +93,7 @@ export function DoctorSchedulePage() {
           >
             <option value="">Select a Doctor</option>
             {doctors.map(d => (
-              <option key={d.id} value={d.id}>Dr. {d.user?.fullName || d.fullName}</option>
+              <option key={d.id} value={d.id}>{drName(d.user?.fullName || d.fullName)}</option>
             ))}
           </select>
         </div>
@@ -117,7 +119,7 @@ export function DoctorSchedulePage() {
                   <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-50">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${daySlots.length > 0 ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                        {day.name.charAt(0)}
+                        {useLang.getState().lang === 'ar' ? AR_LETTER[day.id] : day.name.charAt(0)}
                       </div>
                       <h4 className="font-bold text-gray-900">{day.name}</h4>
                     </div>

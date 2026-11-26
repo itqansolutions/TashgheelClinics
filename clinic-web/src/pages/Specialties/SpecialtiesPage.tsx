@@ -175,7 +175,7 @@ export function SpecialtiesPage() {
                     {!specialty.isActive && <Badge variant="red">Inactive</Badge>}
                   </div>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {specialty.services?.length ?? 0} services
+                    {`${specialty.services?.length ?? 0} services`}
                     {specialty._count?.doctors ? ` · ${specialty._count.doctors} doctors` : ''}
                   </p>
                 </div>
@@ -214,7 +214,7 @@ export function SpecialtiesPage() {
                   {!specialty.services?.length ? (
                     <div className="flex items-center justify-center py-8 text-xs text-gray-400 gap-2">
                       <PackageOpen className="w-4 h-4" />
-                      No services yet —{' '}
+                      No services yet{' '}
                       <button
                         className="text-brand-600 hover:underline"
                         onClick={() => openServiceModal(specialty.id)}
@@ -333,7 +333,7 @@ function ServiceRow({
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />{service.durationMin} min
+            <Clock className="w-3 h-3" />{`${service.durationMin} min`}
           </span>
         </div>
       </div>

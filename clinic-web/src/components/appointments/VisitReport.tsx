@@ -1,5 +1,6 @@
 import { useClinicSettings } from '@/hooks/useSettings';
 import { useBodyAreas } from '@/hooks/useLookups';
+import { drName } from '@/i18n';
 import { formatDateTime, getInitials, formatCurrency } from '@/utils/format';
 import type { Appointment, Patient, PatientArea } from '@/types';
 import { BodySvg } from '@/pages/Patients/tabs/BodyMapTab';
@@ -137,7 +138,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Specialist</span>
-                <span className="text-sm font-bold text-gray-900">Dr. {appointment.doctor?.user?.fullName || appointment.doctor?.fullName}</span>
+                <span className="text-sm font-bold text-gray-900">{drName(appointment.doctor?.user?.fullName || appointment.doctor?.fullName)}</span>
                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{appointment.doctor?.specialty?.name}</span>
               </div>
             </div>

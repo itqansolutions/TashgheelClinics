@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { X, Clock, User, Scissors, Phone, FileText, Calendar, CheckCircle, XCircle, Stethoscope, Printer } from 'lucide-react';
+import { drName } from '@/i18n';
 import { VisitReport } from './VisitReport';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -106,7 +107,7 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
                 <User className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Doctor</p>
-                  <p className="text-sm font-bold text-gray-800">Dr. {appointment.doctor?.user?.fullName || appointment.doctor?.fullName}</p>
+                  <p className="text-sm font-bold text-gray-800">{drName(appointment.doctor?.user?.fullName || appointment.doctor?.fullName)}</p>
                 </div>
               </div>
             </div>

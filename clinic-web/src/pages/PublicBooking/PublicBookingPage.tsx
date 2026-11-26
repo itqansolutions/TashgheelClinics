@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { drName } from '@/i18n';
 import axios from 'axios';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -411,7 +412,7 @@ export function PublicBookingPage() {
                           </div>
                           <div>
                             <p className="font-bold text-gray-900">{apt.service?.name || 'General Consultation'}</p>
-                            <p className="text-xs text-gray-500">Dr. {apt.doctor?.user?.fullName || apt.doctor?.fullName || 'Specialist'}</p>
+                            <p className="text-xs text-gray-500">{drName(apt.doctor?.user?.fullName || apt.doctor?.fullName || 'Specialist')}</p>
                           </div>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
@@ -504,7 +505,7 @@ export function PublicBookingPage() {
                             }`}
                           >
                             <div>
-                              <p className="text-sm font-bold">Dr. {d.user?.fullName || d.fullName}</p>
+                              <p className="text-sm font-bold">{drName(d.user?.fullName || d.fullName)}</p>
                               {sched && <p className="text-[10px] text-gray-500">Hours: {sched.startTime} - {sched.endTime}</p>}
                             </div>
                             {formData.doctorId === String(d.id) && <CheckCircle className="w-4 h-4 text-brand-600" />}

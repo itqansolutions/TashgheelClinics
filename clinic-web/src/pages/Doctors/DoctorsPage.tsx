@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { drName } from '@/i18n';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Stethoscope, Percent, Edit, UserX, Search } from 'lucide-react';
@@ -125,16 +126,16 @@ export function DoctorsPage() {
                         {getInitials(doc.user?.fullName ?? doc.fullName ?? '??')}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">Dr. {doc.user?.fullName ?? doc.fullName}</p>
+                        <p className="text-sm font-semibold text-gray-900">{drName(doc.user?.fullName ?? doc.fullName)}</p>
                         <p className="text-xs text-gray-500">{doc.specialty?.name ?? 'General'}</p>
                       </div>
                     </div>
                     {!doc.isActive && <Badge variant="red">Inactive</Badge>}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                    <span className="flex items-center gap-1"><Percent className="w-3 h-3 text-gray-400" />{Number(doc.commission)}% commission</span>
+                    <span className="flex items-center gap-1"><Percent className="w-3 h-3 text-gray-400" />{`${Number(doc.commission)}% commission`}</span>
                     <span className="text-gray-200">|</span>
-                    <span>Max {Number(doc.discount)}% off</span>
+                    <span>{`Max ${Number(doc.discount)}% off`}</span>
                   </div>
                   <p className="text-[11px] text-gray-400 truncate mb-3">{doc.user?.email || 'No system account'}</p>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -143,7 +144,7 @@ export function DoctorsPage() {
                       <Button variant="ghost" size="xs"
                         className="text-red-400 hover:text-red-600 hover:bg-red-50"
                         leftIcon={<UserX className="w-3 h-3" />}
-                        onClick={() => { if (confirm(`Deactivate Dr. ${doc.user?.fullName || doc.fullName}?`)) deactivateDoctor.mutate(doc.id); }}>
+                        onClick={() => { if (confirm(`Deactivate ${drName(doc.user?.fullName || doc.fullName)}?`)) deactivateDoctor.mutate(doc.id); }}>
                         Deactivate
                       </Button>
                     )}
@@ -162,7 +163,7 @@ export function DoctorsPage() {
 
       <Modal open={modal.open} onClose={() => setModal({ open: false })}
         title={modal.editing ? 'Edit Doctor' : 'New Doctor Profile'}
-        subtitle={modal.editing ? `Dr. ${modal.editing.user?.fullName || modal.editing.fullName}` : 'Link a Doctor-role user'} size="sm">
+        subtitle={modal.editing ? `${drName(modal.editing.user?.fullName || modal.editing.fullName)}` : 'Link a Doctor-role user'} size="sm">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           {!modal.editing && (
             <div className="space-y-4">

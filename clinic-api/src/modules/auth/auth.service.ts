@@ -71,6 +71,12 @@ export const authService = {
         ].map((x) => ({ ...x, tenantId: tenant.id })),
       });
 
+      // 2c. Default patient sources so the patient form is usable on a new clinic
+      await tx.leadSource.createMany({
+        data: ['إعلانات فيسبوك', 'إعلانات إنستجرام', 'ترشيح صديق أو قريب', 'بحث جوجل', 'لافتة العيادة', 'ترشيح دكتور', 'أخرى']
+          .map((name) => ({ name, tenantId: tenant.id })),
+      });
+
       // 3. Create Verification Token
       await tx.emailVerificationToken.create({
         data: {

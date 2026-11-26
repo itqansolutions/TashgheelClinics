@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useFinanceQueue, useFinanceTransactions } from '@/hooks/useFinance';
+import { drName } from '@/i18n';
 import { useFinancialSummary } from '@/hooks/useReports';
 import { useReactToPrint } from 'react-to-print';
 import { PageLoader } from '@/components/ui/Loader';
@@ -197,7 +198,7 @@ export function FinancePage() {
                           <h4 className="text-base font-black text-gray-900">{item.patient?.fullName}</h4>
                           <span className="text-[10px] font-black text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full uppercase tracking-widest">{item.patient?.code}</span>
                         </div>
-                        <p className="text-xs text-gray-500 font-medium">Dr. {item.doctor?.fullName} · {item.service?.name}</p>
+                        <p className="text-xs text-gray-500 font-medium">{drName(item.doctor?.fullName)} · {item.service?.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Clock className="w-3 h-3 text-gray-400" />
                           <span className="text-[10px] text-gray-400 font-bold">{formatDate(item.startTime, 'MMM d, h:mm a')}</span>

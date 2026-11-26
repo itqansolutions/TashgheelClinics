@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppointments } from '@/hooks/useAppointments';
+import { drName } from '@/i18n';
 import { PageLoader } from '@/components/ui/Loader';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors, LayoutGrid, List, Calendar as CalendarIcon, Phone } from 'lucide-react';
@@ -100,7 +101,7 @@ export function CalendarPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Dr. {apt.doctor?.user?.fullName}</span>
+                    <span className="text-sm text-gray-600">{drName(apt.doctor?.user?.fullName)}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">

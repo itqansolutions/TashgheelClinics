@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { drName } from '@/i18n';
 import { 
   Search, X, User, Stethoscope, Package, Truck, 
   Calendar, ArrowRight, CornerDownLeft, Sparkles 
@@ -278,7 +279,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                             DR
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-gray-800 group-hover:text-emerald-900 transition-colors">Dr. {d.fullName || d.user?.fullName}</p>
+                            <p className="text-xs font-bold text-gray-800 group-hover:text-emerald-900 transition-colors">{drName(d.fullName || d.user?.fullName)}</p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{d.specialty?.name}</p>
                           </div>
                         </div>
@@ -308,7 +309,7 @@ export function QuickSearchModal({ isOpen, onClose }: Props) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800 truncate group-hover:text-cyan-900 transition-colors">
-                              {a.patient?.fullName} w/ Dr. {a.doctor?.user?.fullName || a.doctor?.fullName}
+                              {a.patient?.fullName} w/ {drName(a.doctor?.user?.fullName || a.doctor?.fullName)}
                             </p>
                             <p className="text-[10px] text-gray-400 truncate font-semibold uppercase">
                               {a.service?.name} · {formatDateTime(a.startTime)}

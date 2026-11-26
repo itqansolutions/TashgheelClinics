@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useT } from '@/i18n';
+import { useT, drName } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments, useDoctorAppointments } from '@/hooks/useAppointments';
 import { useRole, useTenant } from '@/store/authStore';
@@ -129,7 +129,7 @@ export function AppointmentsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-gray-400" />
-                  Dr. {apt.doctor?.user?.fullName || apt.doctor?.fullName}
+                  {drName(apt.doctor?.user?.fullName || apt.doctor?.fullName)}
                 </div>
                 <div className="flex items-center gap-2">
                   <Scissors className="w-4 h-4 text-gray-400" />

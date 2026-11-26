@@ -90,3 +90,9 @@ export function useT() {
   const lang = useLang((s) => s.lang);
   return (key: string) => dict[lang][key] ?? dict.en[key] ?? key;
 }
+
+// Doctor display name: strips any existing "Dr."/"د." prefix, then adds one in the current language.
+export function drName(name?: string | null): string {
+  const clean = (name || '').replace(/^\s*(?:dr\.?|د\.?|دكتور|الدكتور)\s*/i, '').replace(/^(?:\s*(?:dr\.?|د\.?)\s*)+/i, '').trim();
+  return `${useLang.getState().lang === 'ar' ? 'د.' : 'Dr.'} ${clean}`.trim();
+}

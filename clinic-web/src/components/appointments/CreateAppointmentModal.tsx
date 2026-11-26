@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { drName } from '@/i18n';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Clock, User, Stethoscope, Search, ArrowRight } from 'lucide-react';
@@ -391,7 +392,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
                                     <User className={`w-4 h-4 ${selectedDoctorId === d.id ? 'text-white' : 'text-brand-600'}`} />
                                   </div>
                                   <div>
-                                    <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>Dr. {name}</p>
+                                    <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>{drName(name)}</p>
                                     <p className={`text-[10px] ${selectedDoctorId === d.id ? 'text-brand-100' : 'text-gray-500'}`}>{specialty}</p>
                                   </div>
                                   {selectedDoctorId === d.id && <ArrowRight className="w-4 h-4 text-white ml-auto" />}
@@ -436,7 +437,7 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
                                   <User className={`w-4 h-4 ${selectedDoctorId === d.id ? 'text-white' : 'text-brand-600'}`} />
                                 </div>
                                 <div>
-                                  <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>Dr. {name}</p>
+                                  <p className={`text-xs font-bold ${selectedDoctorId === d.id ? 'text-white' : 'text-gray-900'}`}>{drName(name)}</p>
                                   <p className={`text-[10px] ${selectedDoctorId === d.id ? 'text-brand-100' : 'text-gray-500'}`}>{specialty}</p>
                                 </div>
                                 {selectedDoctorId === d.id && <ArrowRight className="w-4 h-4 text-white ml-auto" />}

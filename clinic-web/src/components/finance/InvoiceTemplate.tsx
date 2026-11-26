@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { formatDate, formatCurrency } from '@/utils/format';
+import { drName } from '@/i18n';
 import { useInvoiceSettings } from '@/hooks/useFinance';
 import { useClinicSettings } from '@/hooks/useSettings';
 
@@ -62,7 +63,7 @@ export const InvoiceTemplate = forwardRef<HTMLDivElement, Props>(({ appointment 
         </div>
         <div className="text-right">
           <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 opacity-40">Medical Provider</h3>
-          <p className="text-lg font-bold">Dr. {appointment.doctor?.fullName}</p>
+          <p className="text-lg font-bold">{drName(appointment.doctor?.fullName)}</p>
           <p className="text-sm font-medium opacity-60">{appointment.doctor?.specialty?.name}</p>
         </div>
       </div>
