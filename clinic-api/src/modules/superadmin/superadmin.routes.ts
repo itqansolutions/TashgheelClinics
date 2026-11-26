@@ -126,6 +126,20 @@ router.get('/audit-logs', async (req, res, next) => {
  * @route POST /api/superadmin/users/reset-password
  * @desc  Platform support resets a clinic owner's password (no email provider). Audited.
  */
+router.get('/backups', async (req, res, next) => {
+  try {
+    if (req.user?.systemRole !== 'SYSTEM_ADMIN') return sendError(res, 'System Admin required', 403);
+    const { listBackups } = await import('../../workers/backupWorker');
+    return sendSuccess(res, listBackups());
+  } catch (e) { next(e); }
+});
+router.post('/backups/run', async (req, res, next) => {
+  try {
+    if (req.user?.systemRole !== 'SYSTEM_ADMIN') return sendError(res, 'System Admin required', 403);
+    const { runBackup } = await import('../../workers/backupWorker');
+    return sendSuccess(res, await runBackup());
+  } catch (e) { next(e); }
+});
 router.post('/users/reset-password', async (req, res, next) => {
   try {
     const { email, newPassword } = req.body as { email?: string; newPassword?: string };

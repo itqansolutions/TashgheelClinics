@@ -2,6 +2,7 @@ import app from './app';
 import { env } from './config/env';
 import { connectDB, disconnectDB, rawPrisma } from './config/db';
 import { startTrialExpirationWorker } from './workers/trialExpirationWorker';
+import { startBackupWorker } from './workers/backupWorker';
 import fs from 'fs';
 import path from 'path';
 
@@ -27,6 +28,7 @@ async function bootstrap() {
 
   // Start background workers (after DB is ready)
   startTrialExpirationWorker();
+  startBackupWorker();
 
   const server = app.listen(env.PORT, () => {
     console.log(`\n🚀  Clinic API running on http://localhost:${env.PORT}`);
