@@ -192,7 +192,7 @@ export function ConsultationPage() {
                   <User className="w-3 h-3" /> {patient.gender === 'M' ? 'Male' : 'Female'}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Calendar className="w-3 h-3" /> Joined {formatDate(patient.createdAt)}
+                  <Calendar className="w-3 h-3" /> {`Joined ${formatDate(patient.createdAt)}`}
                 </div>
               </div>
 
