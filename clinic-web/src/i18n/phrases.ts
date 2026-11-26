@@ -183,4 +183,10 @@ export const phrases: Record<string, string> = {
   "e.g. Nour Mostafa":"مثال: نور مصطفى",
   "e.g. Referred by a friend, Radio, etc.":"مثال: ترشيح من صديق، راديو، إلخ.",
   "Dr. Name...":"د. الاسم...",
+  "Add a doctor profile linked to a Doctor-role user.":"أضف ملف دكتور مرتبط بمستخدم بصلاحية دكتور.",
+  "Already have a clinic account?":"عندك حساب عيادة؟",
+  "e.g. Al-Amal Dental Care":"مثال: عيادة الأمل للأسنان",
+  "e.g. al-amal":"مثال: al-amal",
+  "e.g. Dr. Ahmed Mansour":"مثال: د. أحمد منصور",
+  "doctor@clinic.com":"doctor@clinic.com",
 };
