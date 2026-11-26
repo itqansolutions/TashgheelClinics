@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useT } from '@/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, TrendingUp, Stethoscope, Clock, ArrowRight } from 'lucide-react';
@@ -41,12 +42,13 @@ export function DashboardPage() {
   const { data: kpis,  isLoading: kpisLoading  } = useDashboardKpis();
   const { data: appts, isLoading: apptsLoading } = useAppointmentsToday();
   const navigate = useNavigate();
+  const t = useT();
 
   const kpiCards = [
-    { title: 'Total Patients',       value: kpis?.totalPatients ?? 0,     subtitle: 'Active patients',                                               icon: Users,       iconBg: 'bg-brand-50',  iconColor: 'text-brand-600' },
-    { title: "Today's Appointments", value: kpis?.todayAppointments ?? 0, subtitle: `${kpis?.pendingToday??0} pending · ${kpis?.confirmedToday??0} confirmed`, icon: CalendarDays, iconBg: 'bg-green-50',  iconColor: 'text-green-600' },
-    { title: "Today's Revenue",      value: formatCurrency(kpis?.todayRevenue ?? 0), subtitle: 'Payments received today',                           icon: TrendingUp,  iconBg: 'bg-purple-50', iconColor: 'text-purple-600', isString: true },
-    { title: 'Active Doctors',       value: kpis?.activeDoctors ?? 0,     subtitle: 'Currently on staff',                                           icon: Stethoscope, iconBg: 'bg-amber-50',  iconColor: 'text-amber-600' },
+    { title: t('dash.totalPatients'),       value: kpis?.totalPatients ?? 0,     subtitle: t('dash.activePatients'),                                               icon: Users,       iconBg: 'bg-brand-50',  iconColor: 'text-brand-600' },
+    { title: t('dash.todayAppts'), value: kpis?.todayAppointments ?? 0, subtitle: `${kpis?.pendingToday??0} ${t('status.Pending')} · ${kpis?.confirmedToday??0} ${t('status.Confirmed')}`, icon: CalendarDays, iconBg: 'bg-green-50',  iconColor: 'text-green-600' },
+    { title: t('dash.todayRevenue'),      value: formatCurrency(kpis?.todayRevenue ?? 0), subtitle: t('dash.paymentsToday'),                           icon: TrendingUp,  iconBg: 'bg-purple-50', iconColor: 'text-purple-600', isString: true },
+    { title: t('dash.activeDoctors'),       value: kpis?.activeDoctors ?? 0,     subtitle: t('dash.onStaff'),                                           icon: Stethoscope, iconBg: 'bg-amber-50',  iconColor: 'text-amber-600' },
   ];
 
   return (
@@ -101,7 +103,7 @@ export function DashboardPage() {
           ) : !(appts as Appointment[])?.length ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <CalendarDays className="w-8 h-8 text-gray-200 mb-2" />
-              <p className="text-sm text-gray-400">No appointments today</p>
+              <p className="text-sm text-gray-400">{t('dash.noAppts')}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
@@ -132,14 +134,14 @@ export function DashboardPage() {
         {/* Quick stats */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">Today's Breakdown</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('dash.breakdown')}</h3>
           </div>
           <div className="p-5 space-y-4">
             {kpisLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />) : (
               <>
                 {[
-                  { label: 'Pending',   value: kpis?.pendingToday ?? 0,   color: 'bg-yellow-400' },
-                  { label: 'Confirmed', value: kpis?.confirmedToday ?? 0, color: 'bg-blue-400'   },
+                  { label: t('status.Pending'),   value: kpis?.pendingToday ?? 0,   color: 'bg-yellow-400' },
+                  { label: t('status.Confirmed'), value: kpis?.confirmedToday ?? 0, color: 'bg-blue-400'   },
                   { label: 'Done',
                     value: Math.max(0,(kpis?.todayAppointments??0)-(kpis?.pendingToday??0)-(kpis?.confirmedToday??0)),
                     color: 'bg-green-400' },
@@ -153,7 +155,7 @@ export function DashboardPage() {
                   </div>
                 ))}
                 <div className="pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-1">Revenue</p>
+                  <p className="text-xs text-gray-500 mb-1">{t('dash.revenue')}</p>
                   <p className="text-xl font-bold text-gray-900">{formatCurrency(kpis?.todayRevenue ?? 0)}</p>
                 </div>
               </>

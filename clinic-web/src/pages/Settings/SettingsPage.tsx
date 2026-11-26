@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useT } from '@/i18n';
+import api from '@/api/client';
 import { useForm } from 'react-hook-form';
 import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt, ExternalLink, Copy, CheckCheck } from 'lucide-react';
 import { useClinicSettings, useUpdateClinicSettings, useLeadSourcesAdmin, useLeadSourceMutations } from '@/hooks/useSettings';
@@ -63,6 +65,7 @@ export function SettingsPage() {
 
 // ── System Users ───────────────────────────────────────────────────────────
 function UsersPanel() {
+  const t = useT();
   const { data: usersData, isLoading } = useUsers();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const createUser = useCreateUser();
@@ -134,6 +137,16 @@ function UsersPanel() {
                   <Badge variant={user.role === 'Admin' ? 'purple' : user.role === 'Doctor' ? 'blue' : (user.role === 'Receptionist' || user.role === 'Reception') ? 'green' : 'gray'}>
                     {user.role}
                   </Badge>
+                  <Button variant="ghost" size="xs" className="text-brand-600"
+                    onClick={async () => {
+                      const pw = window.prompt(t('users.newPassword'));
+                      if (!pw) return;
+                      if (pw.length < 8) { alert(t('users.newPassword')); return; }
+                      try { await api.post(`/users/${user.id}/reset-password`, { newPassword: pw }); alert(t('users.resetDone')); }
+                      catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
+                    }}>
+                    {t('users.resetPassword')}
+                  </Button>
                   <Button variant="ghost" size="xs" className="text-red-400 hover:text-red-600" 
                     onClick={() => { if(confirm('Deactivate user?')) deactivateUser.mutate(user.id); }}>
                     <Trash2 className="w-3.5 h-3.5" />

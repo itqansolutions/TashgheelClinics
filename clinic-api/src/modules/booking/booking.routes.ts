@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../../config/db';
 import { sendSuccess } from '../../utils/response';
 import { AppError } from '../../middleware/errorHandler';
+import { getTenantTz, dayRange, toZoned } from '../../utils/tz';
 import { resolvePublicTenant } from '../../middleware/resolveTenant';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.get('/settings', async (req, res, next) => {
       map.tenant_slug = req.publicTenant.slug;
       map.logo_url = req.publicTenant.logoUrl ?? '';
       map.primary_color = req.publicTenant.primaryColor ?? '#0ea5e9';
+      map.timezone = await getTenantTz(db);
     }
     sendSuccess(res, map);
   } catch (error) {
@@ -156,13 +158,13 @@ router.get('/doctor-busy-times', async (req, res, next) => {
     const { doctorId, date } = req.query;
     if (!doctorId || !date) throw new AppError('Doctor ID and Date are required', 400);
 
-    const startOfDay = new Date(`${date}T00:00:00`);
-    const endOfDay = new Date(`${date}T23:59:59`);
+    const tz = await getTenantTz(db);
+    const { start: startOfDay, end: endOfDay } = dayRange(String(date).slice(0, 10), tz);
 
     const appointments = await db.appointment.findMany({
       where: {
         doctorId: Number(doctorId),
-        startTime: { gte: startOfDay, lte: endOfDay },
+        startTime: { gte: startOfDay, lt: endOfDay },
         status: { in: ['Pending', 'Confirmed', 'Done'] }
       },
       select: { startTime: true, endTime: true }
@@ -215,14 +217,18 @@ router.post('/book', async (req, res, next) => {
     const duration = service?.durationMin || 30;
     const end = new Date(start.getTime() + duration * 60000);
 
-    const dayOfWeek = start.getDay();
+    const tz = await getTenantTz(db);
+    const zoned = toZoned(start, tz);
+    const dayOfWeek = zoned.dow;
+    if (Number.isNaN(start.getTime())) throw new AppError('Invalid start time', 400);
+    if (start.getTime() < Date.now()) throw new AppError('Cannot book a time in the past', 400);
     const schedule = await db.doctorSchedule.findFirst({
       where: { doctorId: Number(doctorId), dayOfWeek, isActive: true }
     });
 
     if (!schedule) throw new AppError('Doctor does not work on this day', 400);
 
-    const requestedTime = start.toTimeString().slice(0, 5);
+    const requestedTime = zoned.hhmm;
     if (requestedTime < schedule.startTime || requestedTime > schedule.endTime) {
       throw new AppError(`Doctor available from ${schedule.startTime} to ${schedule.endTime}`, 400);
     }

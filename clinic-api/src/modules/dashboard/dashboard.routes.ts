@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { startOfDay, endOfDay } from 'date-fns';
+import { getTenantTz, dayRange, toZoned } from '../../utils/tz';
 import { sendSuccess } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { allRoles } from '../../middleware/rbac';
@@ -10,9 +10,9 @@ router.use(authenticate, allRoles);
 router.get('/kpis', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const db = req.db!;
-    const today = new Date();
-    const start = startOfDay(today);
-    const end   = endOfDay(today);
+    const tz = await getTenantTz(db);
+    const { start, end: endExcl } = dayRange(toZoned(new Date(), tz).ymd, tz);
+    const end = new Date(endExcl.getTime() - 1);
 
     const [
       totalPatients,
@@ -58,10 +58,11 @@ router.get('/kpis', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/appointments-today', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const db = req.db!;
-    const today = new Date();
+    const tz = await getTenantTz(db);
+    const dr = dayRange(toZoned(new Date(), tz).ymd, tz);
     const appointments = await db.appointment.findMany({
       where: {
-        startTime: { gte: startOfDay(today), lte: endOfDay(today) },
+        startTime: { gte: dr.start, lt: dr.end },
       },
       include: {
         patient: { select: { id: true, fullName: true, code: true, phone: true } },

@@ -24,3 +24,7 @@ export const listQuerySchema = z.object({
   page:   z.string().optional().default('1'),
   limit:  z.string().optional().default('20'),
 });
+
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});

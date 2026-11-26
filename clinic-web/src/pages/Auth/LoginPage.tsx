@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT, useLang } from '@/i18n';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +17,9 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  const t = useT();
+  const { lang, setLang } = useLang();
+  const [showForgot, setShowForgot] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const navigate = useNavigate();
@@ -57,20 +61,23 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
+        <div className="flex justify-end mb-2">
+          <button type="button" onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="text-xs font-semibold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100">{t('lang.switch')}</button>
+        </div>
         {/* Logo block */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-600 shadow-lg mb-3">
             <Heart className="w-6 h-6 text-white fill-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Tashgheel Clinics</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Sign in to your account</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('app.name')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('login.title')}</p>
         </div>
 
         {/* Card */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             <Input
-              label="Email"
+              label={t('login.email')}
               type="email"
               placeholder="admin@clinic.com"
               autoComplete="email"
@@ -80,14 +87,14 @@ export function LoginPage() {
 
             <div className="w-full">
               <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Password <span className="text-red-500">*</span>
+                {t('login.password')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className={`w-full h-9 pl-3 pr-10 rounded-lg border text-sm text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                  className={`w-full h-9 ps-3 pe-10 rounded-lg border text-sm text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                     errors.password ? 'border-red-400' : 'border-gray-300'
                   }`}
                   {...register('password')}
@@ -95,7 +102,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -107,6 +114,15 @@ export function LoginPage() {
               </div>
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div className="text-center -mt-1">
+              <button type="button" onClick={() => setShowForgot((v) => !v)} className="text-xs text-brand-600 hover:underline">
+                {t('login.forgot')}
+              </button>
+              {showForgot && (
+                <p className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 text-start">{t('login.forgotHelp')}</p>
               )}
             </div>
 
@@ -122,7 +138,7 @@ export function LoginPage() {
               className="w-full h-10 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 active:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm mt-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? t('login.submitting') : t('login.submit')}
             </button>
           </form>
 

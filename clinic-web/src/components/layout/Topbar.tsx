@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Bell, Search, Menu, Sparkles, ShieldCheck } from 'lucide-react';
 import { useUser, useTenant, useSystemRole } from '@/store/authStore';
-import { format } from 'date-fns';
 import { QuickSearchModal } from './QuickSearchModal';
+import { useT, useLang } from '@/i18n';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { useAppointments } from '@/hooks/useAppointments';
 
@@ -15,7 +15,9 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
   const user = useUser();
   const tenant = useTenant();
   const systemRole = useSystemRole();
-  const today = format(new Date(), 'EEEE, MMMM d yyyy');
+  const t = useT();
+  const { lang, setLang } = useLang();
+  const today = new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -24,7 +26,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
   const hasNotifications = pendingAppointments.length > 0;
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white border-b border-gray-200 z-30 flex items-center justify-between px-4 lg:px-6">
+    <header className="fixed top-0 right-0 left-0 lg:left-64 rtl:lg:left-0 rtl:lg:right-64 h-16 bg-white border-b border-gray-200 z-30 flex items-center justify-between px-4 lg:px-6">
       {/* Left: Menu Toggle + Page title + Clinic Badge */}
       <div className="flex items-center gap-3">
         <button 
@@ -39,7 +41,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
             {tenant && !systemRole && (
               <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-medium">
                 <Sparkles className="w-3 h-3 text-amber-600" />
-                <span>14-Day Free Trial (Pro Features)</span>
+                <span>{t('top.trial')}</span>
               </div>
             )}
             {systemRole && (
@@ -55,12 +57,18 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
 
       {/* Right: Search + Notifications + User */}
       <div className="flex items-center gap-2 lg:gap-3">
+        <button
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+          className="px-2.5 py-1.5 text-xs font-semibold text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
+        >
+          {t('lang.switch')}
+        </button>
         <button 
           onClick={() => setIsSearchOpen(true)}
           className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
         >
           <Search className="w-3.5 h-3.5" />
-          <span>Quick search...</span>
+          <span>{t('top.search')}</span>
           <kbd className="ml-1 px-1 py-0.5 text-[10px] bg-white border border-gray-200 rounded">
             ⌘K
           </kbd>

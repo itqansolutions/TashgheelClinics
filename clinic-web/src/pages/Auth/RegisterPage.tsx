@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT, useLang } from '@/i18n';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +24,8 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
+  const t = useT();
+  const { lang, setLang } = useLang();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [successInfo, setSuccessInfo] = useState<{
@@ -63,7 +66,12 @@ export function RegisterPage() {
     setServerError('');
     try {
       const res = await authApi.register(data);
-      const resData = res.data.data;
+      const resData = res.data.data as any;
+      if (resData.accessToken && resData.user) {
+        setAuth(resData.user, resData.accessToken);
+        navigate('/app/dashboard', { replace: true });
+        return;
+      }
       setSuccessInfo({
         tenantName: resData.tenant.name,
         slug: resData.tenant.slug,
@@ -97,14 +105,17 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-gray-50 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-2">
+          <button type="button" onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="text-xs font-semibold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100">{t('lang.switch')}</button>
+        </div>
         {/* Header */}
         <div className="flex flex-col items-center mb-6">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-600 shadow-lg mb-3">
             <Building2 className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Clinic Account</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('reg.title')}</h1>
           <p className="text-sm text-gray-500 mt-1 text-center">
-            Launch your clinic on Tashgheel SaaS with a 14-day free trial
+            {t('reg.subtitle')}
           </p>
         </div>
 
@@ -171,7 +182,7 @@ export function RegisterPage() {
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <Input
-                label="Clinic Name"
+                label={t('reg.clinicName')}
                 placeholder="e.g. Al-Amal Dental Care"
                 error={errors.clinicName?.message}
                 {...register('clinicName')}

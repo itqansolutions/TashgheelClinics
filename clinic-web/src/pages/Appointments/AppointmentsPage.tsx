@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments, useDoctorAppointments } from '@/hooks/useAppointments';
 import { useRole, useTenant } from '@/store/authStore';
@@ -11,6 +12,7 @@ import { AppointmentDetailsModal } from '@/components/appointments/AppointmentDe
 import type { Appointment } from '@/types';
 
 export function AppointmentsPage() {
+  const t = useT();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
@@ -41,8 +43,8 @@ export function AppointmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
-          <p className="text-gray-500">Manage and schedule patient visits</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('appts.title')}</h1>
+          <p className="text-gray-500">{t('appts.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button 
@@ -51,14 +53,14 @@ export function AppointmentsPage() {
             onClick={copyBookingLink}
           >
             {copied ? <Check className="w-4 h-4 text-green-600" /> : <LinkIcon className="w-4 h-4 text-brand-600" />}
-            {copied ? 'Link Copied!' : 'Copy Online Booking Link'}
+            {copied ? '✓' : t('appts.copyLink')}
           </Button>
           <Button 
             className="flex items-center gap-2"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="w-4 h-4" />
-            New Appointment
+            {t('appts.new')}
           </Button>
         </div>
       </div>

@@ -66,17 +66,20 @@ export const authService = {
       return { tenant, user };
     });
 
-    console.info(`[Onboarding] Verification token generated for tenant ${result.tenant.id} (${result.tenant.name}): ${verificationToken}`);
+    // Trials are auto-activated (no email provider configured): activate the clinic now and sign the owner in.
+    // The token is never logged or returned.
+    const activated = await this.verifyEmail(verificationToken);
 
     return {
-      message: 'Registration successful. Please verify your email to activate your account.',
+      message: 'Clinic created. Your free trial is active.',
       tenant: {
         id:   result.tenant.id,
         name: result.tenant.name,
         slug: result.tenant.slug,
       },
-      // In development, return the verification token to facilitate automated testing
-      verificationToken: process.env.NODE_ENV !== 'production' ? verificationToken : undefined,
+      accessToken:  activated.accessToken,
+      refreshToken: activated.refreshToken,
+      user:         activated.user,
     };
   },
 
@@ -167,10 +170,7 @@ export const authService = {
       throw new AppError('Invalid email or password', 401);
     }
 
-    // NOTE: Remove the hardcoded bypass before production deployment
-    const passwordMatch =
-      (email.trim().toLowerCase() === 'admin@clinic.com' && password === '12345678') ||
-      (await bcrypt.compare(password, user.passwordHash));
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatch) {
       throw new AppError('Invalid email or password', 401);
@@ -180,7 +180,7 @@ export const authService = {
     if (!user.systemRole && user.tenant) {
       const { status } = user.tenant;
       if (status === 'PENDING_VERIFICATION') {
-        throw new AppError('Please verify your email before logging in.', 403);
+        throw new AppError('This clinic is not activated yet. Please contact support.', 403);
       }
       if (status === 'SUSPENDED') {
         throw new AppError(
@@ -286,5 +286,12 @@ export const authService = {
     });
     if (!user) throw new AppError('User not found', 404);
     return user;
+  },
+
+  async changeOwnPassword(userId: number, currentPassword: string, newPassword: string) {
+    const user = await rawPrisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError('User not found', 404);
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) throw new AppError('Current password is incorrect', 400);
+    await rawPrisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(newPassword, 12) } });
   },
 };

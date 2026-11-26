@@ -2,6 +2,7 @@ import prisma from '../../config/db';
 import { TenantPrismaClient } from '../../utils/tenantPrisma';
 import { PaginationResult } from '../../utils/pagination';
 import { AppError } from '../../middleware/errorHandler';
+import { getTenantTz, dayRange, zonedToUtc } from '../../utils/tz';
 
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Done' | 'Cancelled' | string;
 
@@ -297,71 +298,52 @@ export const appointmentsRepo = {
   },
 
   async getAvailableSlots(db: TenantPrismaClient, doctorId: number, date: string) {
-    const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getUTCDay();
+    const tz = await getTenantTz(db);
+    const ymd = String(date).slice(0, 10);
+    const dayOfWeek = new Date(`${ymd}T00:00:00Z`).getUTCDay();
 
-    // 1. Get Doctor Schedule for this day
+    // 1. Get Doctor Schedule for this day (clinic-local weekday)
     const schedules = await db.doctorSchedule.findMany({
       where: { doctorId, dayOfWeek, isActive: true }
     });
-
     if (schedules.length === 0) return [];
 
-    // 2. Get existing appointments for this doctor on this day
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0,0,0,0);
-    const endOfDay = new Date(date);
-    endOfDay.setUTCHours(23,59,59,999);
-
+    // 2. Existing appointments for this doctor on this clinic-local day
+    const { start: startOfDay, end: endOfDay } = dayRange(ymd, tz);
     const appointments = await db.appointment.findMany({
       where: {
         doctorId,
-        startTime: { gte: startOfDay, lte: endOfDay },
+        startTime: { gte: startOfDay, lt: endOfDay },
         status: { not: 'Cancelled' }
       },
       select: { startTime: true, endTime: true }
     });
 
     const slots: any[] = [];
-    const slotDuration = 30; // default 30 mins
-
+    const slotDuration = 30;
+    const now = new Date();
     for (const schedule of schedules) {
       const [startH, startM] = schedule.startTime.split(':').map(Number);
       const [endH, endM] = schedule.endTime.split(':').map(Number);
-
-      let current = new Date(date);
-      current.setUTCHours(startH, startM, 0, 0);
-
-      const end = new Date(date);
-      end.setUTCHours(endH, endM, 0, 0);
-
+      let current = zonedToUtc(ymd, startH, startM, tz);
+      const end = zonedToUtc(ymd, endH, endM, tz);
       while (current < end) {
         const slotEnd = new Date(current.getTime() + slotDuration * 60000);
-        
-        // Check if this slot overlaps with any appointment
-        const isTaken = appointments.some(apt => {
-          const aptStart = new Date(apt.startTime);
-          const aptEnd = new Date(apt.endTime);
-          return (current < aptEnd && slotEnd > aptStart);
-        });
-
-        if (!isTaken) {
+        const isTaken = appointments.some(apt => current < new Date(apt.endTime) && slotEnd > new Date(apt.startTime));
+        if (!isTaken && current > now) {
           slots.push({
             time: current.toISOString(),
-            label: current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+            label: current.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz })
           });
         }
-
-        current = new Date(current.getTime() + slotDuration * 60000);
+        current = slotEnd;
       }
     }
-
     return slots;
   },
 
   async getAvailableDoctors(db: TenantPrismaClient, date: string) {
-    const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getUTCDay();
+    const dayOfWeek = new Date(`${String(date).slice(0, 10)}T00:00:00Z`).getUTCDay();
 
     return db.doctor.findMany({
       where: {

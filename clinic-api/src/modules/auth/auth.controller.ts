@@ -16,7 +16,9 @@ export const authController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await authService.registerTenant(req.body);
-      sendSuccess(res, result, result.message, 201);
+      res.cookie(COOKIE_NAME, result.refreshToken, COOKIE_OPTS);
+      const { refreshToken: _rt, ...publicResult } = result;
+      sendSuccess(res, publicResult, result.message, 201);
     } catch (err) { next(err); }
   },
 
@@ -35,6 +37,14 @@ export const authController = {
       const result = await authService.login(email, password);
       res.cookie(COOKIE_NAME, result.refreshToken, COOKIE_OPTS);
       sendSuccess(res, { accessToken: result.accessToken, user: result.user }, 'Login successful');
+    } catch (err) { next(err); }
+  },
+
+  async changePassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+      await authService.changeOwnPassword(Number(req.user!.sub), currentPassword, newPassword);
+      sendSuccess(res, null, 'Password changed');
     } catch (err) { next(err); }
   },
 

@@ -38,3 +38,7 @@
     @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
   }
 }
+
+/* Arabic: use Cairo and mirror directional icons */
+[dir='rtl'] body, [dir='rtl'] * { font-family: 'Cairo', 'Outfit', system-ui, sans-serif; }
+[dir='rtl'] .lucide-arrow-right, [dir='rtl'] .lucide-arrow-up-right { transform: scaleX(-1); }

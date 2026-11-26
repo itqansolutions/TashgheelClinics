@@ -2,31 +2,32 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { useT } from '@/i18n';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/app/dashboard':        'Dashboard',
-  '/app/patients':         'Patients',
-  '/app/patients/new':     'New Patient',
-  '/app/appointments':     'Appointments',
-  '/app/calendar':         'Calendar',
-  '/app/doctors':          'Doctors',
-  '/app/doctors/schedule': 'Doctor Schedule',
-  '/app/specialties':      'Specialties & Services',
-  '/app/reports':          'Reports',
-  '/app/finance':          'Finance & Accounting',
-  '/app/stock/balance':    'Stock Balance',
-  '/app/stock/products':   'Products',
-  '/app/stock/vendors':    'Vendors',
-  '/app/settings':         'Clinic Settings',
+  '/app/dashboard':        'title.dashboard',
+  '/app/patients':         'title.patients',
+  '/app/patients/new':     'title.newPatient',
+  '/app/appointments':     'title.appointments',
+  '/app/calendar':         'title.calendar',
+  '/app/doctors':          'title.doctors',
+  '/app/doctors/schedule': 'title.schedule',
+  '/app/specialties':      'title.specialties',
+  '/app/reports':          'title.reports',
+  '/app/finance':          'title.finance',
+  '/app/stock/balance':    'title.stockBalance',
+  '/app/stock/products':   'title.products',
+  '/app/stock/vendors':    'title.vendors',
+  '/app/settings':         'title.settings',
   // Legacy backward-compatibility fallbacks
-  '/dashboard':            'Dashboard',
-  '/patients':             'Patients',
-  '/appointments':         'Appointments',
-  '/calendar':             'Calendar',
-  '/doctors':              'Doctors',
-  '/specialties':          'Specialties & Services',
-  '/reports':              'Reports',
-  '/settings':             'Clinic Settings',
+  '/dashboard':            'title.dashboard',
+  '/patients':             'title.patients',
+  '/appointments':         'title.appointments',
+  '/calendar':             'title.calendar',
+  '/doctors':              'title.doctors',
+  '/specialties':          'title.specialties',
+  '/reports':              'title.reports',
+  '/settings':             'title.settings',
 };
 
 export function AppLayout() {
@@ -34,10 +35,12 @@ export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Match title for dynamic paths like /patients/123
-  const title =
+  const t = useT();
+  const titleKey =
     PAGE_TITLES[pathname] ??
     Object.entries(PAGE_TITLES).find(([key]) => pathname.startsWith(key))?.[1] ??
-    'Clinic';
+    'title.dashboard';
+  const title = t(titleKey);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,7 +48,7 @@ export function AppLayout() {
       <Topbar title={title} onMenuClick={() => setIsSidebarOpen(true)} />
 
       {/* Main content — offset by sidebar width on desktop + topbar height */}
-      <main className="lg:ml-64 pt-16 min-h-screen">
+      <main className="lg:ml-64 rtl:lg:ml-0 rtl:lg:mr-64 pt-16 min-h-screen">
         <div className="p-6">
           <Outlet />
         </div>

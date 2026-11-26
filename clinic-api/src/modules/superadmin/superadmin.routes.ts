@@ -122,4 +122,24 @@ router.get('/audit-logs', async (req, res, next) => {
   }
 });
 
+/**
+ * @route POST /api/superadmin/users/reset-password
+ * @desc  Platform support resets a clinic owner's password (no email provider). Audited.
+ */
+router.post('/users/reset-password', async (req, res, next) => {
+  try {
+    const { email, newPassword } = req.body as { email?: string; newPassword?: string };
+    if (!email || !newPassword || newPassword.length < 8) {
+      return sendError(res, 'email and newPassword (min 8 chars) are required', 400);
+    }
+    if (req.user?.systemRole !== 'SYSTEM_ADMIN') return sendError(res, 'System Admin required', 403);
+    const user = await rawPrisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    if (!user || user.systemRole) return sendError(res, 'User not found', 404);
+    await auditSystemAdminAccess(req, `BUSINESS_ACTION:RESET_PASSWORD:user=${user.id}`);
+    const bcrypt = (await import('bcryptjs')).default;
+    await rawPrisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(newPassword, 12) } });
+    sendSuccess(res, null, 'Password reset');
+  } catch (e) { next(e); }
+});
+
 export default router;

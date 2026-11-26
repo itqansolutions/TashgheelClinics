@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useUser, useRole, useSystemRole, useTenant, useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth';
+import { useT } from '@/i18n';
 
 import type { Role } from '@/types';
 
@@ -18,19 +19,19 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',    path: '/app/dashboard',   icon: LayoutDashboard },
-  { label: 'Patients',     path: '/app/patients',    icon: Users           },
-  { label: 'Appointments', path: '/app/appointments',icon: CalendarDays    },
-  { label: 'Calendar',     path: '/app/calendar',    icon: CalendarDays    },
-  { label: 'Reports',      path: '/app/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
-  { label: 'Doctors',      path: '/app/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception', 'Receptionist'] },
-  { label: 'Schedule',     path: '/app/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception', 'Receptionist'] },
-  { label: 'Stock Balance',path: '/app/stock/balance', icon: Boxes,        roles: ['Admin']              },
-  { label: 'Finance',      path: '/app/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
-  { label: 'Products',     path: '/app/stock/products', icon: Package,      roles: ['Admin']              },
-  { label: 'Vendors',      path: '/app/stock/vendors', icon: Users2,       roles: ['Admin']              },
-  { label: 'Specialties',  path: '/app/specialties', icon: Scissors,       roles: ['Admin']              },
-  { label: 'Settings',     path: '/app/settings',    icon: Settings,       roles: ['Admin', 'Manager']   },
+  { label: 'nav.dashboard',    path: '/app/dashboard',   icon: LayoutDashboard },
+  { label: 'nav.patients',     path: '/app/patients',    icon: Users           },
+  { label: 'nav.appointments', path: '/app/appointments',icon: CalendarDays    },
+  { label: 'nav.calendar',     path: '/app/calendar',    icon: CalendarDays    },
+  { label: 'nav.reports',      path: '/app/reports',     icon: LayoutDashboard, roles: ['Admin', 'Manager'] },
+  { label: 'nav.doctors',      path: '/app/doctors',     icon: Stethoscope,    roles: ['Admin', 'Reception', 'Receptionist'] },
+  { label: 'nav.schedule',     path: '/app/doctors/schedule', icon: Clock,     roles: ['Admin', 'Reception', 'Receptionist'] },
+  { label: 'nav.stockBalance',path: '/app/stock/balance', icon: Boxes,        roles: ['Admin']              },
+  { label: 'nav.finance',      path: '/app/finance',     icon: Wallet,         roles: ['Admin', 'Accountant', 'Manager'] },
+  { label: 'nav.products',     path: '/app/stock/products', icon: Package,      roles: ['Admin']              },
+  { label: 'nav.vendors',      path: '/app/stock/vendors', icon: Users2,       roles: ['Admin']              },
+  { label: 'nav.specialties',  path: '/app/specialties', icon: Scissors,       roles: ['Admin']              },
+  { label: 'nav.settings',     path: '/app/settings',    icon: Settings,       roles: ['Admin', 'Manager']   },
 ];
 
 interface SidebarProps {
@@ -45,6 +46,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const tenant     = useTenant();
   const logout     = useAuthStore((s) => s.logout);
   const navigate   = useNavigate();
+  const t          = useT();
 
   const visible = NAV_ITEMS.filter((item) => {
     if (!item.roles) return true;
@@ -75,8 +77,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       />
 
       <aside className={clsx(
-        "flex flex-col w-64 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 z-50 transition-transform lg:translate-x-0 lg:z-40",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        "flex flex-col w-64 h-screen bg-white border-r border-gray-200 rtl:border-r-0 rtl:border-l fixed left-0 rtl:left-auto rtl:right-0 top-0 z-50 transition-transform lg:translate-x-0 lg:z-40",
+        isOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
       )}>
         {/* Logo */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-200 shrink-0">
@@ -116,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             }
           >
             <ShieldCheck className="w-4 h-4 shrink-0 text-indigo-500" />
-            <span>Super Admin Portal</span>
+            <span>{t('nav.superAdmin')}</span>
           </NavLink>
         )}
 
@@ -130,7 +132,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             }
           >
             <item.icon className="w-4 h-4 shrink-0" />
-            <span>{item.label}</span>
+            <span>{t(item.label)}</span>
           </NavLink>
         ))}
       </nav>
@@ -159,7 +161,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="sidebar-link sidebar-link-inactive w-full text-red-600 hover:bg-red-50 hover:text-red-700"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          <span>Sign Out</span>
+          <span>{t('nav.signOut')}</span>
         </button>
       </div>
       </aside>
