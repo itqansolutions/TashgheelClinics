@@ -105,10 +105,6 @@ export function FinancePage() {
                 Product Sales: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.products || 0)}</span>
               </p>
             </div>
-            <div className="flex items-center gap-1 mt-2">
-              <ArrowUpRight className="w-3 h-3 text-green-500" />
-              <span className="text-[10px] font-bold text-green-600">+12% vs last month</span>
-            </div>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center group-hover:scale-110 transition-transform">
             <TrendingUp className="w-6 h-6 text-brand-600" />
@@ -126,10 +122,6 @@ export function FinancePage() {
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
                 Stock Purchases: <span className="text-gray-900">{formatCurrency(finSum?.breakdown?.purchases || 0)}</span>
               </p>
-            </div>
-            <div className="flex items-center gap-1 mt-2">
-              <ArrowDownLeft className="w-3 h-3 text-red-500" />
-              <span className="text-[10px] font-bold text-red-600">+5% vs last month</span>
             </div>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform">

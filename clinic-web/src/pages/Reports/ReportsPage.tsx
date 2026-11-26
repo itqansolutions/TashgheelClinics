@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { 
   TrendingUp, TrendingDown, Users, Calendar, 
-  DollarSign, PieChart, ArrowUpRight, ArrowDownRight,
+  DollarSign, PieChart, ArrowDownRight,
   Printer, Wallet, Percent,
   Activity
 } from 'lucide-react';
@@ -106,10 +106,6 @@ export function ReportsPage() {
             <div className="flex justify-between items-start mb-6">
               <div className={`w-14 h-14 rounded-2xl ${s.color} text-white flex items-center justify-center shadow-2xl shadow-gray-200 group-hover:scale-110 transition-transform`}>
                 <s.icon className="w-7 h-7" />
-              </div>
-              <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full ${s.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                {s.isUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {s.trend}
               </div>
             </div>
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">{s.label}</p>
