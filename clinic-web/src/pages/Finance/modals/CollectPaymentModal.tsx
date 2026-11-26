@@ -1,7 +1,8 @@
+import { EgpIcon } from '@/components/ui/EgpIcon';
 import { useState, useEffect } from 'react';
 import { useCollectPayment } from '@/hooks/useFinance';
 import { Button } from '@/components/ui/Button';
-import { X, DollarSign, CreditCard, Wallet, Smartphone, ShieldCheck, Percent, Info } from 'lucide-react';
+import { X, CreditCard, Wallet, Smartphone, ShieldCheck, Percent, Info } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 
 interface Props {
@@ -47,7 +48,7 @@ export function CollectPaymentModal({ isOpen, onClose, appointment }: Props) {
     { id: 'Cash', label: 'Cash', icon: <Wallet className="w-5 h-5" />, color: 'orange' },
     { id: 'Card', label: 'Visa / Card', icon: <CreditCard className="w-5 h-5" />, color: 'blue' },
     { id: 'Vodafone Cash', label: 'Vodafone Cash', icon: <Smartphone className="w-5 h-5" />, color: 'red' },
-    { id: 'Bank Transfer', label: 'Bank Transfer', icon: <DollarSign className="w-5 h-5" />, color: 'green' },
+    { id: 'Bank Transfer', label: 'Bank Transfer', icon: <EgpIcon className="w-5 h-5" />, color: 'green' },
     { id: 'Insurance', label: 'Insurance', icon: <ShieldCheck className="w-5 h-5" />, color: 'purple' },
   ];
 
@@ -57,12 +58,12 @@ export function CollectPaymentModal({ isOpen, onClose, appointment }: Props) {
         <div className="p-10 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-[1.5rem] bg-brand-600 flex items-center justify-center shadow-xl shadow-brand-100">
-              <DollarSign className="w-8 h-8 text-white" />
+              <EgpIcon className="w-8 h-8 text-white" />
             </div>
             <div>
               <h2 className="text-3xl font-black text-gray-900 tracking-tight">Collect Payment</h2>
               <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Appointment #{appointment.id}</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">{`Appointment #${appointment.id}`}</p>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
                 <p className="text-xs text-brand-600 font-black uppercase tracking-widest">{appointment.patient?.fullName}</p>
               </div>
@@ -119,7 +120,7 @@ export function CollectPaymentModal({ isOpen, onClose, appointment }: Props) {
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Amount Collected *</label>
                     <div className="relative group">
-                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                      <EgpIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
                       <input
                         type="number"
                         required
@@ -201,7 +202,7 @@ export function CollectPaymentModal({ isOpen, onClose, appointment }: Props) {
             onClick={handleCollect}
             className="flex-1 py-6 h-auto text-sm font-black uppercase tracking-widest rounded-2xl bg-brand-600 hover:bg-brand-700 shadow-2xl shadow-brand-200 transition-all active:scale-[0.98]"
             loading={collectMutation.isPending}
-            leftIcon={<DollarSign className="w-5 h-5" />}
+            leftIcon={<EgpIcon className="w-5 h-5" />}
           >
             Post Financial Transaction
           </Button>

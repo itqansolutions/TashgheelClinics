@@ -302,7 +302,7 @@ export function VisitReport({ appointment, patient, notes, prescription, bodyAre
             <div className="text-[8px] text-gray-400 space-y-0.5">
               <p className="font-black text-gray-600 uppercase tracking-widest mb-1">{clinicName}</p>
               <p>{clinicAddress}</p>
-              <p>Tel: {clinicPhone}</p>
+              <p>{`Tel: ${clinicPhone}`}</p>
               <p className="mt-2 italic opacity-50 uppercase font-bold tracking-tighter">Computer Generated Medical Record</p>
             </div>
             

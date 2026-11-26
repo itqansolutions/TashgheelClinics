@@ -1,7 +1,8 @@
+import { EgpIcon } from '@/components/ui/EgpIcon';
 import { useState } from 'react';
 import { useVendorStatement, useRecordVendorPayment } from '@/hooks/useStock';
 import { Button } from '@/components/ui/Button';
-import { X, FileText, DollarSign, Calendar, TrendingUp, TrendingDown, Receipt, Wallet, Printer } from 'lucide-react';
+import { X, FileText, Calendar, TrendingUp, TrendingDown, Receipt, Wallet, Printer } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { PageLoader } from '@/components/ui/Loader';
 import { useReactToPrint } from 'react-to-print';
@@ -173,7 +174,7 @@ export function VendorStatementModal({ isOpen, onClose, vendor }: Props) {
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Payment Amount</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <EgpIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="number"
                       required

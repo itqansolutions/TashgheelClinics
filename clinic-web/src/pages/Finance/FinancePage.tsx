@@ -264,7 +264,7 @@ export function FinancePage() {
                         <p className={`text-base font-mono font-black ${tx.type === 'Income' ? 'text-brand-600' : 'text-red-600'}`}>
                           {tx.type === 'Income' ? '+' : '-'}{formatCurrency(tx.amount)}
                         </p>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Added by {tx.user?.fullName}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{`Added by ${tx.user?.fullName || ''}`}</p>
                       </div>
                       
                       {tx.referenceType === 'Appointment' && (

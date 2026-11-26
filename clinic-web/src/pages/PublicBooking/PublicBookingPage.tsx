@@ -358,12 +358,14 @@ export function PublicBookingPage() {
 
                         <div className="space-y-1">
                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nationality</label>
-                          <input 
-                            type="text" placeholder="Egyptian, etc."
-                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm"
+                          <select
+                            className="w-full px-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none shadow-sm font-bold text-sm appearance-none"
                             value={formData.nationality}
                             onChange={e => setFormData({...formData, nationality: e.target.value})}
-                          />
+                          >
+                            <option value="Egyptian">Egyptian</option>
+                            <option value="Foreigner">Foreigner</option>
+                          </select>
                         </div>
 
                         <div className="md:col-span-2 space-y-1">

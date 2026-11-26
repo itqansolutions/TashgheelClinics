@@ -101,7 +101,7 @@ export function CalendarPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{drName(apt.doctor?.user?.fullName)}</span>
+                    <span className="text-sm text-gray-600">{drName(apt.doctor?.user?.fullName || apt.doctor?.fullName)}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">

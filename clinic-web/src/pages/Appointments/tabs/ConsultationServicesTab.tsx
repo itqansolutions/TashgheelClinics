@@ -1,6 +1,7 @@
+import { EgpIcon } from '@/components/ui/EgpIcon';
 import { useState } from 'react';
 import { useServicesList } from '@/hooks/useSpecialties';
-import { Search, Plus, Trash2, Sparkles, Stethoscope, DollarSign, FileText } from 'lucide-react';
+import { Search, Plus, Trash2, Sparkles, Stethoscope, FileText } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
 import { Button } from '@/components/ui/Button';
 
@@ -212,7 +213,7 @@ export function ConsultationServicesTab({ services, onChange }: Props) {
                 </div>
                 <div className="relative">
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-mono">
-                    <DollarSign className="w-3 h-3" />
+                    <EgpIcon className="w-3 h-3" />
                   </span>
                   <input
                     type="number"

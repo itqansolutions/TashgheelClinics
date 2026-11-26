@@ -1,8 +1,9 @@
+import { EgpIcon } from '@/components/ui/EgpIcon';
 import { useState, useEffect } from 'react';
 import { useUpdateProduct, useVendors } from '@/hooks/useStock';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { Tag, Hash, Bookmark, DollarSign } from 'lucide-react';
+import { Tag, Hash, Bookmark } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -99,7 +100,7 @@ export function UpdateProductModal({ isOpen, onClose, product }: Props) {
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Selling Price</label>
             <div className="relative">
-              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-600" />
+              <EgpIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-600" />
               <input
                 type="number"
                 step="0.01"

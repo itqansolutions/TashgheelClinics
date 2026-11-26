@@ -425,7 +425,7 @@ function CountriesPanel() {
     <Card padding="none">
       <div className="p-4 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-gray-900">Countries</h3>
-        <p className="text-xs text-gray-500 mt-0.5">{countries.length} countries seeded from database</p>
+        <p className="text-xs text-gray-500 mt-0.5">{`${countries.length} countries seeded from database`}</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-0 divide-y divide-gray-50">
         {isLoading

@@ -12,6 +12,12 @@ const COUNTRIES: Record<string, string> = {
   'Canada':'كندا','Somalia':'الصومال','Mauritania':'موريتانيا','Djibouti':'جيبوتي','Comoros':'جزر القمر',
 };
 const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+  [/^Payment for Appointment #(\d+)\.?\s*(.*)$/, (m) => `دفعة عن الموعد رقم ${m[1]}${m[2] ? ' - ' + (phrases[m[2].trim()] ?? m[2].trim()) : ''}`],
+  [/^Appointment #(\d+)$/, (m) => `موعد رقم ${m[1]}`],
+  [/^Added by\s*(.*)$/, (m) => `أضافه ${m[1]}`.trim()],
+  [/^Tel: (.+)$/, (m) => `تليفون: ${phrases[m[1].trim()] ?? m[1]}`],
+  [/^(.+) \(Consultation Fee\)$/, (m) => `${lookup(m[1]) ?? m[1]} (رسوم الكشف)`],
+  [/^([\d,.]+) countries seeded from database$/, (m) => `${m[1]} دولة جاهزة من قاعدة البيانات`],
   [/^(\d{1,2}):(\d{2}) (AM|PM)$/i, (m) => `${m[1]}:${m[2]} ${m[3].toUpperCase() === 'AM' ? 'ص' : 'م'}`],
   [/^([\d,.]+) EGP$/, (m) => `${m[1]} ج.م`],
   [/^(.+) - ([\d,.]+) EGP$/, (m) => `${lookup(m[1]) ?? m[1]} - ${m[2]} ج.م`],
