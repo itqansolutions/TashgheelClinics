@@ -119,6 +119,7 @@ router.get('/doctors', async (req, res, next) => {
       select: {
         id: true,
         fullName: true,
+        specialtyId: true,
         user: { select: { fullName: true } },
         specialty: { select: { id: true, name: true } },
         schedules: {
