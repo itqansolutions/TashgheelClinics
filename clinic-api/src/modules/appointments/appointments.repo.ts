@@ -281,10 +281,13 @@ export const appointmentsRepo = {
       select: { startTime: true, endTime: true }
     });
 
+    // Generate discrete slots from each schedule window using its average
+    // consultation duration (slotDurationMin, default 30). Taken and past
+    // slots are returned with booked: true so UIs can show them as unavailable.
     const slots: any[] = [];
-    const slotDuration = 30;
     const now = new Date();
     for (const schedule of schedules) {
+      const slotDuration = schedule.slotDurationMin || 30;
       const [startH, startM] = schedule.startTime.split(':').map(Number);
       const [endH, endM] = schedule.endTime.split(':').map(Number);
       let current = zonedToUtc(ymd, startH, startM, tz);
@@ -292,12 +295,14 @@ export const appointmentsRepo = {
       while (current < end) {
         const slotEnd = new Date(current.getTime() + slotDuration * 60000);
         const isTaken = appointments.some(apt => current < new Date(apt.endTime) && slotEnd > new Date(apt.startTime));
-        if (!isTaken && current > now) {
-          slots.push({
-            time: current.toISOString(),
-            label: current.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz })
-          });
-        }
+        const booked = isTaken || current <= now;
+        slots.push({
+          time: current.toISOString(),
+          hhmm: current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz }),
+          label: current.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz }),
+          durationMin: slotDuration,
+          booked
+        });
         current = slotEnd;
       }
     }

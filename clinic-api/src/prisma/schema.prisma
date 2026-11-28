@@ -227,13 +227,14 @@ model Doctor {
 }
 
 model DoctorSchedule {
-  id        Int     @id @default(autoincrement())
-  tenantId  Int?                // Phase 1: nullable; Phase 2b: NOT NULL
-  doctorId  Int
-  dayOfWeek Int                 // 0 = Sunday … 6 = Saturday
-  startTime String              // "09:00"
-  endTime   String              // "17:00"
-  isActive  Boolean @default(true)
+  id              Int     @id @default(autoincrement())
+  tenantId        Int?                // Phase 1: nullable; Phase 2b: NOT NULL
+  doctorId        Int
+  dayOfWeek       Int                 // 0 = Sunday … 6 = Saturday
+  startTime       String              // "09:00"
+  endTime         String              // "17:00"
+  slotDurationMin Int?                // average consultation length in minutes (null = 30)
+  isActive        Boolean @default(true)
 
   // Relations
   tenant Tenant? @relation(fields: [tenantId], references: [id])

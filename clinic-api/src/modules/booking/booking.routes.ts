@@ -4,6 +4,7 @@ import { sendSuccess } from '../../utils/response';
 import { AppError } from '../../middleware/errorHandler';
 import { getTenantTz, dayRange, toZoned } from '../../utils/tz';
 import { resolvePublicTenant } from '../../middleware/resolveTenant';
+import { appointmentsRepo } from '../appointments/appointments.repo';
 
 const router = Router();
 
@@ -124,7 +125,7 @@ router.get('/doctors', async (req, res, next) => {
         specialty: { select: { id: true, name: true } },
         schedules: {
           where: { isActive: true },
-          select: { dayOfWeek: true, startTime: true, endTime: true }
+          select: { dayOfWeek: true, startTime: true, endTime: true, slotDurationMin: true }
         }
       }
     });
@@ -180,6 +181,22 @@ router.get('/doctor-busy-times', async (req, res, next) => {
 });
 
 /**
+ * @route GET /api/public/slots
+ * @desc  Generated time slots (free + booked) for a doctor on a date
+ */
+router.get('/slots', async (req, res, next) => {
+  try {
+    const db = req.db || prisma;
+    const { doctorId, date } = req.query;
+    if (!doctorId || !date) throw new AppError('Doctor ID and Date are required', 400);
+    const slots = await appointmentsRepo.getAvailableSlots(db as any, Number(doctorId), String(date));
+    sendSuccess(res, slots);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * @route POST /api/public/book
  * @desc  Create a booking request from an unauthenticated user
  */
@@ -215,21 +232,23 @@ router.post('/book', async (req, res, next) => {
     }
 
     const service = serviceId ? await db.service.findFirst({ where: { id: Number(serviceId) } }) : null;
-    
+
     const start = new Date(startTime);
-    const duration = service?.durationMin || 30;
-    const end = new Date(start.getTime() + duration * 60000);
+    if (Number.isNaN(start.getTime())) throw new AppError('Invalid start time', 400);
+    if (start.getTime() < Date.now()) throw new AppError('Cannot book a time in the past', 400);
 
     const tz = await getTenantTz(db);
     const zoned = toZoned(start, tz);
     const dayOfWeek = zoned.dow;
-    if (Number.isNaN(start.getTime())) throw new AppError('Invalid start time', 400);
-    if (start.getTime() < Date.now()) throw new AppError('Cannot book a time in the past', 400);
     const schedule = await db.doctorSchedule.findFirst({
       where: { doctorId: Number(doctorId), dayOfWeek, isActive: true }
     });
 
     if (!schedule) throw new AppError('Doctor does not work on this day', 400);
+
+    // Appointment length follows the schedule's average consultation duration
+    const duration = schedule.slotDurationMin || service?.durationMin || 30;
+    const end = new Date(start.getTime() + duration * 60000);
 
     const requestedTime = zoned.hhmm;
     if (requestedTime < schedule.startTime || requestedTime > schedule.endTime) {

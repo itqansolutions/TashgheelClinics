@@ -44,7 +44,10 @@ router.put('/:id/schedule', adminOrReception, async (req, res, next) => {
           doctorId,
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
-          endTime: s.endTime
+          endTime: s.endTime,
+          slotDurationMin: (Number.isInteger(Number(s.slotDurationMin)) && Number(s.slotDurationMin) >= 5 && Number(s.slotDurationMin) <= 240)
+            ? Number(s.slotDurationMin)
+            : null
         }))
       });
     }

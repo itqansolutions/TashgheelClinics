@@ -22,7 +22,7 @@ export function PublicBookingPage() {
   const [searching, setSearching] = useState(false);
   const [success, setSuccess] = useState(false);
   const [patientData, setPatientData] = useState<any>(null);
-  const [busyTimes, setBusyTimes] = useState<any[]>([]);
+  const [slots, setSlots] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
   const [clinicError, setClinicError] = useState<string | null>(null);
 
@@ -79,9 +79,11 @@ export function PublicBookingPage() {
         },
         headers: slug ? { 'x-tenant-slug': slug } : undefined,
       };
-      axios.get('/api/public/doctor-busy-times', config)
-        .then(res => setBusyTimes(res.data.data))
-        .catch(console.error);
+      axios.get('/api/public/slots', config)
+        .then(res => setSlots(Array.isArray(res.data?.data) ? res.data.data : []))
+        .catch(() => setSlots([]));
+    } else {
+      setSlots([]);
     }
   }, [formData.doctorId, formData.date, slug]);
 
@@ -135,27 +137,11 @@ export function PublicBookingPage() {
     return true;
   });
 
-  // Check if chosen time is within doctor's schedule and not busy
+  // A time is bookable only when it matches a generated free slot
+  const selectedSlot = slots.find((sl: any) => sl.hhmm === formData.time);
   const isTimeAvailable = () => {
     if (!selectedDoctor || !formData.time || !formData.date) return false;
-    
-    // 1. Check Schedule
-    const schedule = selectedDoctor.schedules?.find((s: any) => s.dayOfWeek === dayOfWeek);
-    if (!schedule) return false;
-    if (formData.time < schedule.startTime || formData.time > schedule.endTime) return false;
-
-    // 2. Check Conflicts
-    const start = new Date(`${formData.date}T${formData.time}`);
-    const duration = selectedService?.durationMin || 30;
-    const end = new Date(start.getTime() + duration * 60000);
-
-    const isBusy = busyTimes.some(b => {
-      const bStart = new Date(b.startTime);
-      const bEnd = new Date(b.endTime);
-      return (start < bEnd && end > bStart);
-    });
-
-    return !isBusy;
+    return !!selectedSlot && !selectedSlot.booked;
   };
 
   const handleBook = async () => {
@@ -529,18 +515,36 @@ export function PublicBookingPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 ml-1">Select Time</label>
-                    <input 
-                      type="time"
-                      className={`w-full px-6 py-4 border rounded-2xl focus:outline-none ${
-                        formData.doctorId && !isTimeAvailable() ? 'border-red-300 bg-red-50' : 'bg-gray-50 border-gray-100'
-                      }`}
-                      value={formData.time}
-                      onChange={e => setFormData({...formData, time: e.target.value})}
-                    />
-                    {formData.doctorId && !isTimeAvailable() && (
-                      <p className="text-[10px] text-red-500 font-bold ml-2">Time is unavailable or outside working hours.</p>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 ml-1">Select Time · اختر الموعد</label>
+                    {!formData.doctorId ? (
+                      <p className="text-xs text-gray-400 p-2">Choose a doctor to see available slots.</p>
+                    ) : slots.length === 0 ? (
+                      <p className="text-xs text-red-500 p-2">No slots available on this day.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-1">
+                        {slots.map((sl: any) => (
+                          <button
+                            key={sl.time}
+                            type="button"
+                            disabled={sl.booked}
+                            onClick={() => setFormData({...formData, time: sl.hhmm})}
+                            title={sl.booked ? 'Booked / محجوز' : 'Available / متاح'}
+                            className={`py-3 px-1 rounded-xl text-[11px] font-black transition-all border ${
+                              sl.booked
+                                ? 'bg-red-50 border-red-100 text-red-300 line-through cursor-not-allowed'
+                                : formData.time === sl.hhmm
+                                  ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                                  : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
+                            }`}
+                          >
+                            {sl.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {formData.doctorId && formData.time && !isTimeAvailable() && slots.length > 0 && (
+                      <p className="text-[10px] text-red-500 font-bold ml-2">Please pick one of the free slots above.</p>
                     )}
                   </div>
                 </div>

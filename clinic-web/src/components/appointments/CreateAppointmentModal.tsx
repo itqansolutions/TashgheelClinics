@@ -124,7 +124,8 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
 
     const startTime = new Date(values.time);
     const service = allServices.find((s: any) => s.id === values.serviceId);
-    const duration = service?.durationMin || 30;
+    const chosenSlot = (slots || []).find((sl: any) => sl.time === values.time);
+    const duration = chosenSlot?.durationMin || service?.durationMin || 30;
     const endTime = new Date(startTime.getTime() + duration * 60000);
 
     createMutation.mutate({
@@ -513,11 +514,15 @@ export function CreateAppointmentModal({ isOpen, onClose }: Props) {
                         <button
                           key={slot.time}
                           type="button"
+                          disabled={slot.booked}
                           onClick={() => setValue('time', slot.time)}
+                          title={slot.booked ? 'Booked / محجوز' : 'Available / متاح'}
                           className={`py-3 px-2 rounded-xl text-[11px] font-black transition-all border ${
-                            selectedTime === slot.time
-                              ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
-                              : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
+                            slot.booked
+                              ? 'bg-red-50 border-red-100 text-red-300 line-through cursor-not-allowed'
+                              : selectedTime === slot.time
+                                ? 'bg-brand-600 border-brand-600 text-white shadow-lg'
+                                : 'bg-white border-gray-100 text-gray-600 hover:border-brand-300 hover:bg-brand-50'
                           }`}
                         >
                           {slot.label}

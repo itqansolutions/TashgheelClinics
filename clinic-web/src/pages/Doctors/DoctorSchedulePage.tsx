@@ -48,7 +48,7 @@ export function DoctorSchedulePage() {
   };
 
   const addTimeSlot = (dayId: number) => {
-    setSchedules([...schedules, { dayOfWeek: dayId, startTime: '09:00', endTime: '17:00' }]);
+    setSchedules([...schedules, { dayOfWeek: dayId, startTime: '09:00', endTime: '17:00', slotDurationMin: 30 }]);
   };
 
   const removeSlot = (index: number) => {
@@ -153,6 +153,18 @@ export function DoctorSchedulePage() {
                               value={slot.endTime}
                               onChange={(e) => updateSlot(globalIndex, 'endTime', e.target.value)}
                             />
+                          </div>
+                          <div className="flex items-center gap-2" title="Average consultation duration / متوسط وقت الكشف">
+                            <input
+                              type="number"
+                              min={5}
+                              max={240}
+                              step={5}
+                              className="w-24 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500/20"
+                              value={slot.slotDurationMin ?? 30}
+                              onChange={(e) => updateSlot(globalIndex, 'slotDurationMin', e.target.value === '' ? null : Number(e.target.value))}
+                            />
+                            <span className="text-xs text-gray-500 font-bold whitespace-nowrap">min/visit · دقيقة/كشف</span>
                           </div>
                           <button 
                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
