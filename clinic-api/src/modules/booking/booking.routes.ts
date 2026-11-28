@@ -116,7 +116,9 @@ router.get('/doctors', async (req, res, next) => {
     const db = req.db || prisma;
     const doctors = await db.doctor.findMany({
       where: { isActive: true },
-      include: {
+      select: {
+        id: true,
+        fullName: true,
         user: { select: { fullName: true } },
         specialty: { select: { id: true, name: true } },
         schedules: {

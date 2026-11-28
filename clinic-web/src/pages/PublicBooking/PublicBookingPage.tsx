@@ -43,7 +43,13 @@ export function PublicBookingPage() {
   });
 
   useEffect(() => {
-    const config = slug ? { params: { slug }, headers: { 'x-tenant-slug': slug } } : {};
+    // A booking link without a clinic slug is not a real clinic page:
+    // send visitors to the Tashgheel Clinics product page instead.
+    if (!slug) {
+      window.location.replace('https://itqansolutions.org/tashgheel-clinics.html');
+      return;
+    }
+    const config = { params: { slug }, headers: { 'x-tenant-slug': slug } };
     setClinicError(null);
     axios.get('/api/public/doctors', config).then(res => setDoctors(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
     axios.get('/api/public/services', config).then(res => setServices(Array.isArray(res.data?.data) ? res.data.data : [])).catch(console.error);
@@ -198,6 +204,9 @@ export function PublicBookingPage() {
       </div>
     );
   }
+
+  // No clinic slug: redirecting to the product page (see effect above), render nothing.
+  if (!slug) return null;
 
   if (success) {
     return (

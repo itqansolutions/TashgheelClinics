@@ -204,19 +204,10 @@ export async function resolvePublicTenant(
       return;
     }
   } else {
-    // ONLY fall back to the active clinic if NO slug was specified at all (direct /book route)
-    tenant = await prisma.tenant.findFirst({
-      where:  { status: 'ACTIVE' },
-      orderBy: { id: 'asc' },
-      select: {
-        id:           true,
-        name:         true,
-        slug:         true,
-        status:       true,
-        logoUrl:      true,
-        primaryColor: true,
-      },
-    });
+    // No clinic slug: never guess a tenant. The slug-less /book page redirects
+    // visitors to the product site; API calls without a slug get a 404.
+    sendError(res, 'No clinic specified. Please use the clinic\'s own booking link.', 404);
+    return;
   }
 
   if (!tenant) {
