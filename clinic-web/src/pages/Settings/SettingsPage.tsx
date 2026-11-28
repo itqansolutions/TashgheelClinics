@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useT } from '@/i18n';
 import api from '@/api/client';
 import { useForm } from 'react-hook-form';
-import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt, ExternalLink, Copy, CheckCheck } from 'lucide-react';
+import { Building2, Tag, Globe, Plus, Edit, Trash2, Save, Check, User, Search, Key, Receipt, ExternalLink, Copy, CheckCheck, MessageCircle } from 'lucide-react';
+import { WhatsAppPanel } from './WhatsAppPanel';
 import { useClinicSettings, useUpdateClinicSettings, useLeadSourcesAdmin, useLeadSourceMutations } from '@/hooks/useSettings';
 import { useTenant } from '@/store/authStore';
 import { useInvoiceSettings, useUpdateInvoiceSettings } from '@/hooks/useFinance';
@@ -17,7 +18,7 @@ import { Modal } from '@/components/ui/Modal';
 import { clsx } from 'clsx';
 import { Badge } from '@/components/ui/Badge';
 
-type Tab = 'clinic' | 'lead-sources' | 'countries' | 'users' | 'invoice';
+type Tab = 'clinic' | 'lead-sources' | 'countries' | 'users' | 'invoice' | 'whatsapp';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'clinic',        label: 'Clinic Info',    icon: Building2 },
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'invoice',       label: 'Invoice Design', icon: Receipt   },
   { id: 'lead-sources',  label: 'Lead Sources',   icon: Tag       },
   { id: 'countries',     label: 'Countries',      icon: Globe     },
+  { id: 'whatsapp',      label: 'WhatsApp',       icon: MessageCircle },
 ];
 
 export function SettingsPage() {
@@ -59,6 +61,7 @@ export function SettingsPage() {
       {tab === 'invoice'      && <InvoiceDesignPanel />}
       {tab === 'lead-sources' && <LeadSourcesPanel />}
       {tab === 'countries'    && <CountriesPanel />}
+      {tab === 'whatsapp'     && <WhatsAppPanel />}
     </div>
   );
 }

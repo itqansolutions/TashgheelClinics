@@ -3,6 +3,8 @@ import { env } from './config/env';
 import { connectDB, disconnectDB, rawPrisma } from './config/db';
 import { startTrialExpirationWorker } from './workers/trialExpirationWorker';
 import { startBackupWorker } from './workers/backupWorker';
+import { startWhatsAppReminderWorker } from './workers/whatsappReminderWorker';
+import { resumeWhatsAppSessions } from './modules/whatsapp/whatsapp.service';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,6 +31,9 @@ async function bootstrap() {
   // Start background workers (after DB is ready)
   startTrialExpirationWorker();
   startBackupWorker();
+  startWhatsAppReminderWorker();
+  // Re-open WhatsApp sessions that were connected before this restart/deploy
+  resumeWhatsAppSessions().catch((e) => console.warn('[WA] resume error:', e?.message));
 
   const server = app.listen(env.PORT, () => {
     console.log(`\n🚀  Clinic API running on http://localhost:${env.PORT}`);

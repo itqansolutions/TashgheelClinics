@@ -262,6 +262,11 @@ router.post('/book', async (req, res, next) => {
       }
     });
 
+    // Fire-and-forget: WhatsApp booking confirmation from the clinic's own number (feature-flagged)
+    void import('../whatsapp/whatsapp.service')
+      .then((m) => m.sendBookingConfirmation(tenantId, appointment.id))
+      .catch((e) => console.warn('[WA] confirmation hook error:', e?.message));
+
     sendSuccess(res, appointment, 'Your booking request has been received!', 201);
   } catch (error) {
     next(error);

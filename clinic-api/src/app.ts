@@ -27,6 +27,7 @@ import dashboardRoutes  from './modules/dashboard/dashboard.routes';
 import appointmentRoutes from './modules/appointments/appointments.routes';
 import reportRoutes      from './modules/reports/reports.routes';
 import bookingRoutes     from './modules/booking/booking.routes';
+import whatsappRoutes    from './modules/whatsapp/whatsapp.routes';
 import stockRoutes       from './modules/stock/stock.routes';
 import financeRoutes     from './modules/finance/finance.routes';
 
@@ -82,6 +83,7 @@ app.use(`${API}/appointments`, tenantPipeline, appointmentRoutes);
 app.use(`${API}/reports`,      tenantPipeline, requireFeature('hasReports'), reportRoutes);
 app.use(`${API}/stock`,        tenantPipeline, requireFeature('hasStock'), stockRoutes);
 app.use(`${API}/finance`,      tenantPipeline, requireFeature('hasFinance'), financeRoutes);
+app.use(`${API}/whatsapp`,     tenantPipeline, whatsappRoutes);
 
 // Serve Frontend in Production
 if (!isDev) {
