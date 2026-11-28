@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { formatCurrency } from '@/utils/format';
+import { useMemo, useState } from 'react';
+import { formatCurrency, formatDate } from '@/utils/format';
 import { Calendar } from 'lucide-react';
+import { useT } from '@/i18n';
 
 interface BarData {
   label: string;
@@ -89,13 +90,29 @@ export function SimpleDonutChart({ data }: { data: { label: string, value: numbe
   );
 }
 
-export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: number }) {
+export interface CashFlowPoint {
+  label: string;
+  date: string;
+  income: number;
+  expense: number;
+  incomeByCategory?: Record<string, number>;
+  expenseByCategory?: Record<string, number>;
+}
+
+export function SimpleLineChart({ data, height = 200, selected, onSelect }: { data: CashFlowPoint[], height?: number, selected?: number | null, onSelect?: (i: number) => void }) {
+  const t = useT();
+  const [hovered, setHovered] = useState<number | null>(null);
   if (!data.length) return null;
+
+  const catLabel = (c: string) => {
+    const v = t(`cat.${c}`);
+    return v === `cat.${c}` ? c : v;
+  };
 
   const max = Math.max(...data.flatMap(d => [d.income, d.expense]), 1);
   const width = 600;
   const padding = 40;
-  
+
   const getX = (i: number) => {
     if (!width || isNaN(width) || data.length < 2) return (width || 600) / 2;
     return (i / (data.length - 1)) * (width - padding * 2) + padding;
@@ -107,10 +124,10 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
     return h - ((val / maxVal) * (h - padding * 2) + padding);
   };
 
-  const incomePoints = data.length > 1 
+  const incomePoints = data.length > 1
     ? data.map((d, i) => `${getX(i)},${getY(d.income)}`).join(' ')
     : `${getX(0)-1},${getY(data[0].income)} ${getX(0)+1},${getY(data[0].income)}`;
-    
+
   const expensePoints = data.length > 1
     ? data.map((d, i) => `${getX(i)},${getY(d.expense)}`).join(' ')
     : `${getX(0)-1},${getY(data[0].expense)} ${getX(0)+1},${getY(data[0].expense)}`;
@@ -119,10 +136,35 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
   const incomeAreaPoints = data.length > 1
     ? `${incomePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`
     : `${getX(0)-1},${height} ${getX(0)-1},${getY(data[0].income)} ${getX(0)+1},${getY(data[0].income)} ${getX(0)+1},${height}`;
-    
+
   const expenseAreaPoints = data.length > 1
     ? `${expensePoints} ${getX(data.length - 1)},${height} ${getX(0)},${height}`
     : `${getX(0)-1},${height} ${getX(0)-1},${getY(data[0].expense)} ${getX(0)+1},${getY(data[0].expense)} ${getX(0)+1},${height}`;
+
+  const colWidth = data.length > 1 ? (width - padding * 2) / (data.length - 1) : width;
+  const active = hovered ?? (selected ?? null);
+  const activeData = active != null ? data[active] : null;
+
+  const tooltipFor = (d: CashFlowPoint) => (
+    <div className="bg-gray-900 text-white rounded-2xl px-4 py-3 shadow-2xl text-start min-w-[190px] pointer-events-none">
+      <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 mb-2">{formatDate(d.date, 'dd MMM yyyy')}</p>
+      <div className="mb-2">
+        <p className="text-[10px] font-black text-sky-300 uppercase tracking-widest">{t('rep.income')}: {formatCurrency(d.income)}</p>
+        {Object.entries(d.incomeByCategory || {}).map(([cat, amt]) => (
+          <p key={cat} className="text-[10px] text-gray-300 font-semibold ps-2">{catLabel(cat)}: {formatCurrency(amt)}</p>
+        ))}
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-red-300 uppercase tracking-widest">{t('rep.expenses')}: {formatCurrency(d.expense)}</p>
+        {Object.entries(d.expenseByCategory || {}).map(([cat, amt]) => (
+          <p key={cat} className="text-[10px] text-gray-300 font-semibold ps-2">{catLabel(cat)}: {formatCurrency(amt)}</p>
+        ))}
+      </div>
+      <p className="text-[10px] font-black text-emerald-300 uppercase tracking-widest mt-2 pt-2 border-t border-gray-700">
+        {t('rep.net')}: {formatCurrency(d.income - d.expense)}
+      </p>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -141,14 +183,14 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
 
           {/* Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map(p => (
-            <line 
-              key={p} 
-              x1={padding} 
-              y1={getY(max * p)} 
-              x2={width - padding} 
-              y2={getY(max * p)} 
-              stroke="#f8fafc" 
-              strokeWidth="2" 
+            <line
+              key={p}
+              x1={padding}
+              y1={getY(max * p)}
+              x2={width - padding}
+              y2={getY(max * p)}
+              stroke="#f8fafc"
+              strokeWidth="2"
             />
           ))}
 
@@ -170,48 +212,69 @@ export function SimpleLineChart({ data, height = 200 }: { data: any[], height?: 
           <polyline
             fill="none"
             stroke="#ef4444"
-            strokeWidth="3"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
             points={expensePoints}
-            className="opacity-40"
           />
 
-          {/* Interactive Points */}
+          {/* Points */}
           {data.map((d, i) => (
-            <g key={i} className="group cursor-pointer">
-              <circle cx={getX(i)} cy={getY(d.income)} r="5" fill="#0ea5e9" className="hover:r-8 transition-all stroke-white stroke-2 shadow-xl" />
-              <circle cx={getX(i)} cy={getY(d.expense)} r="5" fill="#ef4444" className="hover:r-8 transition-all stroke-white stroke-2 shadow-xl" />
-              
-              {/* Tooltip on hover */}
-              <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <rect x={getX(i) - 40} y={getY(d.income) - 35} width="80" height="25" rx="8" fill="#0f172a" />
-                <text x={getX(i)} y={getY(d.income) - 18} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">
-                  {formatCurrency(d.income)}
-                </text>
-              </g>
+            <g key={`pt-${i}`} className="pointer-events-none">
+              <circle cx={getX(i)} cy={getY(d.income)} r={selected === i ? 7 : 5} fill="#0ea5e9" className="stroke-white stroke-2" />
+              <circle cx={getX(i)} cy={getY(d.expense)} r={selected === i ? 7 : 5} fill="#ef4444" className="stroke-white stroke-2" />
             </g>
           ))}
+
+          {/* Hover / click columns (one per point) */}
+          {data.map((_, i) => (
+            <rect
+              key={`col-${i}`}
+              x={data.length > 1 ? getX(i) - colWidth / 2 : 0}
+              y={0}
+              width={data.length > 1 ? colWidth : width}
+              height={height}
+              fill="transparent"
+              className="cursor-pointer"
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => onSelect && onSelect(i)}
+            />
+          ))}
         </svg>
+
+        {/* Rich HTML tooltip */}
+        {activeData != null && active != null && (
+          <div
+            className="absolute z-20"
+            style={{
+              left: `${Math.min(Math.max((getX(active) / width) * 100, 12), 88)}%`,
+              top: 0,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            {tooltipFor(activeData)}
+          </div>
+        )}
       </div>
-      
+
       <div className="flex justify-between items-center px-4 mt-8 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 group">
             <div className="w-4 h-1.5 bg-[#0ea5e9] rounded-full shadow-sm group-hover:w-6 transition-all"></div>
-            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Revenue</span>
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{t('rep.income')}</span>
           </div>
           <div className="flex items-center gap-2 group">
-            <div className="w-4 h-1.5 bg-[#ef4444] rounded-full opacity-40 shadow-sm group-hover:w-6 transition-all"></div>
-            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Outflow</span>
+            <div className="w-4 h-1.5 bg-[#ef4444] rounded-full shadow-sm group-hover:w-6 transition-all"></div>
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{t('rep.expenses')}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">
           <Calendar className="w-3 h-3" />
-          {data[0]?.label} — {data[data.length - 1]?.label}
+          {data[0]?.label} - {data[data.length - 1]?.label}
         </div>
       </div>
+      <p className="text-[10px] text-gray-400 font-semibold mt-3 text-center">{t('rep.hint')}</p>
     </div>
   );
 }
-

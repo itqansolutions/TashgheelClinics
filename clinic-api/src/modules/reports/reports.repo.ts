@@ -105,21 +105,65 @@ export class ReportsRepository {
   }
 
   async getCashFlow(db: TenantPrismaClient) {
-    const transactions = await db.financialTransaction.findMany({
-      orderBy: { date: 'asc' }
-    });
+    const [transactions, purchases] = await Promise.all([
+      db.financialTransaction.findMany({
+        orderBy: { date: 'asc' }
+      }),
+      // Inventory purchases are real money out and must show in the flow like other expenses
+      db.purchase.findMany({
+        where: { status: { not: 'Cancelled' } },
+        select: {
+          id: true,
+          invoiceNo: true,
+          totalAmount: true,
+          purchaseDate: true,
+          vendor: { select: { name: true } }
+        },
+        orderBy: { purchaseDate: 'asc' }
+      })
+    ]);
 
     const flow: Record<string, any> = {};
+    const dayKey = (d: any) => (d ? new Date(d) : new Date()).toISOString().split('T')[0];
+    const ensure = (date: string) => {
+      if (!flow[date]) flow[date] = { date, income: 0, expense: 0, incomeByCategory: {} as Record<string, number>, expenseByCategory: {} as Record<string, number>, items: [] as any[] };
+      return flow[date];
+    };
 
     transactions.forEach(tx => {
-      const date = tx.date ? new Date(tx.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-      if (!flow[date]) flow[date] = { date, income: 0, expense: 0 };
-      
-      if (tx.type === 'Income') flow[date].income += Number(tx.amount || 0);
-      else flow[date].expense += Number(tx.amount || 0);
+      const day = ensure(dayKey(tx.date));
+      const amount = Number(tx.amount || 0);
+      const category = tx.category || 'Other';
+      const isIncome = tx.type === 'Income';
+      if (isIncome) {
+        day.income += amount;
+        day.incomeByCategory[category] = (day.incomeByCategory[category] || 0) + amount;
+      } else {
+        day.expense += amount;
+        day.expenseByCategory[category] = (day.expenseByCategory[category] || 0) + amount;
+      }
+      day.items.push({
+        kind: isIncome ? 'income' : 'expense',
+        category,
+        description: tx.description || '',
+        amount
+      });
     });
 
-    return Object.values(flow);
+    purchases.forEach(p => {
+      const day = ensure(dayKey(p.purchaseDate));
+      const amount = Number(p.totalAmount || 0);
+      day.expense += amount;
+      day.expenseByCategory['Inventory Purchases'] = (day.expenseByCategory['Inventory Purchases'] || 0) + amount;
+      day.items.push({
+        kind: 'expense',
+        category: 'Inventory Purchases',
+        description: `Purchase ${p.invoiceNo || '#' + p.id}${p.vendor?.name ? ' - ' + p.vendor.name : ''}`,
+        amount
+      });
+    });
+
+    return Object.values(flow).sort((a, b) => a.date.localeCompare(b.date));
   }
 }
 

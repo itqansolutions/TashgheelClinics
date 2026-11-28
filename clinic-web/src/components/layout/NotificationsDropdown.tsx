@@ -58,7 +58,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
       {/* Invisible backdrop to close the dropdown when clicking outside */}
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-100 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 flex flex-col max-h-[500px]">
+      <div className="absolute end-0 mt-2 w-96 max-w-[calc(100vw-1rem)] bg-white border border-gray-100 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 flex flex-col max-h-[500px]">
         {/* Header */}
         <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div className="flex items-center gap-2">

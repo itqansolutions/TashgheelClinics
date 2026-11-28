@@ -35,7 +35,16 @@ const dict: Record<Lang, Record<string, string>> = {
     'users.resetDone': 'Password reset. Share the new password with the user.', 'users.reset': 'Reset',
     'patients.title': 'Patients', 'patients.new': 'New Patient',
     'appts.title': 'Appointments', 'appts.subtitle': 'Manage and schedule patient visits', 'appts.new': 'New Appointment',
-    'appts.copyLink': 'Copy Online Booking Link',
+        'appts.copyLink': 'Copy Online Booking Link',
+    'doc.workingHours': 'Working hours', 'doc.noSchedule': 'No working hours set',
+    'day.0': 'Sun', 'day.1': 'Mon', 'day.2': 'Tue', 'day.3': 'Wed', 'day.4': 'Thu', 'day.5': 'Fri', 'day.6': 'Sat',
+    'rep.income': 'Income', 'rep.expenses': 'Expenses', 'rep.net': 'Net',
+    'rep.hint': 'Hover a point for totals - click it for the full day breakdown',
+    'rep.dayDetails': "Day's transactions", 'rep.noMovements': 'No transactions recorded this day',
+    'rep.close': 'Close',
+    'cat.Medical Services': 'Medical Services', 'cat.Product Sales': 'Product Sales',
+    'cat.Inventory Purchases': 'Inventory Purchases', 'cat.Other': 'Other',
+
   },
   ar: {
     'app.name': 'تشغيل كلينكس',
@@ -67,7 +76,16 @@ const dict: Record<Lang, Record<string, string>> = {
     'users.resetDone': 'تم تغيير كلمة السر. ابعتها للمستخدم.', 'users.reset': 'تغيير',
     'patients.title': 'المرضى', 'patients.new': 'مريض جديد',
     'appts.title': 'المواعيد', 'appts.subtitle': 'إدارة وجدولة زيارات المرضى', 'appts.new': 'موعد جديد',
-    'appts.copyLink': 'نسخ رابط الحجز أونلاين',
+        'appts.copyLink': 'نسخ رابط الحجز أونلاين',
+    'doc.workingHours': 'مواعيد العمل', 'doc.noSchedule': 'لسه مفيش مواعيد عمل متحددة',
+    'day.0': 'الأحد', 'day.1': 'الاتنين', 'day.2': 'التلاتة', 'day.3': 'الأربع', 'day.4': 'الخميس', 'day.5': 'الجمعة', 'day.6': 'السبت',
+    'rep.income': 'الإيراد', 'rep.expenses': 'المصروفات', 'rep.net': 'الصافي',
+    'rep.hint': 'قف على أي نقطة تشوف الإجمالي - ودوس عليها لتفاصيل اليوم كله',
+    'rep.dayDetails': 'حركات اليوم', 'rep.noMovements': 'مفيش حركات مسجلة في اليوم ده',
+    'rep.close': 'قفل',
+    'cat.Medical Services': 'كشف وخدمات طبية', 'cat.Product Sales': 'مبيعات منتجات',
+    'cat.Inventory Purchases': 'مشتريات مخزون', 'cat.Other': 'أخرى',
+
   },
 };
 

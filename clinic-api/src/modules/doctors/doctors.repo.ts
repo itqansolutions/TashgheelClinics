@@ -4,6 +4,11 @@ import { PaginationResult } from '../../utils/pagination';
 const INCLUDE = {
   user:      { select: { id: true, fullName: true, email: true } },
   specialty: { select: { id: true, name: true } },
+  schedules: {
+    where: { isActive: true },
+    select: { dayOfWeek: true, startTime: true, endTime: true },
+    orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] as any,
+  },
 };
 
 export const doctorsRepo = {

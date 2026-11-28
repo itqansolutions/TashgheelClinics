@@ -10,9 +10,17 @@ import {
   Activity
 } from 'lucide-react';
 import { SimpleBarChart, SimpleDonutChart, SimpleLineChart } from '@/components/ui/Charts';
+import { useT } from '@/i18n';
+import { X } from 'lucide-react';
 
 export function ReportsPage() {
+  const t = useT();
+  const catLabel = (c: string) => {
+    const v = t(`cat.${c}`);
+    return v === `cat.${c}` ? c : v;
+  };
   const [summary, setSummary] = useState<any>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [financeSum, setFinanceSum] = useState<any>(null);
   const [aptStats, setAptStats] = useState<any[]>([]);
   const [revenueDoctor, setRevenueDoctor] = useState<any[]>([]);
@@ -131,14 +139,56 @@ export function ReportsPage() {
           </div>
           <div className="flex-1">
             {cashFlow.length > 0 ? (
-              <SimpleLineChart 
-                data={cashFlow.map(f => ({ label: formatDate(f.date, 'MMM d'), income: f.income, expense: f.expense }))}
+              <SimpleLineChart
+                data={cashFlow.map(f => ({
+                  label: formatDate(f.date, 'MMM d'),
+                  date: f.date,
+                  income: f.income,
+                  expense: f.expense,
+                  incomeByCategory: f.incomeByCategory,
+                  expenseByCategory: f.expenseByCategory,
+                }))}
                 height={300}
+                selected={selectedDay}
+                onSelect={(i) => setSelectedDay(selectedDay === i ? null : i)}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-gray-300 text-xs italic">Insufficient data for trend mapping</div>
             )}
           </div>
+
+          {/* Selected day breakdown */}
+          {selectedDay != null && cashFlow[selectedDay] && (
+            <div className="mt-8 bg-gray-50/70 border border-gray-100 rounded-3xl p-6 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">
+                  {t('rep.dayDetails')}: {formatDate(cashFlow[selectedDay].date, 'dd MMM yyyy')}
+                </h4>
+                <button onClick={() => setSelectedDay(null)} className="flex items-center gap-1 text-[10px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest">
+                  <X className="w-3.5 h-3.5" />{t('rep.close')}
+                </button>
+              </div>
+              {(cashFlow[selectedDay].items || []).length === 0 ? (
+                <p className="text-xs text-gray-400 italic">{t('rep.noMovements')}</p>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pe-1">
+                  {cashFlow[selectedDay].items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-2.5">
+                      <div className="min-w-0">
+                        <span className={`inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border mb-1 ${item.kind === 'income' ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                          {catLabel(item.category)}
+                        </span>
+                        {item.description && <p className="text-[11px] text-gray-500 truncate">{item.description}</p>}
+                      </div>
+                      <p className={`text-sm font-mono font-black shrink-0 ${item.kind === 'income' ? 'text-sky-600' : 'text-red-500'}`}>
+                        {item.kind === 'income' ? '+' : '-'}{formatCurrency(item.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Doctor Performance Bar Chart */}

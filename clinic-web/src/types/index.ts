@@ -145,6 +145,13 @@ export interface Doctor {
   isActive: boolean;
   user?: Pick<User, 'id' | 'fullName' | 'email'>;
   specialty: Pick<Specialty, 'id' | 'name'>;
+  schedules?: DoctorScheduleSlot[];
+}
+
+export interface DoctorScheduleSlot {
+  dayOfWeek: number; // 0 = Sunday ... 6 = Saturday
+  startTime: string; // "HH:MM"
+  endTime: string;
 }
 
 // ── Specialty & Service ───────────────────────────────────────────────────

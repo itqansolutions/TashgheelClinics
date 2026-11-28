@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { drName } from '@/i18n';
+import { drName, useT } from '@/i18n';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Stethoscope, Percent, Edit, UserX, Search } from 'lucide-react';
+import { Plus, Stethoscope, Percent, Edit, UserX, Search, Clock } from 'lucide-react';
 import {
   useDoctorList, useCreateDoctor, useUpdateDoctor,
   useDeactivateDoctor, useDoctorUsers
@@ -34,6 +34,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function DoctorsPage() {
+  const t = useT();
   const [search, setSearch] = useState('');
   const [page, setPage]     = useState(1);
   const [modal, setModal]   = useState<{ open: boolean; editing?: Doctor }>({ open: false });
@@ -136,6 +137,22 @@ export function DoctorsPage() {
                     <span className="flex items-center gap-1"><Percent className="w-3 h-3 text-gray-400" />{`${Number(doc.commission)}% commission`}</span>
                     <span className="text-gray-200">|</span>
                     <span>{`Max ${Number(doc.discount)}% off`}</span>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />{t('doc.workingHours')}
+                    </p>
+                    {doc.schedules && doc.schedules.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {doc.schedules.map((s, i) => (
+                          <span key={i} className="text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-100 rounded-lg px-1.5 py-0.5 whitespace-nowrap">
+                            {t(`day.${s.dayOfWeek}`)} {s.startTime} - {s.endTime}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-400 italic">{t('doc.noSchedule')}</p>
+                    )}
                   </div>
                   <p className="text-[11px] text-gray-400 truncate mb-3">{doc.user?.email || 'No system account'}</p>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
