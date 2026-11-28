@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { drName } from '@/i18n';
+import { drName, useT } from '@/i18n';
 import { 
   Bell, Check, X, Calendar, User, Clock, 
   ArrowRight, Sparkles 
@@ -21,6 +21,7 @@ type TabId = 'online' | 'patients' | 'upcoming';
 
 export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, isPendingLoading }: Props) {
   const navigate = useNavigate();
+  const t = useT();
   const [activeTab, setActiveTab] = useState<TabId>('online');
   const updateMutation = useUpdateAppointment();
 
@@ -63,11 +64,11 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
         <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-brand-600 animate-swing" />
-            <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest">Notifications</h3>
+            <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest">{t('notif.title')}</h3>
           </div>
           {pendingAppointments.length > 0 && (
             <span className="text-[9px] font-black uppercase text-brand-700 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-full">
-              {pendingAppointments.length} pending reservation{pendingAppointments.length !== 1 ? 's' : ''}
+              {pendingAppointments.length} {pendingAppointments.length !== 1 ? t('notif.pendingBadgePlural') : t('notif.pendingBadge')}
             </span>
           )}
         </div>
@@ -85,7 +86,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                   : 'text-gray-400 hover:text-gray-600'
               )}
             >
-              {tab === 'online' ? 'Online Portal' : tab === 'patients' ? 'New Patients' : 'Upcoming'}
+              {t(`notif.tab.${tab}`)}
             </button>
           ))}
         </div>
@@ -103,8 +104,8 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
               ) : pendingAppointments.length === 0 ? (
                 <div className="text-center py-10 text-gray-400">
                   <Sparkles className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-xs font-bold text-gray-600">All caught up!</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">No pending online reservations.</p>
+                  <p className="text-xs font-bold text-gray-600">{t('notif.allCaughtUp')}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{t('notif.noPending')}</p>
                 </div>
               ) : (
                 pendingAppointments.map((appt) => (
@@ -120,7 +121,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-gray-800 truncate">{appt.patient?.fullName}</p>
                         <p className="text-[9px] font-semibold text-brand-600 truncate mt-0.5 uppercase">
-                          {appt.service?.name || 'Primary Consultation'}
+                          {appt.service?.name || t('notif.primaryConsultation')}
                         </p>
                         <div className="flex items-center gap-1 text-[9px] text-gray-400 mt-1">
                           <Clock className="w-3 h-3 text-gray-300" />
@@ -137,7 +138,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                         className="flex-1 py-1.5 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-600 text-[10px] font-bold flex items-center justify-center gap-1 transition-all disabled:opacity-50"
                       >
                         <X className="w-3 h-3" />
-                        Reject
+                        {t('notif.reject')}
                       </button>
                       <button
                         onClick={(e) => handleStatusUpdate(appt.id, 'Confirmed', e)}
@@ -145,7 +146,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                         className="flex-1 py-1.5 rounded-lg border border-green-100 bg-green-50/50 hover:bg-green-50 text-green-600 text-[10px] font-bold flex items-center justify-center gap-1 transition-all disabled:opacity-50 shadow-sm"
                       >
                         <Check className="w-3 h-3" />
-                        Accept
+                        {t('notif.accept')}
                       </button>
                     </div>
                   </div>
@@ -164,7 +165,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
               ) : recentPatients.length === 0 ? (
                 <div className="text-center py-10 text-gray-400">
                   <User className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-xs text-gray-500">No patients registered.</p>
+                  <p className="text-xs text-gray-500">{t('notif.noPatients')}</p>
                 </div>
               ) : (
                 recentPatients.map((patient: any) => (
@@ -179,7 +180,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
                       </div>
                       <div>
                         <p className="text-xs font-bold text-gray-800">{patient.fullName}</p>
-                        <p className="text-[9px] text-gray-400 font-mono">{patient.code} · {patient.phone || 'No phone'}</p>
+                        <p className="text-[9px] text-gray-400 font-mono">{patient.code} · {patient.phone || t('notif.noPhone')}</p>
                       </div>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
@@ -199,7 +200,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
               ) : upcomingAppointments.length === 0 ? (
                 <div className="text-center py-10 text-gray-400">
                   <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-xs text-gray-500 font-bold">No upcoming appointments confirmed.</p>
+                  <p className="text-xs text-gray-500 font-bold">{t('notif.noUpcoming')}</p>
                 </div>
               ) : (
                 upcomingAppointments.map((appt: any) => (
@@ -235,7 +236,7 @@ export function NotificationsDropdown({ isOpen, onClose, pendingAppointments, is
             onClick={() => handleNavigate('/appointments')}
             className="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest"
           >
-            Manage Appointments Calendar
+            {t('notif.manageCalendar')}
           </button>
         </div>
       </div>
