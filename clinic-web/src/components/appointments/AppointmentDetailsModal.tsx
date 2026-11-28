@@ -39,8 +39,8 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Props)
         data: { status: newStatus } 
       });
       onClose(); // Close modal on success
-    } catch (err) {
-      alert('Failed to update status');
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to update status');
     }
   };
 

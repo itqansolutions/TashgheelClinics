@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { financeController } from './finance.controller';
 import { authenticate } from '../../middleware/auth';
-import { rbac } from '../../middleware/rbac';
+import { rbac, adminOnly } from '../../middleware/rbac';
 
 const router = Router();
 
@@ -13,6 +13,7 @@ router.get('/queue', financeController.getQueue);
 router.get('/transactions', financeController.getTransactions);
 router.post('/transactions', financeController.createTransaction);
 router.post('/collect', financeController.collectPayment);
+router.post('/transactions/:id/void', adminOnly, financeController.voidTransaction);
 router.get('/settings', financeController.getSettings);
 router.put('/settings', financeController.updateSettings);
 

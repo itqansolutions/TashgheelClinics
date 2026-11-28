@@ -14,6 +14,13 @@ router.get('/kpis', async (req: Request, res: Response, next: NextFunction) => {
     const { start, end: endExcl } = dayRange(toZoned(new Date(), tz).ymd, tz);
     const end = new Date(endExcl.getTime() - 1);
 
+    // Payments whose income entry was voided must not count toward dashboard revenue
+    const voidedIncomeTx = await db.financialTransaction.findMany({
+      where: { type: 'Income', referenceType: 'Appointment', voidedAt: { not: null } },
+      select: { referenceId: true }
+    });
+    const voidedApptIds = voidedIncomeTx.map((t: any) => t.referenceId).filter((x: any) => x != null);
+
     const [
       totalPatients,
       todayAppointments,
@@ -29,7 +36,7 @@ router.get('/kpis', async (req: Request, res: Response, next: NextFunction) => {
       }),
 
       db.payment.aggregate({
-        where:   { paidAt: { gte: start, lte: end } },
+        where:   { paidAt: { gte: start, lte: end }, appointmentId: { notIn: voidedApptIds } },
         _sum:    { amount: true },
       }),
 

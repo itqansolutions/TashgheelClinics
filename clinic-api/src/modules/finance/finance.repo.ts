@@ -23,10 +23,23 @@ export class FinanceRepository {
   }
 
   async getTransactionLedger(db: TenantPrismaClient, filters: any = {}) {
-    return db.financialTransaction.findMany({
+    const rows = await db.financialTransaction.findMany({
       where: filters,
       include: { user: { select: { fullName: true } } },
       orderBy: { createdAt: 'desc' }
+    });
+    // Resolve voided-by display names (plain FK, no relation on the model)
+    const voidedByIds = [...new Set(rows.map((r: any) => r.voidedById).filter(Boolean))] as number[];
+    if (voidedByIds.length === 0) return rows;
+    const users = await db.user.findMany({ where: { id: { in: voidedByIds } }, select: { id: true, fullName: true } });
+    const nameById = new Map(users.map((u: any) => [u.id, u.fullName]));
+    return rows.map((r: any) => ({ ...r, voidedByName: r.voidedById ? nameById.get(r.voidedById) || null : null }));
+  }
+
+  async voidTransaction(db: TenantPrismaClient, id: number, userId: number, reason: string) {
+    return db.financialTransaction.update({
+      where: { id },
+      data: { voidedAt: new Date(), voidedById: userId, voidReason: reason }
     });
   }
 

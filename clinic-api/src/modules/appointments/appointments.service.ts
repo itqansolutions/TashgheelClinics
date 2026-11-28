@@ -13,6 +13,33 @@ async function assertRefsInTenant(db: TenantPrismaClient, d: any) {
   }
 }
 
+// Cancelling a PAID appointment is admin-only (Ali's rule, Nov 28 2026).
+// Unpaid appointments cancel as before, with no ledger impact.
+function isAdminRole(role?: string) {
+  const r = (role || '').trim().toLowerCase();
+  return r === 'admin' || r === 'system admin';
+}
+
+async function assertPaidCancelAllowed(db: TenantPrismaClient, id: number, user?: { role?: string }) {
+  const paidAgg = await db.payment.aggregate({ where: { appointmentId: id }, _sum: { amount: true } });
+  const paid = Number(paidAgg._sum?.amount || 0);
+  if (paid > 0 && !isAdminRole(user?.role)) {
+    throw new AppError('Only an admin can cancel an appointment that has a collected payment', 403);
+  }
+}
+
+// Void (never delete) the income ledger entries tied to a cancelled appointment
+async function voidAppointmentIncome(db: TenantPrismaClient, id: number, userId?: number) {
+  await db.financialTransaction.updateMany({
+    where: { referenceType: 'Appointment', referenceId: id, type: 'Income', voidedAt: null },
+    data: {
+      voidedAt: new Date(),
+      voidedById: userId ?? null,
+      voidReason: `Appointment #${id} cancelled`
+    }
+  });
+}
+
 export const appointmentsService = {
   async list(db: TenantPrismaClient, filters: any, page: number, limit: number) {
     const pg = paginate({ page, limit });
@@ -59,24 +86,35 @@ export const appointmentsService = {
     return appointmentsRepo.update(db, id, data);
   },
 
-  async cancel(db: TenantPrismaClient, id: number) {
+  async cancel(db: TenantPrismaClient, id: number, user?: { id?: number; sub?: number; role?: string }) {
     await this.getById(db, id);
-    return appointmentsRepo.update(db, id, { status: 'Cancelled' });
+    await assertPaidCancelAllowed(db, id, user);
+    const updated = await appointmentsRepo.update(db, id, { status: 'Cancelled' });
+    await voidAppointmentIncome(db, id, user?.id ?? user?.sub);
+    return updated;
   },
 
-  async updateStatus(db: TenantPrismaClient, id: number, status: string) {
+  async updateStatus(db: TenantPrismaClient, id: number, status: string, user?: { id?: number; sub?: number; role?: string }) {
     const validStatuses = ['Pending', 'Confirmed', 'Done', 'Cancelled'];
     if (!validStatuses.includes(status)) {
       throw new AppError(`Invalid status: ${status}`, 400);
     }
     const appointment = await this.getById(db, id);
-    
+
+    if (status === 'Cancelled') {
+      await assertPaidCancelAllowed(db, id, user);
+    }
+
     const updateData: any = { status };
     if (status === 'Done' && !appointment.priceCharged) {
       updateData.priceCharged = Number(appointment.service?.price || 0);
     }
 
-    return appointmentsRepo.update(db, id, updateData);
+    const updated = await appointmentsRepo.update(db, id, updateData);
+    if (status === 'Cancelled') {
+      await voidAppointmentIncome(db, id, user?.id ?? user?.sub);
+    }
+    return updated;
   },
 
   async getDoctorAppointments(db: TenantPrismaClient, userId: number, filters: any, page: number, limit: number) {

@@ -50,6 +50,27 @@ export class FinanceController {
     res.json({ success: true, data: payment });
   }
 
+  async voidTransaction(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const reason = String(req.body?.reason || '').trim();
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, message: 'A valid transaction id is required' });
+    }
+    if (!reason) {
+      return res.status(400).json({ success: false, message: 'A void reason is required' });
+    }
+    const userId = (req as any).user?.id || (req as any).user?.sub;
+    const existing = await req.db!.financialTransaction.findFirst({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Transaction not found' });
+    }
+    if ((existing as any).voidedAt) {
+      return res.status(400).json({ success: false, message: 'Transaction is already voided' });
+    }
+    const tx = await financeRepo.voidTransaction(req.db!, id, userId, reason);
+    res.json({ success: true, data: tx });
+  }
+
   async getSettings(req: Request, res: Response) {
     const settings = await financeRepo.getInvoiceSettings(req.db!);
     res.json({ success: true, data: settings });

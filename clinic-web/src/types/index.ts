@@ -307,5 +307,9 @@ export interface FinancialTransaction {
   referenceId?: number;
   userId: number;
   createdAt: string;
+  voidedAt?: string | null;
+  voidedById?: number | null;
+  voidReason?: string | null;
+  voidedByName?: string | null;
   user?: { fullName: string };
 }

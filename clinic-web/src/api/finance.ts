@@ -14,6 +14,9 @@ export const financeApi = {
   collectPayment: (data: { appointmentId: number; amount: number; method: string; notes?: string }) =>
     api.post<ApiResponse<any>>('/finance/collect', data),
     
+  voidTransaction: (id: number, reason: string) =>
+    api.post<ApiResponse<FinancialTransaction>>(`/finance/transactions/${id}/void`, { reason }),
+
   getSettings: () =>
     api.get<ApiResponse<Record<string, string>>>('/finance/settings'),
     

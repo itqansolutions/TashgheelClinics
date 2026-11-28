@@ -746,6 +746,11 @@ model FinancialTransaction {
   userId        Int?
   createdAt     DateTime @default(now())
 
+  // Void (admin-only cancellation; entry is never deleted)
+  voidedAt      DateTime?
+  voidedById    Int?
+  voidReason    String?
+
   // Relations
   tenant Tenant? @relation(fields: [tenantId], references: [id])
   user   User?   @relation(fields: [userId], references: [id])

@@ -27,6 +27,17 @@ export function useFinanceTransactions(params: any = {}) {
   });
 }
 
+export function useVoidTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) => financeApi.voidTransaction(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance'] });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    }
+  });
+}
+
 export function useCreateFinancialTransaction() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -16,11 +16,14 @@ import {
   CheckCircle2, 
   Clock, 
   Printer,
+  Ban,
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { CollectPaymentModal } from './modals/CollectPaymentModal';
+import { VoidTransactionModal } from './modals/VoidTransactionModal';
+import { useRole } from '@/store/authStore';
 import { MakeTransactionModal } from './modals/MakeTransactionModal';
 import { InvoiceTemplate } from '@/components/finance/InvoiceTemplate';
 import { appointmentsApi } from '@/api/appointments';
@@ -31,6 +34,10 @@ export function FinancePage() {
   const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [voidTarget, setVoidTarget] = useState<any>(null);
+  const role = useRole();
+  const roleStr = (role || '').toLowerCase();
+  const isAdmin = roleStr === 'admin' || roleStr === 'system admin';
 
   const invoiceRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
@@ -246,36 +253,55 @@ export function FinancePage() {
             isLedgerLoading ? <PageLoader /> : (
               <div className="space-y-3">
                 {ledger.map((tx: any) => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
+                  <div key={tx.id} className={`flex items-center justify-between p-4 bg-white rounded-2xl border transition-all group ${tx.voidedAt ? 'border-red-100 bg-red-50/30 opacity-75' : 'border-gray-100 hover:shadow-md'}`}>
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'Income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.voidedAt ? 'bg-gray-100 text-gray-400' : tx.type === 'Income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                         {tx.type === 'Income' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-gray-900">{tx.category || 'General'}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-sm font-bold ${tx.voidedAt ? 'text-gray-500 line-through' : 'text-gray-900'}`}>{tx.category || 'General'}</p>
                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${tx.method === 'Cash' ? 'bg-orange-50 border-orange-100 text-orange-600' : 'bg-blue-50 border-blue-100 text-blue-600'}`}>
                             {tx.method}
                           </span>
+                          {tx.voidedAt && (
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 border border-red-200 text-red-700 tracking-widest">
+                              ملغي · VOID
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-gray-500 font-medium">{tx.description} · {formatDate(tx.date)}</p>
+                        {tx.voidedAt && (
+                          <p className="text-[10px] text-red-500 font-bold mt-0.5">
+                            Voided by {tx.voidedByName || 'Admin'} · {formatDate(tx.voidedAt)}{tx.voidReason ? ` · ${tx.voidReason}` : ''}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right flex items-center gap-4">
                       <div className="text-right">
-                        <p className={`text-base font-mono font-black ${tx.type === 'Income' ? 'text-brand-600' : 'text-red-600'}`}>
+                        <p className={`text-base font-mono font-black ${tx.voidedAt ? 'text-gray-400 line-through' : tx.type === 'Income' ? 'text-brand-600' : 'text-red-600'}`}>
                           {tx.type === 'Income' ? '+' : '-'}{formatCurrency(tx.amount)}
                         </p>
                         <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{`Added by ${tx.user?.fullName || ''}`}</p>
                       </div>
-                      
-                      {tx.referenceType === 'Appointment' && (
+
+                      {!tx.voidedAt && tx.referenceType === 'Appointment' && (
                         <button 
                           onClick={() => handlePrintLedger(tx)}
                           className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-brand-600"
                           title="Print Invoice"
                         >
                           <Printer className="w-5 h-5" />
+                        </button>
+                      )}
+                      {!tx.voidedAt && isAdmin && (
+                        <button
+                          onClick={() => setVoidTarget(tx)}
+                          className="p-2 hover:bg-red-100 rounded-xl transition-all text-gray-400 hover:text-red-600"
+                          title="Void transaction"
+                        >
+                          <Ban className="w-5 h-5" />
                         </button>
                       )}
                     </div>
@@ -296,6 +322,12 @@ export function FinancePage() {
       <MakeTransactionModal 
         isOpen={isTxModalOpen}
         onClose={() => setIsTxModalOpen(false)}
+      />
+
+      <VoidTransactionModal
+        isOpen={!!voidTarget}
+        onClose={() => setVoidTarget(null)}
+        transaction={voidTarget}
       />
 
       <div className="hidden">

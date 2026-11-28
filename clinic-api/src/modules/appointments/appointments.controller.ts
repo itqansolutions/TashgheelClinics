@@ -63,7 +63,7 @@ export const appointmentsController = {
 
   async cancel(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await appointmentsService.cancel(req.db!, Number(req.params.id));
+      const data = await appointmentsService.cancel(req.db!, Number(req.params.id), (req as any).user);
       sendSuccess(res, data, 'Appointment cancelled');
     } catch (error) {
       next(error);
@@ -73,7 +73,7 @@ export const appointmentsController = {
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { status } = req.body;
-      const data = await appointmentsService.updateStatus(req.db!, Number(req.params.id), status);
+      const data = await appointmentsService.updateStatus(req.db!, Number(req.params.id), status, (req as any).user);
       sendSuccess(res, data, `Appointment ${status}`);
     } catch (error) {
       next(error);

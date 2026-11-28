@@ -4,19 +4,19 @@ export class ReportsRepository {
   async getFinancialSummary(db: TenantPrismaClient) {
     const [servicesIncome, productsIncome, otherIncome, generalExpenses, purchaseTotal] = await Promise.all([
       db.financialTransaction.aggregate({
-        where: { type: 'Income', category: 'Medical Services' },
+        where: { type: 'Income', category: 'Medical Services', voidedAt: null },
         _sum: { amount: true }
       }),
       db.financialTransaction.aggregate({
-        where: { type: 'Income', category: 'Product Sales' },
+        where: { type: 'Income', category: 'Product Sales', voidedAt: null },
         _sum: { amount: true }
       }),
       db.financialTransaction.aggregate({
-        where: { type: 'Income', category: { notIn: ['Medical Services', 'Product Sales'] } },
+        where: { type: 'Income', category: { notIn: ['Medical Services', 'Product Sales'] }, voidedAt: null },
         _sum: { amount: true }
       }),
       db.financialTransaction.aggregate({
-        where: { type: 'Expense', category: { not: 'Procurement' } },
+        where: { type: 'Expense', category: { not: 'Procurement' }, voidedAt: null },
         _sum: { amount: true }
       }),
       db.purchase.aggregate({
@@ -47,12 +47,12 @@ export class ReportsRepository {
 
   async getIncomeBreakdown(db: TenantPrismaClient) {
     const services = await db.financialTransaction.aggregate({
-      where: { type: 'Income', category: 'Medical Services' },
+      where: { type: 'Income', category: 'Medical Services', voidedAt: null },
       _sum: { amount: true }
     });
     
     const products = await db.financialTransaction.aggregate({
-      where: { type: 'Income', category: 'Product Sales' },
+      where: { type: 'Income', category: 'Product Sales', voidedAt: null },
       _sum: { amount: true }
     });
 
@@ -107,6 +107,7 @@ export class ReportsRepository {
   async getCashFlow(db: TenantPrismaClient) {
     const [transactions, purchases] = await Promise.all([
       db.financialTransaction.findMany({
+        where: { voidedAt: null },
         orderBy: { date: 'asc' }
       }),
       // Inventory purchases are real money out and must show in the flow like other expenses
