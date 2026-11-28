@@ -232,50 +232,12 @@ export const appointmentsRepo = {
         }
       }
 
-      // 6. Financial Transaction (Sales/Revenue) Sync - Atomic & Idempotent
-      const finalStatus = appointment.status;
-      const totalAmount = Number(appointment.priceCharged || 0);
-
-      const existingFinTx = await db.financialTransaction.findFirst({
-        where: {
-          referenceType: 'Appointment',
-          referenceId: id
-        }
-      });
-
-      const patientName = appointment.patient?.fullName || '';
-      const txDescription = `Appointment #${id} - ${patientName}`;
-
-      if (finalStatus === 'Done' && totalAmount > 0) {
-        if (existingFinTx) {
-          await db.financialTransaction.update({
-            where: { id: existingFinTx.id },
-            data: {
-              amount: totalAmount,
-              type: 'Income',
-              category: 'Service',
-              description: txDescription,
-            }
-          });
-        } else {
-          await db.financialTransaction.create({
-            data: {
-              type: 'Income',
-              category: 'Service',
-              amount: totalAmount,
-              method: 'Cash',
-              referenceType: 'Appointment',
-              referenceId: id,
-              description: txDescription,
-              date: new Date(),
-            }
-          });
-        }
-      } else if (finalStatus === 'Cancelled' && existingFinTx) {
-        await db.financialTransaction.delete({
-          where: { id: existingFinTx.id }
-        });
-      }
+      // 6. Revenue is recorded AT PAYMENT only (finance.repo.collectPayment creates the
+      // single 'Medical Services' income entry). Completing an appointment only sets
+      // priceCharged (the expected amount); a Done-but-unpaid appointment shows in the
+      // finance collection queue until paid. No ledger write here, and historical
+      // entries are never touched by status changes.
+      void appointment;
 
       // Return fully hydrated appointment
       return db.appointment.findFirst({
